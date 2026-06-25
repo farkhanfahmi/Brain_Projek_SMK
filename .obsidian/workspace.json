@@ -11,29 +11,32 @@
             "id": "7faeacdebc27d28a",
             "type": "leaf",
             "state": {
-              "type": "empty",
-              "state": {},
+              "type": "markdown",
+              "state": {
+                "file": "Projek/AbsenSI/15-Deployment-Guide.md",
+                "mode": "source",
+                "source": false
+              },
               "icon": "lucide-file",
-              "title": "Tab baru"
+              "title": "15-Deployment-Guide"
             }
-          }
-        ]
-      },
-      {
-        "id": "f6be5da6fef28fb5",
-        "type": "tabs",
-        "children": [
+          },
           {
-            "id": "661737abc31092ec",
+            "id": "5a61837455bfd999",
             "type": "leaf",
             "state": {
-              "type": "empty",
-              "state": {},
-              "icon": "lucide-file",
-              "title": "Tab baru"
+              "type": "split-diff-view",
+              "state": {
+                "aFile": ".obsidian/workspace.json",
+                "bFile": ".obsidian/workspace.json",
+                "aRef": ""
+              },
+              "icon": "diff",
+              "title": "Diff: workspace.json  (Working Tree)"
             }
           }
-        ]
+        ],
+        "currentTab": 1
       }
     ],
     "direction": "vertical"
@@ -204,8 +207,11 @@
       "realclaudian:Open Claudian": false
     }
   },
-  "active": "0d2bee8c55aff221",
+  "active": "5a61837455bfd999",
   "lastOpenFiles": [
+    "file baruu.md",
+    "Projek/AbsenSI/15-Deployment-Guide.md",
+    "Projek/AbsenSI/14-Debug-Log.md",
     "Projek/AbsenSI/_claudian/workflow-multi-dev.md",
     "Projek/AbsenSI/_claudian/team.md",
     "Projek/AbsenSI/_claudian/project-context.md",
@@ -222,8 +228,6 @@
     "Projek/AbsenSI/06-Features/absensi-kelas-mapel.md",
     "Projek/AbsenSI/06-Features/absensi-gerbang.md",
     "Projek/AbsenSI/06-Features",
-    "Projek/AbsenSI/15-Deployment-Guide.md",
-    "Projek/AbsenSI/14-Debug-Log.md",
     "Projek/AbsenSI/13-Backlog.md",
     "Projek/AbsenSI/12-Status.md",
     "Projek/AbsenSI/11-Decisions.md",
@@ -234,7 +238,6 @@
     "Projek/AbsenSI/05-API-Endpoints.md",
     "Projek/AbsenSI/04-Database-Schema.md",
     "Projek/AbsenSI/03-User-Roles.md",
-    "Projek/AbsenSI/02-Tech-Stack.md",
     "Projek/AbsenSI",
     "Projek",
     "New folder",
