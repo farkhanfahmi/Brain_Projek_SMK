@@ -1,4 +1,4 @@
----
+﻿---
 tags: [absensi, feature, dashboard, realtime, fase-1]
 status: draft
 updated: 2026-06-25
@@ -6,7 +6,7 @@ updated: 2026-06-25
 
 # Feature — Dashboard TV Realtime
 
-← [[30.Projects/AbsenSI/00-INDEX|Index]]
+← [[Projek/AbsenSI/00-INDEX|Index]]
 
 > Tampilan realtime rekap kehadiran untuk TV di ruang kepala sekolah. Push via WebSocket, bukan polling.
 
@@ -34,10 +34,10 @@ Filter yang harus didukung:
 - Per rentang tanggal/hari
 - Per status (hadir/terlambat/tidak hadir/bolos — bolos baru relevan fase 2)
 
-**Catatan performa:** dengan data tahunan (2.500 siswa × ±200 hari sekolah/tahun = ±500rb baris/tahun), query filter butuh index komposit yang tepat di kolom `(tanggal, kelas_id)`, `(tanggal, status)`, dst. Desain index final menyusul di [[30.Projects/AbsenSI/04-Database-Schema|04-Database-Schema]].
+**Catatan performa:** dengan data tahunan (2.500 siswa × ±200 hari sekolah/tahun = ±500rb baris/tahun), query filter butuh index komposit yang tepat di kolom `(tanggal, kelas_id)`, `(tanggal, status)`, dst. Desain index final menyusul di [[Projek/AbsenSI/04-Database-Schema|04-Database-Schema]].
 
 ## Akun & Auth (Resolved)
-- TV dashboard **tetap butuh autentikasi** — tidak dianggap "tampilan publik" meski di ruang terbatas (lihat [[30.Projects/AbsenSI/03-User-Roles|03-User-Roles]])
+- TV dashboard **tetap butuh autentikasi** — tidak dianggap "tampilan publik" meski di ruang terbatas (lihat [[Projek/AbsenSI/03-User-Roles|03-User-Roles]])
 - Role khusus **Kepala Sekolah (`kepsek`)** — akun login tersendiri, read-only
 - Tantangan teknis yang perlu didesain saat breakdown task: TV biasanya nyala terus tanpa keyboard/mouse fisik di unit TV — perlu mekanisme sesi login yang tidak butuh re-login harian (session token berumur panjang khusus device TV, atau browser kiosk yang login sekali dan tidak pernah logout otomatis)
 
@@ -45,5 +45,6 @@ Filter yang harus didukung:
 - [ ] TV display itu app Next.js terpisah, atau cukup route khusus di `apps/kiosk`/`apps/web`? — perlu didiskusikan saat mulai breakdown task
 
 ## 🔗 Lihat Juga
-- [[30.Projects/AbsenSI/06-Features/absensi-gerbang|Absensi Gerbang]]
-- [[30.Projects/AbsenSI/02-Tech-Stack|02-Tech-Stack — bagian Realtime]]
+- [[Projek/AbsenSI/06-Features/absensi-gerbang|Absensi Gerbang]]
+- [[Projek/AbsenSI/02-Tech-Stack|02-Tech-Stack — bagian Realtime]]
+

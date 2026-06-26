@@ -5,9 +5,11 @@ updated: 2026-06-25
 
 # 02 — Tech Stack & Arsitektur
 
-← [[30.Projects/AbsenSI/00-INDEX|Index]]
+← [[Projek/AbsenSI/00-INDEX|Index]]
 
-> Keputusan stack ini **berbeda** dari proyek lain di vault ini (DasiPelajar dkk pakai Laravel). Ini keputusan sadar untuk belajar ekosistem TypeScript sebagai blueprint aplikasi sekolah berikutnya. Risiko & alasan didiskusikan penuh — lihat [[30.Projects/AbsenSI/11-Decisions|ADR-002]].
+> Keputusan stack ini **berbeda** dari proyek lain di vault ini (DasiPelajar dkk pakai Laravel). Ini keputusan sadar untuk belajar ekosistem TypeScript sebagai blueprint aplikasi sekolah berikutnya. Risiko & alasan didiskusikan penuh — lihat [[Projek/AbsenSI/11-Decisions|ADR-002]].
+>
+> **Update 2026-06-26:** Database engine diganti dari PostgreSQL ke **MySQL** — lihat [[Projek/AbsenSI/11-Decisions|ADR-011]] yang men-supersede sebagian ADR-002. Bagian lain ADR-002 (NestJS, Prisma, arsitektur modular monolith) tetap berlaku tanpa berubah.
 
 ---
 
@@ -18,7 +20,7 @@ updated: 2026-06-25
 | **Node.js + TypeScript** | Runtime | Type-safety end-to-end, shared types antar layer |
 | **NestJS** | Framework backend | Struktur modular (module, DI, decorator) — paling mendekati Laravel secara konsep, transisi developer Laravel paling mulus dibanding Express polos |
 | **Prisma** | ORM | Type-safe query, schema-as-code, migration jelas |
-| **PostgreSQL** | Database utama | Query analitik kompleks (filter rekap multi-dimensi) lebih kuat dari MySQL — window function, partial index, partitioning tabel log jangka panjang |
+| **MySQL** | Database utama | Tim sudah familiar dari proyek sebelumnya (DasiPelajar, SIMA-Sarpras) — mengurangi 1 kurva belajar baru di tengah belajar NestJS/TypeScript. Volume data AbsenSI (±500rb baris/tahun) tidak butuh keunggulan analitik PostgreSQL; index komposit yang tepat sudah cukup. Lihat ADR-011. |
 | **Redis** | Cache + Queue broker | Dipakai BullMQ untuk job queue, juga cache rekap TV |
 | **BullMQ** | Job queue | Event-driven: `attendance.recorded` di-dispatch ke queue, listener notifikasi (fase 3) tinggal subscribe tanpa ubah core |
 
@@ -90,3 +92,4 @@ updated: 2026-06-25
 ## ⚠️ Catatan Skala (jangan over-engineer)
 
 Estimasi peak load realistis: **2.500 siswa tap di 1 gerbang saat jam masuk ±5-10 request/detik.** Bottleneck nyata ada di antrian fisik di depan reader, bukan database. Jangan habiskan waktu optimasi premature untuk throughput — fokus ke **reliability offline-sync** dan **kebenaran data** terlebih dulu.
+

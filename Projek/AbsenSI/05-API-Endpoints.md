@@ -1,13 +1,13 @@
----
+﻿---
 tags: [absensi, api]
 updated: 2026-06-25
 ---
 
 # 05 — API Endpoints
 
-← [[30.Projects/AbsenSI/00-INDEX|Index]]
+← [[Projek/AbsenSI/00-INDEX|Index]]
 
-> Draft kasar — detail lengkap menyusul setelah skema database & spec fitur final. Semua endpoint didokumentasikan via OpenAPI/Swagger auto-generate dari NestJS (lihat [[30.Projects/AbsenSI/02-Tech-Stack|02-Tech-Stack]]) — file ini jadi ringkasan navigasi, bukan duplikasi penuh.
+> Draft kasar — detail lengkap menyusul setelah skema database & spec fitur final. Semua endpoint didokumentasikan via OpenAPI/Swagger auto-generate dari NestJS (lihat [[Projek/AbsenSI/02-Tech-Stack|02-Tech-Stack]]) — file ini jadi ringkasan navigasi, bukan duplikasi penuh.
 
 ---
 
@@ -26,3 +26,4 @@ updated: 2026-06-25
 ## ❓ Open Questions
 - [ ] Auth strategy untuk endpoint admin (JWT? session?) — belum diputuskan
 - [ ] Auth untuk kiosk (device-level token, supaya kiosk tidak butuh login user) — perlu didesain karena kiosk jalan unattended
+

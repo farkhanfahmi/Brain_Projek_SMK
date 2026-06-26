@@ -5,9 +5,9 @@ updated: 2026-06-25
 
 # 03 — User Roles
 
-← [[30.Projects/AbsenSI/00-INDEX|Index]]
+← [[Projek/AbsenSI/00-INDEX|Index]]
 
-> Ini role PENGGUNA APLIKASI (siswa, guru, admin sekolah) — bukan role tim developer. Untuk pembagian tim developer lihat [[30.Projects/AbsenSI/_claudian/team|team.md]].
+> Ini role PENGGUNA APLIKASI (siswa, guru, admin sekolah) — bukan role tim developer. Untuk pembagian tim developer lihat [[Projek/AbsenSI/_claudian/team|team.md]].
 
 ---
 
@@ -33,3 +33,4 @@ updated: 2026-06-25
 - [ ] Matriks izin detail per endpoint API menyusul saat modul Web/Core dirancang lebih detail
 
 > **Implikasi teknis dari "TV dashboard tetap butuh auth":** layar TV di ruang kepsek perlu mekanisme login yang tidak ribet diulang tiap hari (TV biasanya nyala terus, tidak ada keyboard/mouse di TV itu sendiri). Opsi yang perlu dipikirkan saat masuk task breakdown: token sesi berumur panjang khusus device TV (mirip "remember this device"), atau login sekali di awal lalu browser kiosk di mini-PC TV tidak pernah logout. Detail teknis ini didesain saat task dashboard-tv dipecah, bukan sekarang.
+

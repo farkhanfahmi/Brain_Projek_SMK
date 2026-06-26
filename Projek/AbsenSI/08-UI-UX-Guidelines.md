@@ -1,11 +1,11 @@
----
+﻿---
 tags: [absensi, ui-ux]
 updated: 2026-06-25
 ---
 
 # 08 — UI/UX Guidelines
 
-← [[30.Projects/AbsenSI/00-INDEX|Index]]
+← [[Projek/AbsenSI/00-INDEX|Index]]
 
 > Belum dirancang detail — placeholder. Akan diisi saat Developer 1 & 2 mulai breakdown task `apps/web` dan `apps/kiosk`.
 
@@ -17,3 +17,4 @@ updated: 2026-06-25
 ## Belum Diputuskan
 - [ ] Design system / komponen library yang dipakai bersama (shadcn/ui? Tailwind UI custom?)
 - [ ] Palet warna & branding sekolah
+

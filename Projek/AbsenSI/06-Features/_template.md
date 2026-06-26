@@ -1,4 +1,4 @@
----
+﻿---
 tags: [absensi, feature]
 status: draft
 updated: YYYY-MM-DD
@@ -6,7 +6,7 @@ updated: YYYY-MM-DD
 
 # Feature — [Nama Fitur]
 
-← [[30.Projects/AbsenSI/00-INDEX|Index]]
+← [[Projek/AbsenSI/00-INDEX|Index]]
 
 > Ringkasan satu paragraf tentang fitur ini.
 
@@ -30,3 +30,4 @@ updated: YYYY-MM-DD
 ## ❓ Open Questions
 
 ## 🔗 Lihat Juga
+

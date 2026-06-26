@@ -1,11 +1,11 @@
----
+﻿---
 tags: [absensi, team, ownership]
 updated: 2026-06-25
 ---
 
 # Team & Module Ownership
 
-← [[30.Projects/AbsenSI/00-INDEX|Index]]
+← [[Projek/AbsenSI/00-INDEX|Index]]
 
 > Pembagian modul **diusulkan** berdasarkan background yang disampaikan saat diskusi awal. Ini bukan keputusan final — silakan dikoreksi/disesuaikan tim, lalu update file ini.
 
@@ -38,8 +38,9 @@ updated: 2026-06-25
 
 ## Aturan Kolaborasi
 
-1. **Task selalu punya field "Assigned to"** di task brief — lihat [[30.Projects/AbsenSI/06-Features/tasks/_task-template|_task-template.md]]. Jangan kerjakan task modul orang lain tanpa koordinasi dulu.
-2. **CONTEXT.md terpisah per app** (`apps/api/CONTEXT.md`, `apps/web/CONTEXT.md`, `apps/kiosk/CONTEXT.md`) — bukan satu CONTEXT.md di root. Ini supaya 3 Claude Code session paralel tidak rebutan/override file context yang sama. Detail di [[30.Projects/AbsenSI/_claudian/workflow-multi-dev|workflow-multi-dev.md]].
+1. **Task selalu punya field "Assigned to"** di task brief — lihat [[Projek/AbsenSI/06-Features/tasks/_task-template|_task-template.md]]. Jangan kerjakan task modul orang lain tanpa koordinasi dulu.
+2. **CONTEXT.md terpisah per app** (`apps/api/CONTEXT.md`, `apps/web/CONTEXT.md`, `apps/kiosk/CONTEXT.md`) — bukan satu CONTEXT.md di root. Ini supaya 3 Claude Code session paralel tidak rebutan/override file context yang sama. Detail di [[Projek/AbsenSI/_claudian/workflow-multi-dev|workflow-multi-dev.md]].
 3. **Perubahan ke `packages/types`** (shared) wajib di-flag ke 2 dev lain sebelum merge — karena breaking change di sini berdampak ke semua app.
 4. **Modul Core (`apps/api`)** adalah satu-satunya sumber kebenaran data siswa/guru/jadwal. Modul lain TIDAK BOLEH query database langsung ke tabel Core — selalu lewat service/API layer yang disediakan. Ini supaya batas modul tetap bisa dipecah jadi microservice nanti tanpa rewrite besar (lihat ADR-003).
-5. **Async-first** — karena semua anggota tim adalah guru aktif dengan waktu terbatas, koordinasi utama lewat update [[30.Projects/AbsenSI/12-Status|12-Status.md]] (board per modul), bukan mengandalkan meeting sinkron.
+5. **Async-first** — karena semua anggota tim adalah guru aktif dengan waktu terbatas, koordinasi utama lewat update [[Projek/AbsenSI/12-Status|12-Status.md]] (board per modul), bukan mengandalkan meeting sinkron.
+

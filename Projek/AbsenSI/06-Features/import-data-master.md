@@ -6,7 +6,7 @@ updated: 2026-06-25
 
 # Feature — Import Data Master (Guru, Siswa, Kartu RFID)
 
-← [[30.Projects/AbsenSI/00-INDEX|Index]]
+← [[Projek/AbsenSI/00-INDEX|Index]]
 
 > **Naik ke scope Fase 1** (awalnya dianggap fase 3/nice-to-have, dinaikkan karena rollout awal 2.500 kartu tidak praktis kalau input manual satu-satu). Mencakup 3 alur: import data siswa, import data guru, dan pemetaan kartu RFID ke orang.
 
@@ -64,7 +64,7 @@ nip, nama, (mapel yang diajar — opsional, baru relevan penuh di fase 2 saat ja
 nisn_nip, uid
 ```
 - Prasyarat: `nisn_nip` harus sudah ada di sistem (dari Sub-Fitur 1/2)
-- Validasi: `uid` harus unik (tolak duplikat — 1 UID cuma boleh aktif ke 1 orang, sesuai aturan di [[30.Projects/AbsenSI/06-Features/manajemen-kartu|manajemen-kartu.md]])
+- Validasi: `uid` harus unik (tolak duplikat — 1 UID cuma boleh aktif ke 1 orang, sesuai aturan di [[Projek/AbsenSI/06-Features/manajemen-kartu|manajemen-kartu.md]])
 - Baris gagal (NISN/NIP tidak ditemukan, atau UID sudah terpakai) dilaporkan terpisah, partial commit sama seperti Sub-Fitur 1
 
 ### Mode B — Tap-to-Assign (siswa baru / kartu belum terekam)
@@ -79,6 +79,7 @@ nisn_nip, uid
 - [ ] Apakah perlu fitur "undo" import kalau ternyata ada kesalahan besar di file yang sudah diupload (misal salah kelas semua)?
 
 ## 🔗 Lihat Juga
-- [[30.Projects/AbsenSI/06-Features/manajemen-kartu|Manajemen Kartu RFID]]
-- [[30.Projects/AbsenSI/03-User-Roles|03-User-Roles]]
-- [[30.Projects/AbsenSI/13-Backlog|13-Backlog]]
+- [[Projek/AbsenSI/06-Features/manajemen-kartu|Manajemen Kartu RFID]]
+- [[Projek/AbsenSI/03-User-Roles|03-User-Roles]]
+- [[Projek/AbsenSI/13-Backlog|13-Backlog]]
+

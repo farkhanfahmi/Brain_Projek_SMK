@@ -1,0 +1,23 @@
+{
+  "id": "conv-1782413837142-7izy3iapp",
+  "providerId": "claude",
+  "title": "perbaiki, banyak file yang tidak terhubung ke file...",
+  "titleGenerationStatus": "failed",
+  "createdAt": 1782413837146,
+  "updatedAt": 1782486674547,
+  "lastResponseAt": 1782486674547,
+  "sessionId": "386f288c-a9d8-46fe-939f-a9dd8a0ee2d4",
+  "providerState": {
+    "providerSessionId": "386f288c-a9d8-46fe-939f-a9dd8a0ee2d4"
+  },
+  "usage": {
+    "model": "sonnet",
+    "inputTokens": 2,
+    "cacheCreationInputTokens": 809,
+    "cacheReadInputTokens": 232605,
+    "contextWindow": 1000000,
+    "contextTokens": 233416,
+    "percentage": 23,
+    "contextWindowIsAuthoritative": true
+  }
+}

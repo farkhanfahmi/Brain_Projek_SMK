@@ -1,4 +1,4 @@
----
+﻿---
 tags: [absensi, feature, kelas, fase-2, planning]
 status: planning
 updated: 2026-06-25
@@ -6,7 +6,7 @@ updated: 2026-06-25
 
 # Feature — Absensi Kelas & Mapel (Fase 2 — Planning Only)
 
-← [[30.Projects/AbsenSI/00-INDEX|Index]]
+← [[Projek/AbsenSI/00-INDEX|Index]]
 
 > **Belum dikerjakan.** Dokumen ini hanya mencatat rencana & keputusan awal agar skema database fase 1 sudah kompatibel. Detail spec lengkap baru disusun saat fase 2 dimulai.
 
@@ -55,6 +55,7 @@ updated: 2026-06-25
 - Modul Attendance fase 1 harus dirancang generic untuk "sesi tap" (bisa sesi gerbang ATAU sesi kelas nanti), bukan hardcode hanya untuk gerbang
 
 ## 🔗 Lihat Juga
-- [[30.Projects/AbsenSI/06-Features/absensi-gerbang|Absensi Gerbang (Fase 1)]]
-- [[30.Projects/AbsenSI/11-Decisions|ADR-005]]
-- [[30.Projects/AbsenSI/13-Backlog|13-Backlog]]
+- [[Projek/AbsenSI/06-Features/absensi-gerbang|Absensi Gerbang (Fase 1)]]
+- [[Projek/AbsenSI/11-Decisions|ADR-005]]
+- [[Projek/AbsenSI/13-Backlog|13-Backlog]]
+

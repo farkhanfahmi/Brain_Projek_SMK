@@ -1,9 +1,9 @@
-# Project Context — AbsenSI
+﻿# Project Context — AbsenSI
 
 **Stack:** NestJS + Prisma + PostgreSQL (apps/api) · Next.js + TailwindCSS (apps/web, apps/kiosk) · Turborepo monorepo · Redis + BullMQ
 **Status:** Fase 1 — masih tahap perancangan spec fitur gerbang, belum mulai coding
-**Docs lengkap:** [[30.Projects/AbsenSI/00-INDEX|00-INDEX]]
-**Tim:** 3 developer, modular ownership — lihat [[30.Projects/AbsenSI/_claudian/team|team.md]]
+**Docs lengkap:** [[Projek/AbsenSI/00-INDEX|00-INDEX]]
+**Tim:** 3 developer, modular ownership — lihat [[Projek/AbsenSI/_claudian/team|team.md]]
 
 ## Keputusan Aktif
 - 1 sekolah saja, bukan SaaS multi-tenant
@@ -25,3 +25,4 @@ Merancang spec fitur Absensi Gerbang (06-Features/absensi-gerbang.md) dan skema 
 - Gerbang sekolah TIDAK ada penghalang fisik — aturan "wajib tap gerbang dulu" (fase 2) punya risiko false-negative, perlu keputusan UX sebelum fase 2 mulai
 - Repo & vault masih di vault pribadi — akan dipindah ke vault tim + repo GitHub terpisah saat siap kolaborasi
 - Jangan over-engineer untuk throughput — beban riil rendah (±5-10 req/s peak), fokus reliability offline-sync
+

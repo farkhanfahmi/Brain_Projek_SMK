@@ -1,4 +1,4 @@
----
+﻿---
 tags: [absensi, feature, kartu, fase-1]
 status: draft
 updated: 2026-06-25
@@ -6,7 +6,7 @@ updated: 2026-06-25
 
 # Feature — Manajemen Kartu RFID
 
-← [[30.Projects/AbsenSI/00-INDEX|Index]]
+← [[Projek/AbsenSI/00-INDEX|Index]]
 
 > CRUD mapping UID kartu RFID ↔ siswa/guru. Termasuk proses ganti kartu hilang/rusak — wajib lewat admin (sesuai keputusan diskusi awal).
 
@@ -34,7 +34,8 @@ updated: 2026-06-25
 3. Tap dari UID yang `inactive` → ditolak dengan pesan jelas, dicatat sebagai log percobaan (untuk audit, bukan attendance record)
 
 ## Role & Akses
-**Resolved (lihat ADR-008 & [[30.Projects/AbsenSI/03-User-Roles|03-User-Roles]]):** Registrasi & CRUD kartu boleh dilakukan oleh **Admin Pusat (`super_admin`)** maupun **Admin Pengelola Kartu (`card_admin`)** — role kedua ini didedikasikan khusus untuk delegasi tugas kartu (misal ke staff TU), tanpa kasih akses ke fitur lain (jadwal, koreksi absensi, kelola akun). Validasi role wajib dicek di backend API, bukan cuma disembunyikan di UI.
+**Resolved (lihat ADR-008 & [[Projek/AbsenSI/03-User-Roles|03-User-Roles]]):** Registrasi & CRUD kartu boleh dilakukan oleh **Admin Pusat (`super_admin`)** maupun **Admin Pengelola Kartu (`card_admin`)** — role kedua ini didedikasikan khusus untuk delegasi tugas kartu (misal ke staff TU), tanpa kasih akses ke fitur lain (jadwal, koreksi absensi, kelola akun). Validasi role wajib dicek di backend API, bukan cuma disembunyikan di UI.
 
 ## ❓ Open Questions
 - [ ] Apakah perlu fitur bulk-import kartu (misal saat awal rollout, daftarkan 2.500 kartu sekaligus via CSV)? — sangat mungkin perlu, mengingat skala awal. **Kemungkinan ini harus naik prioritas ke fase 1**, bukan nice-to-have.
+

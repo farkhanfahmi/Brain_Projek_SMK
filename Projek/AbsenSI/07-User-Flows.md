@@ -1,11 +1,11 @@
----
+﻿---
 tags: [absensi, user-flows]
 updated: 2026-06-25
 ---
 
 # 07 — User Flows
 
-← [[30.Projects/AbsenSI/00-INDEX|Index]]
+← [[Projek/AbsenSI/00-INDEX|Index]]
 
 > Draft awal — detail lengkap menyusul setelah Open Questions di absensi-gerbang.md terjawab.
 
@@ -37,3 +37,4 @@ updated: 2026-06-25
 ## ❓ Belum Dibuat
 - Flow koreksi manual data absensi oleh admin
 - Flow lihat rekap dengan filter di dashboard
+

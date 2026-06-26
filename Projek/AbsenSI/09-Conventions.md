@@ -1,11 +1,11 @@
----
+﻿---
 tags: [absensi, conventions, git, coding-standard]
 updated: 2026-06-25
 ---
 
 # 09 — Conventions
 
-← [[30.Projects/AbsenSI/00-INDEX|Index]]
+← [[Projek/AbsenSI/00-INDEX|Index]]
 
 ---
 
@@ -35,9 +35,10 @@ updated: 2026-06-25
 
 ## Environment & Secrets
 - `.env.example` selalu update kalau ada env var baru
-- Jangan commit `.env` asli — detail lengkap di [[30.Projects/AbsenSI/10-Environment|10-Environment]]
+- Jangan commit `.env` asli — detail lengkap di [[Projek/AbsenSI/10-Environment|10-Environment]]
 
 ## Bahasa
 - Kode (variable, function, comment teknis): **Bahasa Inggris** — standar industri, lebih mudah cari referensi
 - Dokumentasi Obsidian, commit message, diskusi tim: **Bahasa Indonesia** — sesuai kenyamanan tim
 - UI yang dilihat user akhir (siswa/guru/admin sekolah): **Bahasa Indonesia**
+

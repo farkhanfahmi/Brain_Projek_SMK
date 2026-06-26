@@ -1,4 +1,4 @@
----
+﻿---
 tags: [absensi, feature, gerbang, fase-1]
 status: draft
 updated: 2026-06-25
@@ -6,7 +6,7 @@ updated: 2026-06-25
 
 # Feature — Absensi Gerbang (Fase 1)
 
-← [[30.Projects/AbsenSI/00-INDEX|Index]]
+← [[Projek/AbsenSI/00-INDEX|Index]]
 
 > Modul utama fase 1. Siswa & guru tap kartu RFID di gerbang masuk utama sekolah. Status hadir/terlambat dihitung terhadap jam masuk sekolah (ADR-005).
 
@@ -46,7 +46,7 @@ updated: 2026-06-25
 - **Guru:** tap masuk > (jam mengajar pertama hari itu − threshold menit yang diset admin) → `terlambat`. Threshold ini per-guru atau global? → **PERLU DISKUSI LANJUTAN**
 
 ### Validasi Tap
-- UID kartu harus terdaftar & aktif (lihat [[30.Projects/AbsenSI/06-Features/manajemen-kartu|manajemen-kartu]]) — kalau UID tidak dikenal, kiosk tampilkan pesan error, TIDAK membuat record
+- UID kartu harus terdaftar & aktif (lihat [[Projek/AbsenSI/06-Features/manajemen-kartu|manajemen-kartu]]) — kalau UID tidak dikenal, kiosk tampilkan pesan error, TIDAK membuat record
 - Idempotency: setiap tap dari kiosk dikirim dengan `client_uuid` unik (untuk dukung offline-retry) — server tolak duplikat `client_uuid`
 
 ---
@@ -74,7 +74,7 @@ Setiap tap berhasil → dispatch event `attendance.recorded` ke BullMQ (lihat AD
 
 ## 🖥️ Dashboard TV
 
-Lihat [[30.Projects/AbsenSI/06-Features/dashboard-tv|dashboard-tv.md]] untuk detail terpisah.
+Lihat [[Projek/AbsenSI/06-Features/dashboard-tv|dashboard-tv.md]] untuk detail terpisah.
 
 ---
 
@@ -87,6 +87,7 @@ Lihat [[30.Projects/AbsenSI/06-Features/dashboard-tv|dashboard-tv.md]] untuk det
 - [ ] Apakah siswa yang TIDAK tap pulang (lupa/keburu) perlu auto-close di akhir hari, atau tetap status "masuk" terus?
 
 ## 🔗 Lihat Juga
-- [[30.Projects/AbsenSI/06-Features/manajemen-kartu|Manajemen Kartu RFID]]
-- [[30.Projects/AbsenSI/06-Features/absensi-kelas-mapel|Absensi Kelas & Mapel (Fase 2)]]
-- [[30.Projects/AbsenSI/11-Decisions|ADR-005]]
+- [[Projek/AbsenSI/06-Features/manajemen-kartu|Manajemen Kartu RFID]]
+- [[Projek/AbsenSI/06-Features/absensi-kelas-mapel|Absensi Kelas & Mapel (Fase 2)]]
+- [[Projek/AbsenSI/11-Decisions|ADR-005]]
+

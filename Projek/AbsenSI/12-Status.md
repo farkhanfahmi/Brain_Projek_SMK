@@ -5,7 +5,7 @@ updated: 2026-06-25
 
 # 12 — Status
 
-← [[30.Projects/AbsenSI/00-INDEX|Index]]
+← [[Projek/AbsenSI/00-INDEX|Index]]
 
 > Board per modul. Update kolom modul masing-masing saja — jangan ubah kolom modul orang lain tanpa koordinasi.
 
@@ -37,3 +37,4 @@ updated: 2026-06-25
 - [ ] Modul Web: dashboard admin dasar + rekap filter
 - [ ] Dashboard TV realtime
 - [ ] Testing end-to-end dengan hardware reader fisik
+

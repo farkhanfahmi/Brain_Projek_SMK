@@ -1,0 +1,98 @@
+{
+  "userName": "",
+  "permissionMode": "yolo",
+  "model": "sonnet",
+  "thinkingBudget": "off",
+  "effortLevel": "medium",
+  "serviceTier": "default",
+  "enableAutoTitleGeneration": true,
+  "titleGenerationModel": "",
+  "excludedTags": [],
+  "mediaFolder": "",
+  "systemPrompt": "Anda adalah seorang full stack web Developer dengan pengalaman lebih dari 15 tahun dalam membangun aplikasi web produksi. Anda adalah rekan pendiri teknis saya untuk setiap proyek di dalam vault ini.\n\nPERAN ANDA:\n- Tantang asumsi saya sebelum menerimanya\n- Tunjukkan kekurangan, kasus khusus, dan masalah skalabilitas yang belum saya pertimbangkan\n- Ajukan pertanyaan klarifikasi ketika persyaratan ambigu\n- Usulkan alternatif ketika pendekatan saya kurang optimal\n- Beri tahu jika saya melakukan rekayasa berlebihan atau kurang rekayasa\n- Pikirkan tentang keamanan, kinerja, dan pemeliharaan secara default\n\nGAYA KOMUNIKASI ANDA:\n- Bersikap langsung dan jujur, meskipun tidak nyaman\n- Katakan \"pendekatan ini memiliki masalah karena X\" — bukan \"ide bagus, tetapi mungkin pertimbangkan...\"\n- Kuantifikasi trade-off jika memungkinkan (\"ini menambah kompleksitas ~40% untuk keuntungan 5%)\n- Bedakan dengan jelas antara opini dan fakta\n- Jika Anda tidak tahu sesuatu, katakan saja — jangan pernah berhalusinasi\n\nAPA YANG BUKAN ANDA:\n- Bukan orang yang selalu setuju — jangan pernah setuju hanya untuk bersikap sopan\n- Bukan generator kode — vault ini untuk desain, bukan eksekusi\n- Bukan pasif — secara proaktif beri tahu masalah meskipun saya tidak melakukannya\n\nKONTEKS:\nSemua dokumen proyek ada di brankas Obsidian ini. Saat saya melampirkan file, bacalah seluruhnya sebelum menanggapi. Saat kita membuat keputusan, ingatkan saya untuk memperbarui catatan yang relevan.",
+  "persistentExternalContextPaths": [],
+  "sharedEnvironmentVariables": "",
+  "envSnippets": [],
+  "customContextLimits": {},
+  "customModelAliases": {},
+  "keyboardNavigation": {
+    "scrollUpKey": "w",
+    "scrollDownKey": "s",
+    "focusInputKey": "i"
+  },
+  "requireCommandOrControlEnterToSend": false,
+  "locale": "en",
+  "providerConfigs": {
+    "claude": {
+      "safeMode": "acceptEdits",
+      "cliPath": "",
+      "cliPathsByHost": {},
+      "loadUserSettings": true,
+      "enableChrome": false,
+      "enableBangBash": false,
+      "enableOpus1M": false,
+      "enableSonnet1M": false,
+      "customModels": "",
+      "lastModel": "sonnet",
+      "environmentVariables": "",
+      "environmentHash": ""
+    },
+    "codex": {
+      "enabled": false,
+      "safeMode": "workspace-write",
+      "cliPath": "",
+      "cliPathsByHost": {},
+      "customModels": "",
+      "reasoningSummary": "detailed",
+      "environmentVariables": "",
+      "environmentHash": "",
+      "installationMethod": "native-windows",
+      "installationMethodsByHost": {},
+      "wslDistroOverride": "",
+      "wslDistroOverridesByHost": {}
+    },
+    "opencode": {
+      "cliPath": "",
+      "cliPathsByHost": {},
+      "enabled": false,
+      "environmentHash": "",
+      "environmentVariables": "OPENCODE_ENABLE_EXA=1",
+      "modelAliases": {},
+      "preferredThinkingByModel": {},
+      "selectedMode": "",
+      "thinkingOptionsByModel": {},
+      "visibleModels": []
+    },
+    "pi": {
+      "cliPath": "",
+      "cliPathsByHost": {},
+      "discoveredModels": [],
+      "enabled": false,
+      "environmentHash": "",
+      "environmentVariables": "",
+      "modelAliases": {},
+      "preferredThinkingByModel": {},
+      "toolMode": "all",
+      "visibleModels": []
+    }
+  },
+  "settingsProvider": "claude",
+  "savedProviderModel": {
+    "claude": "sonnet"
+  },
+  "savedProviderEffort": {
+    "claude": "medium"
+  },
+  "savedProviderServiceTier": {},
+  "savedProviderThinkingBudget": {},
+  "savedProviderPermissionMode": {
+    "claude": "yolo"
+  },
+  "lastCustomModel": "",
+  "maxTabs": 3,
+  "enableAutoScroll": true,
+  "deferMathRenderingDuringStreaming": true,
+  "expandFileEditsByDefault": false,
+  "chatViewPlacement": "right-sidebar",
+  "hiddenProviderCommands": {}
+}
