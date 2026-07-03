@@ -1,0 +1,23 @@
+{
+  "id": "conv-1782567810514-chee7p64t",
+  "providerId": "claude",
+  "title": "Fix broken project file relationships",
+  "titleGenerationStatus": "success",
+  "createdAt": 1782567810516,
+  "updatedAt": 1782761021003,
+  "lastResponseAt": 1782761021003,
+  "sessionId": "93ef5da1-8a3a-492f-ae0b-a6985ba76f1d",
+  "providerState": {
+    "providerSessionId": "93ef5da1-8a3a-492f-ae0b-a6985ba76f1d"
+  },
+  "usage": {
+    "model": "sonnet",
+    "inputTokens": 2,
+    "cacheCreationInputTokens": 849,
+    "cacheReadInputTokens": 195920,
+    "contextWindow": 1000000,
+    "contextTokens": 196771,
+    "percentage": 20,
+    "contextWindowIsAuthoritative": true
+  }
+}

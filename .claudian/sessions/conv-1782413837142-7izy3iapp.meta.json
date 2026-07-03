@@ -4,20 +4,20 @@
   "title": "perbaiki, banyak file yang tidak terhubung ke file...",
   "titleGenerationStatus": "failed",
   "createdAt": 1782413837146,
-  "updatedAt": 1782486674547,
-  "lastResponseAt": 1782486674547,
+  "updatedAt": 1783092943505,
+  "lastResponseAt": 1783092943505,
   "sessionId": "386f288c-a9d8-46fe-939f-a9dd8a0ee2d4",
   "providerState": {
     "providerSessionId": "386f288c-a9d8-46fe-939f-a9dd8a0ee2d4"
   },
   "usage": {
     "model": "sonnet",
-    "inputTokens": 2,
-    "cacheCreationInputTokens": 809,
-    "cacheReadInputTokens": 232605,
-    "contextWindow": 1000000,
-    "contextTokens": 233416,
-    "percentage": 23,
+    "inputTokens": 1,
+    "cacheCreationInputTokens": 19080,
+    "cacheReadInputTokens": 15324,
+    "contextWindow": 200000,
+    "contextTokens": 34405,
+    "percentage": 17,
     "contextWindowIsAuthoritative": true
   }
 }

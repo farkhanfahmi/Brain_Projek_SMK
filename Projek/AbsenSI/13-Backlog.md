@@ -12,10 +12,24 @@ updated: 2026-06-25
 ## 🟢 Fase 1 — Absensi Gerbang (sedang dirancang)
 Lihat [[Projek/AbsenSI/06-Features/absensi-gerbang|absensi-gerbang.md]] untuk Open Questions yang harus dijawab sebelum mulai coding.
 
+**Modul yang masuk Fase 1 (harus selesai sebelum go-live):**
+- Absensi gerbang (tap RFID)
+- Manajemen kartu
+- Import data master (ADR-009)
+- **Kalender Pendidikan** — lihat [[Projek/AbsenSI/06-Features/kalender-pendidikan|kalender-pendidikan.md]] (input tahun ajaran, libur blok, libur mendadak satu klik; **harus diisi sebelum rekap bisa akurat**)
+- **Rekap kehadiran untuk Admin Pusat** — lihat [[Projek/AbsenSI/06-Features/rekap-kehadiran|rekap-kehadiran.md]] (filter: tanggal, kelas, jurusan; output: count hadir/terlambat/izin/sakit/alfa per siswa; tanpa export di Fase 1)
+
 ## 🟢 Fase 1b — Dashboard Piket (menyusul setelah inti Fase 1 stabil)
 Lihat [[Projek/AbsenSI/06-Features/dashboard-piket|dashboard-piket.md]]. Sengaja dipisah dari Fase 1 inti (bukan dikerjakan bersamaan) supaya tim tidak overload — keputusan ini diambil sadar mengingat tim masih belajar stack baru sekaligus. Bawa konsep baru: struktur 2 kampus, role `guru_piket` ber-scope kampus, tabel `permits`, mekanisme lock/unlock siswa, dan reuse `print.php` existing untuk cetak surat izin.
 
-## 🟡 Fase 2 — Absensi Kelas & Mapel (planning)
+## 🟡 Fase 2 — Fitur Lanjutan (planning)
+- **Rekap untuk Wali Kelas** — scope dibatasi ke kelas yang diampu (lihat [[Projek/AbsenSI/06-Features/rekap-kehadiran|rekap-kehadiran.md]])
+- **Riwayat kehadiran Guru** — guru lihat riwayat diri sendiri
+- **Rekap perizinan untuk Guru Piket** — laporan bulanan permits per kampus (untuk BK/rapat orang tua)
+- **Export Excel** rekap (jika diputuskan butuh)
+- **Absensi Kelas & Mapel** — lihat [[Projek/AbsenSI/06-Features/absensi-kelas-mapel|absensi-kelas-mapel.md]]
+
+## 🟡 Fase 2 (lama) — Absensi Kelas & Mapel (planning)
 Lihat [[Projek/AbsenSI/06-Features/absensi-kelas-mapel|absensi-kelas-mapel.md]].
 **Blocker untuk mulai fase ini:** keputusan soal hard-block vs soft-block gerbang-dulu (risiko fisik gerbang tanpa penghalang).
 

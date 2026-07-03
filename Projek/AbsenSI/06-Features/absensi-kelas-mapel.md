@@ -1,4 +1,4 @@
-﻿---
+---
 tags: [absensi, feature, kelas, fase-2, planning]
 status: planning
 updated: 2026-06-25

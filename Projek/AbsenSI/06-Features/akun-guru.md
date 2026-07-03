@@ -1,4 +1,4 @@
-﻿---
+---
 tags: [absensi, feature, akun-guru, fase-1]
 status: draft
 updated: 2026-06-25
@@ -16,7 +16,7 @@ updated: 2026-06-25
 | Item | Detail |
 |---|---|
 | Phase | Fase 1 |
-| Status | 🟡 Draft |
+| Status | 🟢 Final — siap jadi task |
 | Owner | Developer 1 (apps/web) untuk UI; Developer 3 (apps/api) untuk auth & endpoint |
 
 ---
@@ -30,8 +30,11 @@ updated: 2026-06-25
 - Wali kelas melihat rekap kehadiran kelas yang diampu → **Fase 2**
 - Guru mapel melihat siapa yang hadir di kelasnya → **Fase 2** (baru relevan setelah ada reader kelas)
 
-## ❓ Open Questions
-- [ ] Reset password guru — self-service (lupa password, kirim email/WA) atau harus minta admin reset manual? (Fase 1 mungkin cukup manual mengingat skala awal & belum ada jalur email/WA terverifikasi)
+## ✅ Open Questions — Resolved (2026-07-03)
+
+- [x] **Reset password guru** → **Manual oleh admin di Fase 1.** Belum ada jalur email/WA terverifikasi. Admin generate password baru dari dashboard dan sampaikan ke guru via komunikasi langsung. Self-service reset (kirim link via WA) masuk backlog Fase 3 bersama notifikasi orang tua.
+
+**Status spec:** ✅ Final — siap dipecah jadi task development.
 
 ## 🔗 Lihat Juga
 - [[Projek/AbsenSI/03-User-Roles|03-User-Roles]]

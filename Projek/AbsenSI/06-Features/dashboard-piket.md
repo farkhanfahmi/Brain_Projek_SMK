@@ -53,18 +53,38 @@ Sekolah punya **2 kampus fisik** (Kampus 1, Kampus 2), masing-masing dengan **gu
 - **Tidak ada cetak surat** untuk jalur ini — ini cuma pencatatan status, beda dari izin keluar.
 
 ### 3. Perizinan Keluar Sekolah (Menu Terpisah)
-- Form dedicated: pilih siswa, alasan, keterangan, toggle **"Akan kembali hari ini?"**.
-  - Kalau **ya** → isi jam kembali yang dijanjikan.
-  - Kalau **tidak** → tidak perlu isi jam kembali, `attendance_records` hari itu langsung diset status `izin`/`sakit` untuk sisa hari.
-- Submit → record `permits` (`jenis: keluar`) tersimpan, **kode verifikasi** unik digenerate.
-- Sistem otomatis konstruksi URL ke `print.php` (server lokal `10.10.10.100:8800`, lihat ADR-018) dengan parameter siswa/alasan/jam/kode, buka di tab baru → petugas piket klik print manual dari preview.
-- **Siswa tidak perlu tap** sama sekali — baik saat minta izin maupun saat keluar fisik (keputusan eksplisit, beda dari jalur gerbang normal).
+
+Ada **dua sub-alur** yang berbeda, keduanya dikelola dari menu Perizinan Keluar:
+
+**Sub-alur A — Izin Keluar Sementara (siswa tidak tap):**
+- Siswa lapor lisan ke piket bahwa ingin keluar (urusan keluarga, berobat, dsb).
+- Piket isi form: pilih siswa, alasan (`sakit`/`izin`), keterangan, jam keluar, jam kembali yang dijanjikan (opsional).
+- Submit → `permits(jenis: keluar)` tersimpan, `status_kembali: belum`, **kode verifikasi** unik digenerate.
+- Sistem konstruksi URL ke `print.php` → buka di tab baru → piket print surat izin manual.
+- **Siswa langsung pergi tanpa tap** — tidak perlu scan kartu di gerbang.
+- Saat kembali: siswa lapor lisan ke piket → piket klik **"Sudah Kembali"** → `status_kembali: sudah`. Siswa **tidak perlu tap** saat kembali juga.
+- Kalau siswa tidak kembali sampai akhir jam sekolah: piket klik **"Dianggap Pulang"** → `status_kembali: pulang`, `attendance_records.pulang_via: piket_izin`, `waktu_pulang` diisi `jam_keluar` dari permits.
+
+**Sub-alur B — Izin Pulang Awal (siswa tap dulu):**
+- Siswa lapor ke piket bahwa ingin pulang lebih awal (izin resmi).
+- Piket setujui → **siswa tap kartu di gerbang terlebih dahulu** → sistem catat `waktu_pulang` dari tap.
+- Setelah tap, piket klik konfirmasi **"Tandai sebagai Izin Pulang"** di dashboard → `attendance_records.pulang_via` diubah dari `tap` jadi `tap_izin_pulang`, tercatat di `activity_log`.
+- **Fallback** — kalau siswa gagal tap (kartu tertinggal, reader error): piket manual input tanpa tap → `pulang_via: piket_izin`, `waktu_pulang` diisi manual oleh piket.
 
 ### 4. Monitoring "Belum Kembali"
-- Untuk siswa dengan izin keluar yang "akan kembali", begitu siswa lapor balik ke piket secara lisan, piket klik **"Sudah Kembali"** di dashboard (manual, bukan tap) → `permits.status_kembali` jadi `sudah`.
-- Kalau `jam_kembali_diharapkan` sudah lewat dan belum ditandai kembali → siswa otomatis muncul di **daftar "Belum Kembali"** sebagai sinyal untuk piket menindaklanjuti (telepon orang tua, dst). Ini **bukan** trigger otomatis ke mekanisme lock — cuma sinyal/peringatan.
+- Siswa dari Sub-alur A yang punya `jam_kembali_diharapkan` dan belum ditandai kembali → otomatis muncul di daftar **"Belum Kembali"** saat waktu yang dijanjikan sudah lewat — sinyal visual untuk piket, bukan trigger otomatis apa pun.
+- Piket tindak lanjut: hubungi orang tua, atau klik "Dianggap Pulang" kalau memang tidak kembali.
 
-### 5. Tinjauan & Lock/Unlock Siswa
+### 5. Antrian Klarifikasi "Tidak Tap Pulang"
+
+- Setiap pagi, Dashboard Piket menampilkan daftar **siswa kampus ini yang kemarin tap masuk tapi tidak tap pulang** (`waktu_pulang = null` pada hari kemarin).
+- Siswa datang melapor ke piket → piket resolve dengan salah satu aksi:
+  - **"Konfirmasi Pulang Normal"** → piket isi jam pulang perkiraan (atau "tidak diketahui"), `waktu_pulang` diisi dengan catatan `pulang_via: piket_izin`, dicatat di `activity_log`.
+  - **"Tandai Izin Keluar Tidak Kembali"** → buat `permits(jenis: keluar, status_kembali: pulang)` retroaktif untuk hari kemarin, sistem update `attendance_records` kemarin.
+- Kalau siswa tidak melapor dan tidak ada klarifikasi → record tetap dengan `waktu_pulang = null`. Rekap akan menampilkan ini sebagai "masuk tanpa keterangan pulang" — bukan alfa, tapi data tidak lengkap.
+- Daftar ini **per kampus** (guru piket Kampus 1 hanya lihat siswa Kampus 1, sesuai ADR-015).
+
+### 6. Tinjauan & Lock/Unlock Siswa
 - Di akhir hari, sistem menandai siswa dengan izin "akan kembali" yang masih `status_kembali: belum` sebagai **"Perlu Ditinjau"**.
 - Piket review daftar ini besok pagi — kalau memang belum terselesaikan (bukan cuma piket lupa klik), piket **secara manual** mengunci siswa tersebut (isi `locked_reason`, sistem catat `locked_by` + `locked_at`).
 - Siswa terkunci yang tap di gerbang → **ditolak** dengan pesan jelas di layar kiosk ("Hubungi Guru Piket"), tetap dicatat sebagai log percobaan (pola sama dengan tap kartu inactive, lihat [[Projek/AbsenSI/06-Features/manajemen-kartu|manajemen-kartu.md]]).
@@ -85,23 +105,30 @@ Sekolah punya **2 kampus fisik** (Kampus 1, Kampus 2), masing-masing dengan **gu
 
 | Sumber | Efek ke `attendance_records` |
 |---|---|
-| Tap gerbang (jalur normal) | `waktu_masuk`/`waktu_pulang` terisi, `pulang_via: tap` |
-| `permits` jenis `tidak_masuk` | Status hari itu jadi `izin`/`sakit` |
-| `permits` jenis `keluar`, tidak kembali | `waktu_pulang` = `jam_keluar`, `pulang_via: izin_piket`, status sisa hari `izin`/`sakit` |
-| `permits` jenis `keluar`, akan kembali & terkonfirmasi | Tidak mengubah status existing — siswa dianggap tetap hadir normal |
-| Siswa terkunci coba tap | Tap ditolak, **tidak** membuat `attendance_record`, hanya log percobaan |
+| Tap gerbang masuk (jalur normal) | `waktu_masuk` terisi, status `hadir`/`terlambat` |
+| Tap gerbang pulang (jalur normal) | `waktu_pulang` terisi, `pulang_via: tap` |
+| `permits` jenis `tidak_masuk` | Status hari itu jadi `izin`/`sakit`, tidak ada `waktu_pulang` |
+| `permits` jenis `keluar`, siswa kembali (`status_kembali: sudah`) | Tidak ubah data kehadiran — siswa dianggap hadir normal |
+| `permits` jenis `keluar`, siswa tidak kembali (`status_kembali: pulang`) | `waktu_pulang` = `jam_keluar`, `pulang_via: piket_izin` |
+| Piket konfirmasi "Tandai Izin Pulang" (setelah tap Sub-alur B) | `pulang_via` diubah dari `tap` → `tap_izin_pulang`, dicatat di `activity_log` |
+| Piket manual fallback pulang (tap gagal) | `waktu_pulang` diisi manual, `pulang_via: piket_izin`, dicatat di `activity_log` |
+| Siswa terkunci coba tap | Tap **ditolak**, tidak membuat/update `attendance_record`, hanya masuk `tap_events` dengan `result: rejected_locked` |
 
-**Catatan penting untuk modul Attendance saat breakdown task:** perlu aturan precedence tegas — status dari `permits` tidak boleh ditimpa balik oleh tap yang terjadi setelahnya di hari yang sama (dan sebaliknya). Ini belum didetailkan, lihat Open Questions.
+**Aturan kewenangan (ADR-019):** Hanya `guru_piket` yang bisa membuat `permits` dan mengubah status kehadiran. `super_admin` tidak memiliki akses ke endpoint ini.
 
 ---
 
-## ❓ Open Questions (harus dijawab sebelum spec ini final & siap jadi task)
+## ✅ Open Questions yang Sudah Resolved
 
-- [ ] Aturan precedence detail: kalau siswa sudah ditandai `izin` oleh piket pagi-pagi, tapi ternyata tap gerbang siang (kasus aneh tapi mungkin terjadi) — status mana yang menang?
-- [ ] Relasi kewenangan koreksi data antara **Admin Pusat** (`super_admin`, sudah ada kewenangannya di `03-User-Roles.md`) dan **Guru Piket** — apakah piket bisa override koreksi admin atau sebaliknya, dan siapa yang jadi log "terakhir mengubah"?
-- [ ] Apakah guru piket butuh riwayat/laporan bulanan perizinan (misal untuk keperluan BK atau rapat orang tua), atau cukup data mentah di `permits` tanpa laporan khusus di Fase 1b?
+- [x] **Aturan precedence tap vs permits** → Resolved: domain dipisah bersih. Tap hanya mencatat `waktu_masuk`/`waktu_pulang` fisik. Status kehadiran (`izin`/`sakit`/`alfa`) hanya bisa diubah oleh piket via `permits`. Keduanya tidak saling overwrite — tap tidak mengubah status, permits tidak menghapus data waktu tap.
+- [x] **Relasi kewenangan Admin Pusat vs Guru Piket** → Resolved (ADR-019): domain non-overlapping. Admin mengelola data teknis, piket mengelola status kehadiran. Tidak ada konflik karena admin tidak punya akses ke endpoint status kehadiran sama sekali.
+- [x] **Field `akan_kembali`** → Dihapus. Semua izin keluar diasumsikan "berpotensi kembali." Kalau tidak kembali, piket klik "Dianggap Pulang" → `status_kembali: pulang`.
+
+## ❓ Open Questions yang Masih Terbuka
+
+- [ ] Apakah guru piket butuh laporan/rekap bulanan perizinan (untuk keperluan BK atau rapat orang tua), atau cukup data mentah di `permits` tanpa fitur rekap khusus di Fase 1b? → **Kemungkinan masuk Fase 2 bersama rekap wali kelas.**
 - [ ] UI kiosk gerbang untuk siswa terkunci — perlu desain pesan & tampilan spesifik, beda dari pesan UID tidak terdaftar/inactive
-- [ ] Modifikasi `print.php` untuk parameter `kode` baru — siapa yang punya akses edit script ini di tim, dan kapan dikerjakan relatif ke development modul Permits
+- [x] **Modifikasi `print.php` untuk parameter `kode` baru** → Script ada di `C:\ProjekSMK\print.php` di server lokal `10.10.10.100`. Dikerjakan **sebelum modul Permits di-deploy** — siapapun yang mengerjakan modul Permits bertanggung jawab koordinasi edit `print.php` ini. Perubahan minimal: tambah 1 blok `<?= $kode ?>` di template HTML surat izin.
 
 ## 🔗 Lihat Juga
 - [[Projek/AbsenSI/06-Features/absensi-gerbang|Absensi Gerbang (Fase 1)]]

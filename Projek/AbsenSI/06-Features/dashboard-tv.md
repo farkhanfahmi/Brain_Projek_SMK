@@ -1,4 +1,4 @@
-﻿---
+---
 tags: [absensi, feature, dashboard, realtime, fase-1]
 status: draft
 updated: 2026-06-25
@@ -16,7 +16,7 @@ updated: 2026-06-25
 | Item | Detail |
 |---|---|
 | Phase | Fase 1 |
-| Status | 🟡 Draft |
+| Status | 🟢 Final — siap jadi task |
 | Owner | Developer 2 (apps/kiosk atau app terpisah untuk TV — perlu diputuskan apakah TV display bagian dari `apps/kiosk` atau modul Next.js sendiri) |
 
 ---
@@ -39,10 +39,17 @@ Filter yang harus didukung:
 ## Akun & Auth (Resolved)
 - TV dashboard **tetap butuh autentikasi** — tidak dianggap "tampilan publik" meski di ruang terbatas (lihat [[Projek/AbsenSI/03-User-Roles|03-User-Roles]])
 - Role khusus **Kepala Sekolah (`kepsek`)** — akun login tersendiri, read-only
-- Tantangan teknis yang perlu didesain saat breakdown task: TV biasanya nyala terus tanpa keyboard/mouse fisik di unit TV — perlu mekanisme sesi login yang tidak butuh re-login harian (session token berumur panjang khusus device TV, atau browser kiosk yang login sekali dan tidak pernah logout otomatis)
+- **Sesi TV:** akun `kepsek` di TV menggunakan refresh token berumur panjang (**30 hari, sliding renewal**) — setiap kali halaman dimuat atau Socket.IO event masuk, token diperbarui otomatis di background. TV tidak pernah perlu re-login manual selama aktif dipakai. Kalau token expire (TV mati lebih dari 30 hari), admin login ulang sekali dari keyboard/mouse yang tersedia.
 
-## ❓ Open Questions
-- [ ] TV display itu app Next.js terpisah, atau cukup route khusus di `apps/kiosk`/`apps/web`? — perlu didiskusikan saat mulai breakdown task
+## ✅ Open Questions — Resolved
+
+- [x] **TV display: app terpisah atau route di app yang sudah ada?** → **Route `/tv` di `apps/web`** (Next.js admin app), bukan app terpisah dan bukan di `apps/kiosk`.
+  - **Alasan:** `apps/web` sudah punya Socket.IO client, auth context, dan semua API client data attendance — tinggal buat route `/tv` dengan layout khusus (fullscreen, font besar, no navbar, no sidebar).
+  - `apps/kiosk` tidak tepat karena tugasnya capture tap RFID — bukan display agregat.
+  - App terpisah menambah deployment target baru (Nginx config, container, env vars) tanpa manfaat yang proporsional.
+  - **Implementasi:** layout `apps/web/app/tv/layout.tsx` terpisah dari layout admin biasa, tidak ada navbar/sidebar, optimasi untuk layar besar dan jarak pandang jauh.
+
+**Status spec:** ✅ Final — siap dipecah jadi task development.
 
 ## 🔗 Lihat Juga
 - [[Projek/AbsenSI/06-Features/absensi-gerbang|Absensi Gerbang]]

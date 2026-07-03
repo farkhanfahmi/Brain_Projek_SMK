@@ -3,7 +3,7 @@
   "permissionMode": "yolo",
   "model": "sonnet",
   "thinkingBudget": "off",
-  "effortLevel": "medium",
+  "effortLevel": "low",
   "serviceTier": "default",
   "enableAutoTitleGeneration": true,
   "titleGenerationModel": "",
@@ -46,9 +46,9 @@
       "reasoningSummary": "detailed",
       "environmentVariables": "",
       "environmentHash": "",
-      "installationMethod": "native-windows",
-      "installationMethodsByHost": {},
-      "wslDistroOverride": "",
+      "installationMethodsByHost": {
+        "device:b435db10-4b95-4f06-b22b-62c67d631858": "native-windows"
+      },
       "wslDistroOverridesByHost": {}
     },
     "opencode": {
@@ -81,7 +81,7 @@
     "claude": "sonnet"
   },
   "savedProviderEffort": {
-    "claude": "medium"
+    "claude": "low"
   },
   "savedProviderServiceTier": {},
   "savedProviderThinkingBudget": {},

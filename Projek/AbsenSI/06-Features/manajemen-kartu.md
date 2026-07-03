@@ -1,4 +1,4 @@
-﻿---
+---
 tags: [absensi, feature, kartu, fase-1]
 status: draft
 updated: 2026-06-25
@@ -16,7 +16,7 @@ updated: 2026-06-25
 | Item | Detail |
 |---|---|
 | Phase | Fase 1 |
-| Status | 🟡 Draft |
+| Status | 🟢 Final — siap jadi task |
 | Owner | Developer 3 (apps/api — Card module) + Developer 1 (apps/web — UI admin) |
 
 ---
@@ -36,6 +36,9 @@ updated: 2026-06-25
 ## Role & Akses
 **Resolved (lihat ADR-008 & [[Projek/AbsenSI/03-User-Roles|03-User-Roles]]):** Registrasi & CRUD kartu boleh dilakukan oleh **Admin Pusat (`super_admin`)** maupun **Admin Pengelola Kartu (`card_admin`)** — role kedua ini didedikasikan khusus untuk delegasi tugas kartu (misal ke staff TU), tanpa kasih akses ke fitur lain (jadwal, koreksi absensi, kelola akun). Validasi role wajib dicek di backend API, bukan cuma disembunyikan di UI.
 
-## ❓ Open Questions
-- [ ] Apakah perlu fitur bulk-import kartu (misal saat awal rollout, daftarkan 2.500 kartu sekaligus via CSV)? — sangat mungkin perlu, mengingat skala awal. **Kemungkinan ini harus naik prioritas ke fase 1**, bukan nice-to-have.
+## ✅ Open Questions — Resolved
+
+- [x] **Bulk-import kartu** → Naik ke Fase 1 (sudah dicatat di ADR-009). Dua mode: **Mode A** bulk CSV (untuk UID yang sudah diketahui dari vendor), **Mode B** tap-to-assign (untuk kartu yang UID-nya belum diketahui — admin scan satu per satu di PC admin). Lihat [[Projek/AbsenSI/11-Decisions|ADR-009]] untuk detail flow.
+
+**Status spec:** ✅ Final — siap dipecah jadi task development.
 

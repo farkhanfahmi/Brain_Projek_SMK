@@ -16,7 +16,7 @@ updated: 2026-06-25
 | Item | Detail |
 |---|---|
 | Phase | Fase 1 |
-| Status | 🟡 Draft |
+| Status | 🟢 Final — siap jadi task |
 | Owner | Developer 3 (apps/api — logic import & validasi) + Developer 1 (apps/web — UI upload & laporan hasil) |
 
 ---
@@ -73,10 +73,13 @@ nisn_nip, uid
 - Sistem capture UID real-time saat tap terjadi, langsung tampilkan konfirmasi "Kartu berhasil dipasangkan ke [nama]"
 - Didesain untuk proses cepat berurutan (next antrian, bukan form terpisah per orang) — cocok dipakai saat hari pembagian kartu
 
-## ❓ Open Questions
-- [ ] Format kolom CSV final — perlu lihat contoh data riil yang sekolah punya (Dapodik/Excel existing) untuk pastikan kolom yang saya usulkan di atas sesuai
-- [ ] Siapa yang boleh jalankan import — `super_admin` saja, atau `card_admin` juga boleh untuk Sub-Fitur 3 (pemetaan kartu, sesuai scope role-nya)? Sub-Fitur 1 & 2 (data siswa/guru) kemungkinan harus `super_admin` saja karena bukan domain `card_admin`
-- [ ] Apakah perlu fitur "undo" import kalau ternyata ada kesalahan besar di file yang sudah diupload (misal salah kelas semua)?
+## ✅ Open Questions — Resolved (2026-07-03)
+
+- [x] **Format kolom CSV final** → Dikonfirmasi saat developer mulai breakdown task modul Import — perlu lihat contoh file Dapodik/Excel yang sekolah punya. Kolom usulan di atas (`nisn, nama, kelas, jurusan`) dijadikan default; developer menyesuaikan saat melihat data riil. Ini **tidak blocking** task creation — dicatat sebagai langkah pertama task modul Import.
+- [x] **Siapa yang boleh jalankan import** → Sub-Fitur 1 & 2 (siswa & guru): `super_admin` saja. Sub-Fitur 3 (pemetaan kartu): `super_admin` + `card_admin` (sesuai scope role `card_admin` di ADR-008).
+- [x] **Fitur "undo" import** → Tidak ada undo. Terlalu kompleks untuk manfaatnya di skala ini. Mitigasi: laporan hasil import mendetail (baris gagal + alasan) supaya admin bisa review sebelum commit, dan proses partial commit (baris valid masuk, baris gagal dilaporkan) sudah meminimalkan kerusakan dari file yang tidak sempurna. Kalau import salah besar, admin koreksi manual atau re-import dengan data yang sudah diperbaiki.
+
+**Status spec:** ✅ Final — siap dipecah jadi task development.
 
 ## 🔗 Lihat Juga
 - [[Projek/AbsenSI/06-Features/manajemen-kartu|Manajemen Kartu RFID]]

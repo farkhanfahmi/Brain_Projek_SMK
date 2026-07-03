@@ -39,6 +39,11 @@ updated: 2026-06-25
 - [[Projek/AbsenSI/06-Features/dashboard-tv|Dashboard TV Realtime]]
 - [[Projek/AbsenSI/06-Features/notifikasi-ortu|Notifikasi Orang Tua]] (Fase 3 — jalur disiapkan, belum dibangun)
 - [[Projek/AbsenSI/06-Features/dashboard-piket|Dashboard Piket]] (Fase 1b — menyusul setelah inti Fase 1 stabil)
+- [[Projek/AbsenSI/06-Features/rekap-kehadiran|Rekap Kehadiran]] (Fase 1 admin, Fase 2 wali kelas + guru)
+- [[Projek/AbsenSI/06-Features/kalender-pendidikan|Kalender Pendidikan]] (Fase 1 — fondasi perhitungan alfa rekap)
+
+### 🎯 Task Execution
+- [[Projek/AbsenSI/TASKS-FASE-1|TASKS-FASE-1]] — 26 task bertahap, siap dieksekusi
 
 ### Proses & Keputusan
 - [[Projek/AbsenSI/07-User-Flows|07 — User Flows]]

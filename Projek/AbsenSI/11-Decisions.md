@@ -190,6 +190,28 @@ updated: 2026-06-25
 
 ---
 
+## ADR-019: Status Kehadiran Adalah Kewenangan Eksklusif Guru Piket
+**Tanggal:** 2026-07-03
+**Status:** Accepted
+**Konteks:** Dua aktor berpotensi menyentuh data kehadiran: `super_admin` (punya akses koreksi data teknis) dan `guru_piket` (yang menerima laporan langsung dari siswa/orang tua dan mencatat status izin/sakit/alfa). Sebelumnya sempat diasumsikan bahwa admin pusat punya kewenangan penuh termasuk mengubah status kehadiran — ini berpotensi menghasilkan konflik bila admin dan piket berbeda pendapat soal status yang sama.
+**Keputusan:** Status kehadiran (`izin`, `sakit`, `alfa`) adalah **kewenangan eksklusif `guru_piket`**. `super_admin` **tidak bisa mengubah** status kehadiran siswa. Domain kewenangan dipisah bersih: admin mengelola data teknis (kartu, akun user, jadwal, kelas, jurusan, konfigurasi sistem), piket mengelola status kehadiran harian.
+**Alasan:** Piket adalah petugas yang menerima laporan langsung dari siswa dan orang tua — mereka punya informasi ground truth yang admin tidak punya saat koreksi dari jauh. Memisahkan domain sepenuhnya menghilangkan konflik kewenangan secara struktural (bukan dengan precedence rule yang rumit). Kalau ada sengketa status kehadiran, jalurnya adalah komunikasi dengan piket kampus yang bersangkutan — bukan override admin.
+**Konsekuensi:** Endpoint API untuk `POST/PATCH` data `permits` dan update status `attendance_records` hanya dapat dipanggil oleh role `guru_piket`, ditegakkan di level guard NestJS (bukan sekadar disembunyikan di UI). `super_admin` tidak punya akses ke endpoint ini meskipun mereka tahu URL-nya — konsisten dengan ADR-008. Bila ada kebutuhan "koreksi darurat" status kehadiran di masa depan, mekanismenya adalah piket yang melakukan koreksi (bukan admin langsung ubah), agar trail aksi tetap jelas di `activity_log` (lihat ADR-020).
+
+---
+
+## ADR-020: Dua Layer Logging — Raw Tap Events + Activity Log Pengguna
+**Tanggal:** 2026-07-03
+**Status:** Accepted
+**Konteks:** Sistem butuh dua jenis bukti yang berbeda tujuannya: (1) bukti forensik bahwa tap RFID fisik benar-benar terjadi — dibutuhkan untuk kasus siswa klaim sudah tap tapi tidak tercatat, atau investigasi tap yang ditolak; (2) bukti audit siapa pengguna yang melakukan aksi apa di sistem — dibutuhkan untuk akuntabilitas piket dan admin serta investigasi data yang tidak sesuai.
+**Keputusan:** Dua tabel immutable terpisah:
+- **`tap_events`** — log mentah setiap tap RFID, insert-only, tidak bisa diedit/dihapus dari aplikasi. Mencatat: UID kartu, `card_id` (nullable — null kalau UID tidak dikenal), `kiosk_id` (mesin scanner), `scanned_at` (timestamp server, bukan client), `result` (enum: `accepted` / `rejected_inactive` / `rejected_locked` / `rejected_unknown` / `rejected_duplicate`), dan `attendance_record_id` (FK nullable — terisi kalau tap berhasil).
+- **`activity_log`** — log setiap aksi pengguna yang login, insert-only. Mencatat: `actor_id` (FK ke `users`), `action` (string: `permit.create`, `permit.confirm_kembali`, `student.lock`, `student.unlock`, `attendance.manual_pulang`, dsb), `target_type` + `target_id` (record yang diubah), `snapshot_before` + `snapshot_after` (JSON state sebelum/sesudah), `ip_address`, `created_at`.
+**Alasan:** Satu log gabungan tidak bisa melayani dua tujuan sekaligus — tap system events tidak punya `actor_id` (tap tidak punya sesi user), sementara activity log tidak perlu menyimpan raw UID dan kiosk_id yang hanya relevan untuk forensik hardware. Memisahkan keduanya membuat query forensik dan query audit masing-masing sederhana tanpa kolom nullable yang membingungkan.
+**Konsekuensi:** `tap_events.scanned_at` selalu menggunakan **timestamp server** (bukan timestamp dari kiosk client) — clock kiosk bisa drift dan tidak bisa dijadikan sumber kebenaran waktu. `tap_events` diperkirakan tumbuh ±5.000 baris/hari (2.500 siswa × 2 tap) = ±1,8 juta baris/tahun — masih manageable di MySQL dengan index pada `(kiosk_id, scanned_at)`, dan termasuk dalam scope ETL ke data warehouse (ADR-013) agar tidak terus tumbuh tanpa batas di database operasional. Kedua tabel ini tidak boleh punya endpoint DELETE atau UPDATE yang bisa diakses dari aplikasi — hanya INSERT yang diizinkan.
+
+---
+
 ## ADR-014: Master Data (Core) Tetap di Dalam AbsenSI, Ekstraksi Servis Terpisah Ditunda
 **Tanggal:** 2026-06-26
 **Status:** Accepted
