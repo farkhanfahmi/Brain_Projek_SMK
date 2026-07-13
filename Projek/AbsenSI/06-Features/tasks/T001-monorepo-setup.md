@@ -92,12 +92,16 @@ PRINT_SERVER_URL="http://10.10.10.100:8800/print.php"
 - **Jangan sentuh:** tidak ada (task pertama, belum ada yang bisa salah disentuh)
 
 ## Acceptance Criteria
-- [ ] `turbo build` dari root berjalan tanpa error (walaupun semua apps masih kosong)
-- [ ] `packages/types` bisa di-import dari `apps/api`, `apps/web`, dan `apps/kiosk`
-- [ ] `packages/ui` — komponen shadcn/ui bisa di-import di `apps/web`
-- [ ] `.env.example` sudah ada di root
-- [ ] `.gitignore` sudah include `.env`, `node_modules`, `.next`, `dist`
-- [ ] Repo sudah di-push ke GitHub
+- [x] `turbo build` dari root berjalan tanpa error (walaupun semua apps masih kosong)
+- [x] `packages/types` bisa di-import dari `apps/api`, `apps/web`, dan `apps/kiosk`
+- [x] `packages/ui` — komponen shadcn/ui bisa di-import di `apps/web`
+- [x] `.env.example` sudah ada di root
+- [x] `.gitignore` sudah include `.env`, `node_modules`, `.next`, `dist`
+- [ ] Repo sudah di-push ke GitHub ⬅️ **Manual: `gh` CLI tidak tersedia, push via GUI atau `git remote add origin <url> && git push -u origin main`**
+
+> **Status:** ✅ Selesai kecuali GitHub push (perlu dilakukan manual)
+> **Commit:** `8c0ec53` — feat: T001 — initial monorepo setup (Turborepo)
+> **Dikerjakan:** 2026-07-07
 
 ## Handoff ke T002
 T002 akan menambahkan Prisma ke `apps/api`. Pastikan `apps/api` sudah bisa di-run (`nest start`) meskipun belum ada modul apapun.

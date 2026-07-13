@@ -1,0 +1,24 @@
+{
+  "id": "conv-1783409008523-fnq41kx50",
+  "providerId": "claude",
+  "title": "Execute task T001",
+  "titleGenerationStatus": "success",
+  "createdAt": 1783409008524,
+  "updatedAt": 1783453398314,
+  "lastResponseAt": 1783453398314,
+  "sessionId": "9499bc4f-bef3-47b8-a402-9c8224371949",
+  "providerState": {
+    "providerSessionId": "9499bc4f-bef3-47b8-a402-9c8224371949"
+  },
+  "currentNote": "Projek/AbsenSI/06-Features/tasks/T001-monorepo-setup.md",
+  "usage": {
+    "model": "sonnet",
+    "inputTokens": 1,
+    "cacheCreationInputTokens": 354,
+    "cacheReadInputTokens": 99885,
+    "contextWindow": 200000,
+    "contextTokens": 100240,
+    "percentage": 50,
+    "contextWindowIsAuthoritative": true
+  }
+}

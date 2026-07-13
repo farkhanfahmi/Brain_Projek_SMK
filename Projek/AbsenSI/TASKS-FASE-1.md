@@ -17,7 +17,7 @@ updated: 2026-07-03
 
 | Blok | Task | Selesai |
 |---|---|---|
-| 0 — Foundation | T001–T003 | 0/3 |
+| 0 — Foundation | T001–T003 | 2/3 |
 | 1 — Master Data | T004–T006 | 0/3 |
 | 2 — Kartu RFID | T007–T009 | 0/3 |
 | 3 — Kalender | T010 | 0/1 |
@@ -25,7 +25,7 @@ updated: 2026-07-03
 | 5 — Realtime & Dashboard | T017–T019 | 0/3 |
 | 6 — Akun Guru | T020–T021 | 0/2 |
 | 7 — Dashboard Piket (Fase 1b) | T022–T026 | 0/5 |
-| **Total** | | **0/26** |
+| **Total** | | **2/26** |
 
 ---
 
@@ -54,9 +54,9 @@ updated: 2026-07-03
 
 ---
 
-### T002 — Prisma Schema Lengkap
-- [ ] Setup `apps/api` NestJS + Prisma + koneksi MySQL lokal (dev)
-- [ ] Tulis `schema.prisma` dengan **semua tabel Fase 1**:
+### T002 — Prisma Schema Lengkap ✅
+- [x] Setup `apps/api` NestJS + Prisma + koneksi MySQL lokal (dev) — docker-compose (`mysql:8` port 3307, `redis:7` port 6379) karena port 3306 dipakai project lain di server yang sama
+- [x] Tulis `schema.prisma` dengan **semua tabel Fase 1**:
   - `kampus`, `jurusan`, `kelas`
   - `students`, `teachers`
   - `academic_years`, `school_holidays`
@@ -67,23 +67,38 @@ updated: 2026-07-03
   - `tap_events` (insert-only)
   - `activity_log` (insert-only)
   - `permits` (tanpa `akan_kembali`, `status_kembali`: `belum`/`sudah`/`pulang`)
-- [ ] Jalankan `prisma migrate dev` — pastikan semua relasi dan constraint valid
-- [ ] Seed data minimal untuk development: 2 kampus, beberapa kelas/jurusan, 1 akun `super_admin`
+- [x] Jalankan `prisma migrate dev` — semua relasi dan constraint valid (dual-FK nullable ditegakkan lewat kolom nullable + FK asli MySQL, bukan polymorphic, sesuai ADR-010)
+- [x] Seed data minimal untuk development: 2 kampus, 2 jurusan, 3 kelas, 1 akun `super_admin` (`admin`/`password123`)
+
+**Catatan implementasi (2026-07-13):**
+- Prisma versi latest (v7.8.0) mewajibkan driver adapter eksplisit (`@prisma/adapter-mariadb` dkk) dan API constructor yang beda dari mayoritas referensi NestJS+Prisma yang ada. **Diputuskan turun ke Prisma v6.19.3** (`prisma-client-js` generator klasik, auto-connect dari `DATABASE_URL`) — lebih dekat ke asumsi stack di CLAUDE.md dan lebih mudah dipelihara tim yang baru belajar Nest/Prisma.
+- `.env` tunggal di root repo (`.env.example` sudah ada duluan); `apps/api/.env` adalah **symlink** ke root `.env` supaya Prisma CLI (yang cari `.env` di folder schema) tetap jalan tanpa duplikasi source of truth.
+- `docker-compose.yml` baru di root: `mysql:8` (port host **3307**, bukan 3306 — bentrok dengan container MariaDB proyek lain di server yang sama) + `redis:7` (port 6379).
+- Seed script: `apps/api/prisma/seed.ts`, dijalankan via `npx prisma db seed` (terdaftar di `package.json#prisma.seed`).
 
 **Ref:** [[Projek/AbsenSI/04-Database-Schema|04-Database-Schema]] — baca seluruh file ini sebelum mulai
 
 ---
 
-### T003 — Auth Module
-- [ ] Install & setup: `@nestjs/jwt`, `@nestjs/passport`, `passport-jwt`, `ioredis` (Redis)
-- [ ] `AuthModule`: login endpoint `POST /auth/login` → return `access_token` (15 menit) + `refresh_token` (7 hari)
-- [ ] `POST /auth/refresh` — tukar refresh token dengan access token baru
-- [ ] `POST /auth/logout` — masukkan token ke Redis blacklist
-- [ ] `JwtAuthGuard` — validasi JWT + cek blacklist Redis di setiap request
-- [ ] `RolesGuard` — cek `role` dari payload JWT vs decorator `@Roles()`
-- [ ] `KioskGuard` — validasi static device token dari env (`KIOSK_DEVICE_TOKEN`) untuk endpoint kiosk
-- [ ] TV session: refresh token `kepsek` role dengan sliding renewal 30 hari
-- [ ] Unit test: login, refresh, logout, blacklist cek
+### T003 — Auth Module ✅
+- [x] Install & setup: `@nestjs/jwt`, `@nestjs/passport`, `passport-jwt`, `ioredis` (Redis)
+- [x] `AuthModule`: login endpoint `POST /auth/login` → return `access_token` (15 menit) + `refresh_token` (7 hari)
+- [x] `POST /auth/refresh` — tukar refresh token dengan access token baru (dengan rotasi: refresh token lama langsung dicabut begitu dipakai)
+- [x] `POST /auth/logout` — masukkan token ke Redis blacklist
+- [x] `JwtAuthGuard` — validasi JWT + cek blacklist Redis di setiap request
+- [x] `RolesGuard` — cek `role` dari payload JWT vs decorator `@Roles()`
+- [x] `KioskGuard` — validasi static device token dari env (`KIOSK_DEVICE_TOKEN`) untuk endpoint kiosk
+- [x] TV session: refresh token `kepsek` role dengan sliding renewal 30 hari
+- [x] Unit test: login, refresh, logout, blacklist cek (9 test, semua pass)
+
+**Catatan implementasi (2026-07-13):**
+- Struktur: `apps/api/src/auth/` (controller, service, dto, guards/, strategies/, decorators/), plus `src/prisma/` (PrismaService global) dan `src/redis/` (ioredis client global, dipakai auth & nanti modul lain).
+- Access token payload: `{ sub, role, teacherId, kampusId, jti }` — `jti` dipakai sebagai kunci blacklist Redis (`blacklist:access:<jti>`, TTL = sisa umur token, dihitung dari klaim `exp`).
+- Refresh token disimpan di Redis sebagai `refresh:<userId>` → `jti` refresh yang sedang aktif (bukan seluruh token) — refresh baru **merotasi** (menghapus sesi refresh lama), replay refresh token lama akan ditolak.
+- Sliding renewal 30 hari untuk role `kepsek` (dashboard TV) diimplementasikan sebagai TTL refresh token yang lebih panjang (`REFRESH_TOKEN_TTL_SLIDING_SECONDS`) dibanding role lain (7 hari) — setiap kali TV memanggil `/auth/refresh`, TTL 30 hari dihitung ulang dari saat itu (efek "sliding").
+- `nanoid` di-pin ke v3 (bukan v5 default) karena v5 ESM-only dan bikin Jest (ts-jest, transform CJS) gagal parse — masalah kompatibilitas umum di ekosistem Jest+ESM, bukan bug spesifik proyek ini.
+- Sempat salah pilih Prisma v7 di T002 (lihat catatan T002) — begitu di-downgrade ke v6, `@prisma/client` kembali ke pola import standar (`from "@prisma/client"`) yang dipakai di `auth.service.ts`, `prisma.service.ts`, dan test.
+- Diuji end-to-end manual lewat `curl` (bukan cuma unit test): login → refresh (rotasi berhasil, refresh lama ditolak) → logout (access token masuk blacklist, request ulang dengan token itu ditolak 401).
 
 **Ref:** [[Projek/AbsenSI/05-API-Endpoints|05-API-Endpoints]], [[Projek/AbsenSI/11-Decisions|ADR-008]]
 
@@ -92,8 +107,8 @@ updated: 2026-07-03
 ## 🗂️ Blok 1 — Master Data
 > Dependency: T001, T002, T003
 
-### T004 — Core Module: Master Data Manual
-- [ ] API endpoints (dilindungi `super_admin`):
+### T004 — Core Module: Master Data Manual 🟡 (backend selesai, UI belum)
+- [x] API endpoints (dilindungi `super_admin`):
   - `GET/POST /kampus`
   - `GET/POST/PATCH /jurusan`
   - `GET/POST/PATCH /kelas` (dengan `kampus_id`)
@@ -102,7 +117,15 @@ updated: 2026-07-03
   - Halaman Kelas & Jurusan: tabel list + form create/edit inline
   - Halaman Kampus: tabel + form (cukup sederhana, hanya nama)
   - Halaman Jadwal: form set jam masuk sekolah + threshold terlambat guru (global)
-- [ ] Validasi: kelas tidak boleh dibuat tanpa kampus yang valid
+- [x] Validasi: kelas tidak boleh dibuat tanpa kampus yang valid (dan jurusan valid juga ditegakkan meski tidak diminta eksplisit di spec — konsisten dgn constraint FK yang sama)
+
+**Catatan implementasi (2026-07-13):**
+- Struktur `apps/api/src/core/{kampus,jurusan,kelas,schedules}/` — masing-masing dengan dto/service/controller sendiri, digabung lewat `CoreModule` (ADR-003: batas modul dijaga, semua akses Core lewat service yang di-export, bukan raw Prisma dari modul lain).
+- Semua endpoint diproteksi `@UseGuards(JwtAuthGuard, RolesGuard)` + `@Roles(UserRole.super_admin)`.
+- `KelasService` validasi `kampusId` **dan** `jurusanId` harus merujuk row yang ada sebelum create/update — 400 Bad Request kalau tidak, bukan 500 dari FK constraint MySQL yang gagal.
+- `SchedulesService` validasi `teacherId`/`kelasId` opsional tapi kalau diisi harus valid (dipakai nanti utk `jam_mengajar` per guru, bukan cuma `jam_sekolah` global).
+- Diuji manual end-to-end via curl: GET semua endpoint dengan data seed T002, POST kelas dengan kampus tidak valid (400), POST kelas valid (201), POST schedule jam_sekolah (201), POST schedule dengan teacherId tidak valid (400), akses tanpa token (401), PATCH resource yang tidak ada (404).
+- **Belum dikerjakan:** Admin UI di `apps/web` — `apps/web` saat ini masih scaffold Next.js kosong tanpa halaman login/session sama sekali, jadi UI admin (termasuk 3 halaman yang diminta task ini) sengaja ditunda ke sesi terpisah supaya auth-flow frontend tidak tergesa dibangun sekaligus dengan CRUD backend. Keputusan ini dikonfirmasi ke user sebelum eksekusi.
 
 **Ref:** [[Projek/AbsenSI/03-User-Roles|03-User-Roles]], [[Projek/AbsenSI/04-Database-Schema|04-Database-Schema]]
 
