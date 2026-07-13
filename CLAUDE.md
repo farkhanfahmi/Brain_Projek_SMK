@@ -147,3 +147,7 @@ packages/
 - Backlog & roadmap: `Projek/AbsenSI/13-Backlog.md`
 - Debug log: `Projek/AbsenSI/14-Debug-Log.md` (isi saat ada masalah saat development)
 - Environment: `Projek/AbsenSI/10-Environment.md`
+
+
+
+halloo

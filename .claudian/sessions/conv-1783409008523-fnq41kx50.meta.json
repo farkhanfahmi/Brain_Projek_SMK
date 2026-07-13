@@ -4,8 +4,8 @@
   "title": "Execute task T001",
   "titleGenerationStatus": "success",
   "createdAt": 1783409008524,
-  "updatedAt": 1783453398314,
-  "lastResponseAt": 1783453398314,
+  "updatedAt": 1783921497123,
+  "lastResponseAt": 1783921497123,
   "sessionId": "9499bc4f-bef3-47b8-a402-9c8224371949",
   "providerState": {
     "providerSessionId": "9499bc4f-bef3-47b8-a402-9c8224371949"
@@ -14,11 +14,11 @@
   "usage": {
     "model": "sonnet",
     "inputTokens": 1,
-    "cacheCreationInputTokens": 354,
-    "cacheReadInputTokens": 99885,
+    "cacheCreationInputTokens": 233,
+    "cacheReadInputTokens": 109140,
     "contextWindow": 200000,
-    "contextTokens": 100240,
-    "percentage": 50,
+    "contextTokens": 109374,
+    "percentage": 55,
     "contextWindowIsAuthoritative": true
   }
 }
