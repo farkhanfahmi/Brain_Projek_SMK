@@ -18,14 +18,14 @@ updated: 2026-07-03
 | Blok | Task | Selesai |
 |---|---|---|
 | 0 — Foundation | T001–T003 | 2/3 |
-| 1 — Master Data | T004–T006 | 0/3 |
+| 1 — Master Data | T004–T006 | 2/3 |
 | 2 — Kartu RFID | T007–T009 | 0/3 |
 | 3 — Kalender | T010 | 0/1 |
 | 4 — Absensi Gerbang | T011–T016 | 0/6 |
 | 5 — Realtime & Dashboard | T017–T019 | 0/3 |
 | 6 — Akun Guru | T020–T021 | 0/2 |
 | 7 — Dashboard Piket (Fase 1b) | T022–T026 | 0/5 |
-| **Total** | | **2/26** |
+| **Total** | | **4/26** |
 
 ---
 
@@ -107,40 +107,58 @@ updated: 2026-07-03
 ## 🗂️ Blok 1 — Master Data
 > Dependency: T001, T002, T003
 
-### T004 — Core Module: Master Data Manual 🟡 (backend selesai, UI belum)
+### T004 — Core Module: Master Data Manual ✅
 - [x] API endpoints (dilindungi `super_admin`):
   - `GET/POST /kampus`
   - `GET/POST/PATCH /jurusan`
   - `GET/POST/PATCH /kelas` (dengan `kampus_id`)
   - `GET/POST/PATCH /schedules` (jadwal masuk sekolah + threshold terlambat global untuk guru)
-- [ ] Admin UI (`apps/web`):
+- [x] Admin UI (`apps/web`):
   - Halaman Kelas & Jurusan: tabel list + form create/edit inline
   - Halaman Kampus: tabel + form (cukup sederhana, hanya nama)
   - Halaman Jadwal: form set jam masuk sekolah + threshold terlambat guru (global)
 - [x] Validasi: kelas tidak boleh dibuat tanpa kampus yang valid (dan jurusan valid juga ditegakkan meski tidak diminta eksplisit di spec — konsisten dgn constraint FK yang sama)
 
-**Catatan implementasi (2026-07-13):**
+**Catatan implementasi backend (2026-07-13):**
 - Struktur `apps/api/src/core/{kampus,jurusan,kelas,schedules}/` — masing-masing dengan dto/service/controller sendiri, digabung lewat `CoreModule` (ADR-003: batas modul dijaga, semua akses Core lewat service yang di-export, bukan raw Prisma dari modul lain).
 - Semua endpoint diproteksi `@UseGuards(JwtAuthGuard, RolesGuard)` + `@Roles(UserRole.super_admin)`.
 - `KelasService` validasi `kampusId` **dan** `jurusanId` harus merujuk row yang ada sebelum create/update — 400 Bad Request kalau tidak, bukan 500 dari FK constraint MySQL yang gagal.
 - `SchedulesService` validasi `teacherId`/`kelasId` opsional tapi kalau diisi harus valid (dipakai nanti utk `jam_mengajar` per guru, bukan cuma `jam_sekolah` global).
-- Diuji manual end-to-end via curl: GET semua endpoint dengan data seed T002, POST kelas dengan kampus tidak valid (400), POST kelas valid (201), POST schedule jam_sekolah (201), POST schedule dengan teacherId tidak valid (400), akses tanpa token (401), PATCH resource yang tidak ada (404).
-- **Belum dikerjakan:** Admin UI di `apps/web` — `apps/web` saat ini masih scaffold Next.js kosong tanpa halaman login/session sama sekali, jadi UI admin (termasuk 3 halaman yang diminta task ini) sengaja ditunda ke sesi terpisah supaya auth-flow frontend tidak tergesa dibangun sekaligus dengan CRUD backend. Keputusan ini dikonfirmasi ke user sebelum eksekusi.
+
+**Catatan implementasi UI (2026-07-14):**
+- Dibangun sesuai brief design system baru (vault: `session Claude/design-system/*.md`) — palet beige/orange, radius 24px kartu, Plus Jakarta Sans, lucide-react. Lihat memory Claude Code "design_system_absensi" untuk ringkasan.
+- Auth-flow frontend dibangun dari nol karena `apps/web` sebelumnya tidak punya sama sekali: login via Next.js Route Handler (`/api/auth/login`) yang proxy ke NestJS lalu set **httpOnly cookie** (access + refresh token terpisah) — token tidak pernah terjangkau JS browser.
+- `middleware.ts` proteksi semua route admin (redirect ke `/login` kalau cookie tidak ada).
+- `lib/api.ts` (`apiFetch`, server-side only) auto-refresh access token sekali kalau dapat 401, sebelum retry — mengikuti pola rotasi refresh token yang sama dari T003.
+- Client component (form interaktif di halaman Kelas/Kampus/Jadwal) tidak bisa akses cookie httpOnly langsung, jadi mutasinya lewat proxy generik `app/api/proxy/[...path]/route.ts` yang meneruskan ke `apiFetch` server-side.
+- Shell (`components/shell/`): `Sidebar` (240px, nav aktif solid orange pill), `TopBar` (profile block, tombol logout), `PageTitleProvider` (context sederhana supaya tiap page.tsx bisa set judul yang tampil di TopBar tanpa prop-drilling dari layout).
+- `packages/ui/src/globals.css` & `packages/config/tailwind.config.ts` diubah total — token warna/radius/shadow/font brief dipetakan ke CSS variable shadcn standar (`--background`, `--primary`, dst) supaya komponen shadcn lama otomatis ikut tema baru tanpa perlu diubah satu-satu. `apps/web/src/app/globals.css` sekarang cuma `@import "@absensi/ui/globals.css"` — sebelumnya app ini punya salinan token shadcn default sendiri yang tidak pernah dipakai (bug lama, sudah dibersihkan).
+- Diuji end-to-end nyata di browser (Playwright headless, bukan cuma build check): redirect ke login saat belum auth → login sukses → dashboard dengan shell tampil → 3 halaman (Kampus/Kelas & Jurusan/Jadwal) dicek visual → submit form "Tambah Kampus" dan baris baru muncul di tabel tanpa reload. Tidak ada console error.
 
 **Ref:** [[Projek/AbsenSI/03-User-Roles|03-User-Roles]], [[Projek/AbsenSI/04-Database-Schema|04-Database-Schema]]
 
 ---
 
-### T005 — Core Module: Students & Teachers
-- [ ] API endpoints:
+### T005 — Core Module: Students & Teachers ✅
+- [x] API endpoints:
   - `GET /students` (dengan filter kelas, jurusan, status aktif/nonaktif)
   - `GET /students/:id` (detail + status lock)
   - `GET /teachers`
   - `GET /teachers/:id`
-- [ ] Admin UI:
+- [x] Admin UI:
   - Halaman daftar siswa: tabel dengan filter + kolom status (aktif/terkunci)
   - Halaman daftar guru: tabel sederhana
   - Detail siswa: info lengkap + riwayat kartu (tabel kartu yang pernah dimiliki)
+
+**Catatan implementasi (2026-07-14):**
+- `apps/api/src/core/{students,teachers}/` — pola sama dengan T004 (service + controller, digabung ke `CoreModule` yang sudah ada).
+- Endpoint dilindungi `super_admin` **dan** `card_admin` (bukan cuma `super_admin` seperti T004) — `card_admin` butuh cari siswa/guru untuk alur pemetaan kartu di T007-T009 nanti (`GET /cards/unassigned-persons`), sesuai batas kewenangan `card_admin` di ADR-008.
+- Filter `jurusanId` di `/students` di-join lewat `kelas.jurusanId` karena `students` sendiri tidak menyimpan `jurusanId` langsung (siswa mewarisi jurusan lewat kelasnya, sama seperti kampus — lihat ADR-015).
+- Detail siswa (`GET /students/:id`) sudah include relasi `cards` (riwayat kartu, urut terbaru dulu) meski modul Card (T007) belum dibangun — tabel `cards` sudah ada dari skema T002, jadi tidak ada blocker.
+- Fixture data dev manual (bukan bagian dari `prisma db seed` resmi T002): `apps/api/prisma/dev-fixtures/students-teachers.ts` — 3 siswa (1 nonaktif), 2 guru, 3 kartu contoh. Dijalankan manual (`npx tsx prisma/dev-fixtures/students-teachers.ts`) untuk uji coba UI, terpisah dari seed resmi supaya tidak tercampur dengan data yang dianggap "official" T002.
+- UI: halaman Siswa dengan 3 filter dropdown (kelas/jurusan/status) yang mengubah URL query params (`/siswa?status=nonaktif` dst — shareable link, bukan client state tersembunyi). Halaman Guru tabel sederhana tanpa filter (sesuai spec). Detail siswa (`/siswa/:id`) menampilkan info lengkap + riwayat kartu, badge "Terkunci" (merah) kalau `lockedAt` terisi.
+- Nav sidebar ditambah "Siswa" dan "Guru".
+- Diverifikasi end-to-end di browser (Playwright headless): login → daftar siswa tampil dengan status badge → filter nonaktif bekerja (URL berubah, hasil ter-filter benar) → klik nama siswa → halaman detail dengan riwayat kartu tampil → halaman guru tampil. Nol console error.
 
 **Ref:** [[Projek/AbsenSI/04-Database-Schema|04-Database-Schema]] — tabel `students`, `teachers`, kolom lock
 
