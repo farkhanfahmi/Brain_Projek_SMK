@@ -1,4 +1,4 @@
-﻿# Project Context — AbsenSI
+# Project Context — AbsenSI
 
 **Stack:** NestJS + Prisma + PostgreSQL (apps/api) · Next.js + TailwindCSS (apps/web, apps/kiosk) · Turborepo monorepo · Redis + BullMQ
 **Status:** Fase 1 — masih tahap perancangan spec fitur gerbang, belum mulai coding

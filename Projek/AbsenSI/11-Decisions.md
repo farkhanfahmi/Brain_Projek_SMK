@@ -212,6 +212,25 @@ updated: 2026-06-25
 
 ---
 
+## ADR-021: Kiosk Auth — URL Token + IP Whitelist, Token Disimpan di Database
+**Tanggal:** 2026-07-15
+**Status:** Accepted
+**Supersedes:** Bagian kiosk auth di ADR-008 (static env token `KIOSK_DEVICE_TOKEN`)
+**Konteks:** Desain awal (ADR-008) menggunakan satu static device token yang disimpan di `.env` kiosk. Masalahnya: setiap kiosk baru butuh akses fisik ke device untuk edit `.env` dan restart app — ini ribet secara operasional, terutama saat ganti device atau rotasi token. Selain itu, satu token tanpa lapisan lain berarti siapapun yang tahu token URL bisa kirim request dari device lain di jaringan yang sama.
+**Keputusan:** Auth kiosk menggunakan dua lapis:
+1. **Token per-kiosk dari URL** — admin buat kiosk di dashboard, server generate token unik, dashboard tampilkan URL lengkap + QR code (misal `http://server/kiosk?device=TOKEN`). IT/operator set URL ini sebagai homepage browser kiosk — sekali saja. Token di-extract dari URL dan disimpan ke `localStorage` kiosk; semua request ke API menyertakan token ini di header `Authorization: Bearer`. Token disimpan di tabel `kiosks` di database (bukan `.env` server), sehingga manajemen token (buat, revoke, rotasi) dilakukan dari admin dashboard tanpa menyentuh file konfigurasi server.
+2. **IP whitelist per-kiosk** — setiap device kiosk diberi IP static di jaringan sekolah. IP ini diinput admin saat registrasi kiosk. `KioskGuard` memvalidasi `request.ip` terhadap `kiosks.allowed_ip` di database. Kombinasi: token yang bocor tidak bisa dipakai dari device lain (IP tidak cocok); akses dari IP kiosk yang benar tanpa token tetap ditolak.
+**Alasan:** IP-only tidak cukup (siapapun di LAN sekolah bisa kirim request dari IP yang sama subnet). Token-only tanpa IP membuat token yang bocor bisa dipakai dari device apapun di jaringan. Kombinasi keduanya membutuhkan kompromi dua lapis sekaligus, yang di lingkungan fisik sekolah (akses ke ruang kiosk = akses fisik yang sudah terlindungi) secara praktis sangat sulit. Setup operasional jauh lebih mudah dari desain lama: setup kiosk baru = set homepage browser + set IP static di OS, tidak perlu SSH atau edit file `.env`.
+**Konsekuensi:**
+- Tabel baru `kiosks` ditambahkan ke schema: `id`, `nama`, `kampus_id` (FK), `device_token` (random 256-bit), `allowed_ip`, `last_seen_at`, `last_seen_ip`, `is_active`, `created_by`, `created_at`.
+- `KioskGuard` direfaktor: tidak lagi baca `KIOSK_DEVICE_TOKEN` dari env — ganti ke query tabel `kiosks` berdasarkan token dari header, lalu validasi `allowed_ip`.
+- `KIOSK_DEVICE_TOKEN` dihapus dari `.env` dan dari `10-Environment.md`.
+- `kiosk_id` di `tap_events` terisi dari `kiosks.id` yang ditemukan saat validasi guard — tidak lagi self-reported dari request body kiosk.
+- Rotasi token kiosk cukup dari admin dashboard (generate token baru, salin URL baru ke homepage browser) — tanpa deploy ulang atau SSH.
+- `last_seen_at` diupdate setiap tap sukses — dashboard admin bisa tampilkan status online/offline (threshold: `last_seen_at > 5 menit = offline`).
+
+---
+
 ## ADR-014: Master Data (Core) Tetap di Dalam AbsenSI, Ekstraksi Servis Terpisah Ditunda
 **Tanggal:** 2026-06-26
 **Status:** Accepted

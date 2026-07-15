@@ -1,4 +1,4 @@
-﻿---
+---
 tags: [absensi, team, ownership]
 updated: 2026-06-25
 ---

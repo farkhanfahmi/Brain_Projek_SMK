@@ -1,4 +1,4 @@
-﻿# Discussion Log — AbsenSI
+# Discussion Log — AbsenSI
 
 > Buffer keputusan dari diskusi sebelum dipindah ke [[Projek/AbsenSI/11-Decisions|11-Decisions.md]]. Semua keputusan dari diskusi awal (2026-06-25) sudah dipindah jadi ADR-001 s/d ADR-007. File ini kosong untuk diskusi selanjutnya.
 

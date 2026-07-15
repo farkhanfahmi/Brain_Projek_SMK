@@ -25,7 +25,8 @@ updated: 2026-07-03
 | 5 — Realtime & Dashboard | T017–T019 | 3/3 |
 | 6 — Akun Guru | T020–T021 | 2/2 |
 | 7 — Dashboard Piket (Fase 1b) | T022–T026 | 5/5 — semua selesai penuh, tidak ada blocker deploy tersisa |
-| **Total** | | **25/26** |
+| 8 — Kiosk Auth Refactor | T027 | 0/1 |
+| **Total** | | **25/27** |
 
 ---
 
@@ -678,6 +679,25 @@ updated: 2026-07-03
 - **Verifikasi API menyeluruh via curl**: lock berhasil dengan data lengkap (`lockedBy` ter-include); tap kartu siswa terkunci → `rejected_locked` dikonfirmasi nyata (bukan cuma baca kode); `GET /students/terkunci` menampilkan siswa yang tepat; lock kedua kali → 409; unlock berhasil, field terisi benar, riwayat `lockedReason` dipertahankan; tap setelah unlock → `accepted` normal lagi; cross-kampus lock (piket kampus lain) → 403; `super_admin` di endpoint lock → 403 (override method-level dikonfirmasi bekerja) tapi tetap 200 di `GET /students` biasa (tidak ada regresi).
 - **Verifikasi UI end-to-end via Playwright** (browser asli, skenario penuh 5 section sekaligus aktif — papan utama, Belum Kembali, Tidak Tap Pulang Kemarin, Perlu Ditinjau, Siswa Terkunci): login piket dengan data seed campuran (1 siswa sudah terkunci dari sebelumnya, 1 permit overdue 2 hari) → semua 5 section tampil benar dan konsisten dengan design system → klik "Kunci Siswa" di Perlu Ditinjau → dialog isi alasan → submit → LIVE tanpa reload: baris di papan utama berubah badge "Terkunci", section Perlu Ditinjau kosong, section Siswa Terkunci bertambah 1 → klik "Buka Kunci" → dialog isi catatan → submit → LIVE: baris papan utama kembali "Belum Hadir" dengan tombol Izin/Sakit muncul lagi, section Siswa Terkunci berkurang 1.
 - Data uji (akun piket, permit, lock state) sudah dibersihkan seluruhnya setelah verifikasi. **Ini menandai T022–T026 (Blok 7 — Dashboard Piket, Fase 1b) SELESAI SEMUA** — *(update 2026-07-15: item prasyarat deploy print.php eksternal yang disebut di sini sudah tidak berlaku lagi, lihat revisi arsitektur di catatan T024)*.
+
+---
+
+## 🔐 Blok 8 — Kiosk Auth Refactor
+> Dependency: T002 (schema), T003 (KioskGuard), T011–T012 (kiosk app + tap API)
+> Task ini breaking change terhadap T003 (KioskGuard) dan T011 (cara kiosk kirim token). Jalankan migration + update sekaligus dalam 1 sesi agar tidak ada periode di mana sistem setengah-lama setengah-baru.
+
+### T027 — Manajemen Kiosk: Auth Berlapis (Token DB + IP Whitelist)
+- [ ] Tambah tabel `kiosks` ke `schema.prisma` + jalankan migration
+- [ ] Refaktor `KioskGuard`: query token dari DB `kiosks`, validasi `allowed_ip`, update `last_seen_at` fire-and-forget
+- [ ] Update `AttendanceService.tap()`: ambil `kiosk_id` dari `req.kiosk.id` (hasil guard), bukan dari request body — hapus dari `TapDto`
+- [ ] Update `apps/kiosk`: baca token dari URL param `?device=TOKEN` → simpan ke `localStorage` → kirim ke Route Handler proxy → sertakan di `Authorization: Bearer`
+- [ ] Tampilkan layar error di kiosk kalau tidak ada token (localStorage kosong + tidak ada URL param)
+- [ ] Admin UI di `/kiosk`: tabel kiosk + status online/offline + form tambah kiosk + modal URL+QR code
+- [ ] API endpoints: `GET/POST /kiosks`, `PATCH /kiosks/:id`, `PATCH /kiosks/:id/deactivate`, `PATCH /kiosks/:id/rotate-token`
+- [ ] Hapus `KIOSK_DEVICE_TOKEN` dari `.env`, update `10-Environment.md` dan `CLAUDE.md`
+- [ ] Verifikasi regresi: semua test tap yang sudah jalan di T012–T013 tetap benar setelah refaktor guard
+
+**Ref:** [[Projek/AbsenSI/06-Features/tasks/T027-manajemen-kiosk|T027-manajemen-kiosk.md]], [[Projek/AbsenSI/11-Decisions|ADR-021]]
 
 ---
 

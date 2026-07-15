@@ -66,7 +66,7 @@ packages/
 | Actor | Mekanisme |
 |---|---|
 | User (admin, guru, piket, kepsek) | JWT Bearer — `POST /auth/login` → access + refresh token |
-| Kiosk (unattended) | Static device token di `.env` (`KIOSK_DEVICE_TOKEN`) → `KioskGuard` |
+| Kiosk (unattended) | Token per-kiosk dari URL (`?device=TOKEN`) → `localStorage` kiosk → Bearer header → `KioskGuard` query tabel `kiosks` + validasi `allowed_ip` → ADR-021 |
 | TV display (kepsek) | JWT refresh token 30 hari, sliding renewal |
 
 **Guard hierarchy di NestJS:**
