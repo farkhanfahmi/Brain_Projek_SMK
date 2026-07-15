@@ -1,4 +1,4 @@
-﻿---
+---
 tags: [absensi, overview]
 updated: 2026-06-25
 ---

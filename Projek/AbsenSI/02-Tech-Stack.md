@@ -26,11 +26,11 @@ updated: 2026-06-25
 
 ## 🎨 Frontend
 
-| Teknologi | Kegunaan |
-|---|---|
-| **Next.js (React + TypeScript)** | Dashboard admin + halaman kiosk mini-PC |
-| **TailwindCSS** | Styling |
-| **Socket.IO client** | Konsumsi event realtime dari backend (dashboard TV, live monitor) |
+| Teknologi                        | Kegunaan                                                          |
+| -------------------------------- | ----------------------------------------------------------------- |
+| **Next.js (React + TypeScript)** | Dashboard admin + halaman kiosk mini-PC                           |
+| **TailwindCSS**                  | Styling                                                           |
+| **Socket.IO client**             | Konsumsi event realtime dari backend (dashboard TV, live monitor) |
 
 ## 🗺️ Arsitektur — Modular Monolith (BUKAN microservices)
 
