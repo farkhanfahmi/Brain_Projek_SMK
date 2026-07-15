@@ -24,8 +24,8 @@ updated: 2026-07-03
 | 4 — Absensi Gerbang | T011–T016 | 6/6 |
 | 5 — Realtime & Dashboard | T017–T019 | 3/3 |
 | 6 — Akun Guru | T020–T021 | 2/2 |
-| 7 — Dashboard Piket (Fase 1b) | T022–T026 | 2/5 |
-| **Total** | | **22/26** |
+| 7 — Dashboard Piket (Fase 1b) | T022–T026 | 5/5 — semua selesai penuh, tidak ada blocker deploy tersisa |
+| **Total** | | **25/26** |
 
 ---
 
@@ -595,44 +595,89 @@ updated: 2026-07-03
 ---
 
 ### T024 — Dashboard Piket: Perizinan Keluar + Print
-- [ ] Menu terpisah `/piket/izin-keluar` di sidebar piket
-- [ ] Form Sub-alur A (izin keluar sementara):
+- [x] Menu terpisah `/piket/izin-keluar` di sidebar piket
+- [x] Form Sub-alur A (izin keluar sementara):
   - Cari siswa (autocomplete), alasan kategori, keterangan, jam keluar, jam kembali (opsional)
   - Submit → POST `/permits` → generate `kode_verifikasi`
-  - Sistem konstruksi URL ke `http://10.10.10.100:8800/print.php?petugas=...&kode=...` lalu `window.open()` di tab baru
-- [ ] Form Sub-alur B (konfirmasi izin pulang setelah tap):
+  - Sistem konstruksi URL ke route cetak internal lalu `window.open()` di tab baru
+- [x] Form Sub-alur B (konfirmasi izin pulang setelah tap):
   - Cari siswa yang sudah tap pulang hari ini → tombol "Tandai Izin Pulang" → `PATCH /attendance/confirm-izin-pulang/:id`
-- [ ] **Sebelum task ini: edit `C:\ProjekSMK\print.php`** — tambah blok tampilkan `$kode` di template HTML surat
+- [x] ~~Edit `C:\ProjekSMK\print.php` di server 10.10.10.100~~ — **TIDAK LAGI RELEVAN**, lihat revisi arsitektur 2026-07-15 di bawah
 
-**Ref:** [[Projek/AbsenSI/06-Features/dashboard-piket|dashboard-piket.md]], [[Projek/AbsenSI/11-Decisions|ADR-018]]
+**Ref:** [[Projek/AbsenSI/06-Features/dashboard-piket|dashboard-piket.md]], [[Projek/AbsenSI/11-Decisions|ADR-018 (direvisi 2026-07-15)]]
+
+**Revisi arsitektur (2026-07-15) — print.php eksternal DIHAPUS, diganti Route Handler internal:**
+- User (pemilik `print.php` asli) memberikan source code PHP yang sebenarnya dipakai sekolah dan meminta itu disinkronkan ke repo ini — **bukan sekadar edit file di server luar**, tapi mengganti pendekatan ADR-018 sepenuhnya: hentikan ketergantungan pada server PHP terpisah (`10.10.10.100:8800`), port template itu jadi Next.js Route Handler di `apps/web/src/app/print/struk-izin/route.ts`.
+- **ADR-018 revisi**: alasan asli ADR-018 (reuse print.php yang sudah terbukti jalan dengan hardware) tetap dihormati — HTML/CSS/struktur struk 58mm untuk printer thermal Blueprint ECO 58D di-port 1:1 dari source PHP asli, bukan didesain ulang. Yang berubah cuma *tempat* logic itu berjalan: dari PHP+Apache di server terpisah, jadi Route Handler Next.js yang sudah co-located dengan `apps/web` — konsisten dengan alasan ADR-012 (hindari server terpisah tanpa manfaat operasional nyata). Tidak ada lagi dependency ke jaringan sekolah/server fisik `10.10.10.100` sama sekali.
+- **Field baru `kode` (kode verifikasi)** — satu-satunya perubahan fungsional dari template PHP asli — ditambahkan sebagai baris `<div class="kode-verifikasi">` di bagian footer struk, sesuai kebutuhan T024 asli (antisipasi pemalsuan surat, ADR-018).
+- Semua value yang di-interpolasi ke HTML di-escape (`escapeHtml()`) — PHP asli pakai `echo` mentah tanpa escaping (aman waktu itu karena input dari form internal terpercaya), tapi di Route Handler ini nilai datang dari query string URL yang bisa saja diketik manual — escaping ditambahkan sebagai pencegahan reflected-XSS berbiaya rendah, tidak mengubah tampilan untuk input normal.
+- `logo.png` sekolah (diberikan user) dipindah ke `apps/web/public/logo.png` — direferensikan sebagai `/logo.png` (Next.js static asset convention), dengan `onerror` fallback yang sama seperti PHP asli (sembunyikan img kalau gagal load, bukan broken-image icon).
+- `NEXT_PUBLIC_PRINT_SERVER_URL` dan `PRINT_SERVER_URL` dihapus dari `.env`/`.env.example` — tidak ada lagi env var untuk print server eksternal, URL cetak sekarang relatif (`/print/struk-izin?...`, same-origin dengan `apps/web`).
+- `print.php` di root repo (yang user attach ke sesi ini) dihapus setelah isinya di-port — sudah tidak relevan lagi sebagai artifact terpisah.
+- **Verifikasi menyeluruh**: curl langsung ke route (dengan cookie sesi) mengonfirmasi semua 8 parameter (termasuk `kode`) tampil benar di HTML mentah; verifikasi end-to-end via Playwright — submit form Sub-alur A sungguhan → permit tersimpan → popup terbuka ke `/print/struk-izin` (bukan lagi ke `10.10.10.100`) → screenshot mengonfirmasi layout struk 58mm, logo termuat, semua field terisi dari data permit yang baru dibuat, kode verifikasi tampil di footer.
+- **T024 sekarang benar-benar 100% selesai** — tidak ada lagi item deploy eksternal yang menunggu, tidak ada lagi dependency ke server fisik sekolah untuk fitur cetak.
+
+**Catatan implementasi (2026-07-14, SEBAGIAN SUDAH DIGANTIKAN — lihat revisi arsitektur 2026-07-15 di atas):**
+- ~~⚠️ **PENTING — belum di-deploy**: `print.php` di server fisik `10.10.10.100:8800` **belum diedit**...~~ **Superseded** — user menyediakan source `print.php` asli tanggal 15 Juli dan meminta itu di-port jadi Route Handler internal, menghapus kebutuhan server eksternal sama sekali. Catatan asli di bawah ini dipertahankan untuk jejak sejarah keputusan, bukan lagi mencerminkan state sekarang.
+- **Perubahan infrastruktur kecil**: `AccessTokenPayload` (JWT) ditambah field `username` (sebelumnya cuma `sub`, `role`, `teacherId`, `kampusId`, `jti`) — dibutuhkan untuk mengisi parameter `petugas` di URL print.php dengan nama akun yang bermakna, bukan `Piket #18` yang tidak informatif untuk dokumen fisik yang dibaca orang tua/siswa. Field ini tidak sensitif (username, bukan password) jadi aman ditambahkan ke token. `AuthService.issueTokenPair()` dan `apps/web/lib/current-user.ts` (decoder client-side) diupdate sejalan. Test suite (`auth.service.spec.ts`) tidak perlu berubah karena `baseUser` mock sudah punya field `username` dari awal (mengikuti schema Prisma `User`).
+- **Env var baru**: `NEXT_PUBLIC_PRINT_SERVER_URL` (sebelumnya `PRINT_SERVER_URL` tanpa prefix, belum dipakai di kode manapun) — wajib `NEXT_PUBLIC_` karena `window.open()` construction terjadi di browser (client component), bukan server-side.
+- **UI**: route baru `apps/web/src/app/(piket)/piket/izin-keluar/`. Ditambahkan `PiketNav` — tab bar horizontal ringkas (bukan Sidebar penuh gaya admin) di `(piket)/layout.tsx`, dipakai bersama oleh `/piket` dan `/piket/izin-keluar` — pertama kalinya shell piket (yang sejak T023 sengaja tanpa navigasi sama sekali) punya lebih dari 1 halaman, jadi baru sekarang navigasi antar-halaman dibutuhkan. Tetap jauh lebih ringkas dari `Sidebar` admin (cuma 2 tab, tanpa ikon, height minimal) — konsisten dengan prinsip "guru_piket cuma dapat navigasi seperlunya" dari T023.
+- **Autocomplete siswa**: reuse data `piketBoard` yang sudah di-fetch di server component (bukan endpoint baru) — filter nama client-side saat mengetik. Cukup untuk skala kampus (puluhan-ratusan siswa), tidak perlu endpoint search/debounce server-side terpisah.
+- **Sub-alur B**: reuse data `piketBoard` yang sama, filter `waktuPulang !== null` untuk daftar kandidat. Field `pulangVia` di-patch optimis di state lokal setelah konfirmasi sukses (tidak re-fetch board), konsisten dengan pola optimistic update yang sudah dipakai di halaman `/piket` (T023).
+- **Kombinasi tanggal+jam untuk `jamKeluar`/`jamKembaliDiharapkan`**: input `<input type="time">` HTML native (pola yang sama dipakai di halaman Jadwal, T006) hanya menghasilkan string `HH:mm`, digabung dengan tanggal hari ini di client (`combineWithToday()`) sebelum dikirim sebagai ISO datetime ke backend (`CreatePermitDto` mengharap `IsDateString()` lengkap).
+- **Verifikasi UI end-to-end via Playwright** (browser asli, termasuk skenario yang tidak bisa diuji lewat curl): login piket → klik tab "Perizinan Keluar" di nav → Sub-alur B menampilkan Ahmad Fauzi (sudah tap pulang) dengan status "Tap Normal" dan tombol aktif → isi form Sub-alur A untuk Siti Nurhaliza (autocomplete, kategori, keterangan, jam keluar/kembali) → submit → **popup window ditangkap oleh Playwright** (`context.waitForEvent("page")`, tidak menunggu load karena server print.php sungguhan tidak reachable dari environment ini) dan URL popup dikonfirmasi berisi ke-8 parameter yang benar dengan encoding URL yang tepat (`petugas=piket_kampus1&tgl=14%2F7%2F2026&nama=Siti+Nurhaliza&kls=XI+TKJ+1&alasan=izin&ket=Berobat+ke+klinik&jamkembali=11%3A00&kode=RR5BE6WS`) → kembali ke Sub-alur B, klik "Tandai Izin Pulang" untuk Ahmad Fauzi → badge berubah ke "Izin Pulang" live, tombol hilang, dan dikonfirmasi juga langsung di database (`pulang_via` berubah `tap`→`tap_izin_pulang`).
+- Tidak ada bug baru ditemukan. Data uji (akun piket, tap, permit, activity_log terkait) sudah dibersihkan seluruhnya setelah verifikasi.
 
 ---
 
 ### T025 — Dashboard Piket: Monitoring & Antrian Klarifikasi
-- [ ] Section "Belum Kembali" di `/piket`:
+- [x] Section "Belum Kembali" di `/piket`:
   - Query: `permits` jenis `keluar`, `status_kembali: belum`, `jam_kembali_diharapkan < now()`
   - Tombol per baris: **[Sudah Kembali]** → `confirm-kembali` | **[Dianggap Pulang]** → `set-pulang`
-- [ ] Section "Tidak Tap Pulang Kemarin":
+- [x] Section "Tidak Tap Pulang Kemarin":
   - Query: `attendance_records` tanggal kemarin, `waktu_pulang = null`, siswa kampus ini
   - Tombol per baris: **[Konfirmasi Pulang]** (input jam) | **[Tandai Izin Keluar Tidak Kembali]** (buat permit retroaktif)
 
 **Ref:** [[Projek/AbsenSI/06-Features/dashboard-piket|dashboard-piket.md]], T016
 
+**Catatan implementasi (2026-07-15):**
+- **"Belum Kembali"**: endpoint baru `GET /permits/belum-kembali` di `PermitsService` — query `jenis=keluar, statusKembali=belum, jamKembaliDiharapkan < now()`, di-scope kampus. Aksi "Sudah Kembali"/"Dianggap Pulang" REUSE `confirmKembali`/`setPulang` yang sudah dibangun penuh di T022 — tidak ada logic baru untuk dua aksi ini, murni endpoint listing baru + UI.
+- **"Tidak Tap Pulang Kemarin"**: endpoint baru `GET /attendance/tidak-tap-pulang-kemarin` di `AttendanceService` — query kampus-scoped live (BUKAN bergantung pada hasil `EndOfDayService.detectMissingCheckouts()` dari T016, sesuai catatan eksplisit di komentar kode T016 sendiri: "Dashboard Piket (T025) query ulang secara live saat dibuka, tidak bergantung pada hasil job ini" — job T016 tetap jalan untuk logging/observability, dua hal ini sengaja tidak disatukan).
+- **2 aksi resolusi baru** untuk antrian ini:
+  - `POST /attendance/:record_id/konfirmasi-pulang-retroaktif` — isi jam pulang perkiraan, ATAU kosongkan untuk "tidak diketahui". Kasus "tidak diketahui" secara desain tetap menyimpan `waktu_pulang: null`, tapi `pulang_via` diisi `piket_izin` — pola ini dipakai sebagai penanda "record sudah diklarifikasi" (beda dari record yang belum pernah ditinjau sama sekali, yang juga punya `waktu_pulang: null` tapi `pulang_via: null`). Tidak perlu kolom/flag baru di skema.
+  - `POST /permits/tandai-izin-tidak-kembali` — bikin `permits(jenis: keluar, status_kembali: pulang)` retroaktif untuk tanggal record yang diklarifikasi, plus update `attendance_records` yang sama.
+- **Keputusan desain (dikonfirmasi ke user sebelum coding)**: field `jam_keluar` untuk permit retroaktif "Tandai Izin Keluar Tidak Kembali" **wajib diisi** di skema tapi piket sama sekali tidak tahu jam pastinya (itulah kenapa jadi kasus klarifikasi, bukan izin keluar resmi). Dipakai estimasi dari `jam_selesai` jadwal `jam_sekolah` pada hari itu (bukan input manual dari piket) — form tetap sederhana tanpa memaksa piket mengarang angka yang mereka sendiri tidak tahu.
+- **Bug ditemukan+diperbaiki sebelum sempat ke production** (ditemukan lewat verifikasi manual nilai tersimpan di database, bukan dari gejala UI): draft awal helper `combineDateAndTime` di `PermitsService` memakai `Date.UTC(y, m, d, hours, minutes)` untuk menggabung tanggal record (yang sudah UTC-midnight-normalized) dengan jam `HH:mm` dari jadwal — ini SALAH karena `HH:mm` di jadwal dimaksud sebagai jam dinding WIB, bukan UTC. Untuk server WIB (UTC+7), ini menghasilkan pergeseran 7 jam (jam_selesai "15:00" tersimpan sebagai 22:00 WIB, bukan 15:00 WIB). Root cause: helper `combineDateAndTime` yang SUDAH ADA di `AttendanceService` (dipakai sejak T012) memakai pola berbeda — `setHours()` pada Date asli (bukan `Date.UTC()`) — karena input aslinya adalah timestamp nyata (`scannedAt`), bukan tanggal ter-normalisasi. Draft awal keliru menyalin pola yang salah konteks. Diperbaiki dengan membangun ulang Date LOKAL dari komponen UTC tanggal record, baru `setHours()` — dikonfirmasi benar lewat pengecekan manual: `jamSelesai="15:00"` pada hari Selasa tersimpan sebagai `2026-07-14T08:00:00.000Z` (=15:00 WIB), bukan `22:00Z`. Ini bug timezone kelas yang sama dengan insiden T012/T016 — kali ini tertangkap sebelum verifikasi selesai, bukan lewat regresi berikutnya.
+- **UI**: dua section baru (`BelumKembaliSection`, `TidakTapPulangSection`) ditambahkan ke `piket-board-view.tsx` (T023) di bawah tabel utama — state di-patch optimis (filter item yang baru diresolusi dari array lokal) tanpa re-fetch penuh, konsisten dengan pola yang sudah dipakai board utama. Dialog klarifikasi (`TidakTapPulangForm`) menggabungkan kedua opsi resolusi (form isi jam + tombol aksi terpisah) dalam 1 dialog supaya piket bisa lihat & pilih tanpa berpindah context.
+- **Verifikasi API menyeluruh via curl**: data uji nyata untuk kedua skenario (permit overdue, attendance record kemarin tanpa pulang) — `belum-kembali` & `tidak-tap-pulang-kemarin` menampilkan data yang tepat dan ter-scope kampus; `konfirmasi-pulang-retroaktif` dengan jam maupun tanpa jam (kasus "tidak diketahui") keduanya diverifikasi hasil di DB; `tandai-izin-tidak-kembali` diverifikasi menghasilkan permit + update attendance_records yang benar (termasuk setelah fix bug timezone); role guard (`super_admin` → 403) dan idempotency (record yang sudah py `waktu_pulang` → 403 kalau dicoba lagi) dikonfirmasi.
+- **Verifikasi UI end-to-end via Playwright** (browser asli): login piket → dashboard menampilkan ketiga section (papan utama, Belum Kembali, Tidak Tap Pulang Kemarin) dengan data yang cocok dan format tanggal/jam yang mudah dibaca ("15 Jul, 07.39") → klik "Sudah Kembali" → baris hilang live dari section Belum Kembali → klik "Klarifikasi" pada baris Tidak Tap Pulang → dialog menampilkan kedua opsi resolusi → klik "Tandai Izin Keluar Tidak Kembali" → baris hilang live, dikonfirmasi juga di database (waktu_pulang & pulang_via terisi benar, permit retroaktif tercipta dengan kode verifikasi).
+- Data uji (akun piket, permit, attendance_records, activity_log terkait) sudah dibersihkan seluruhnya setelah verifikasi.
+
 ---
 
 ### T026 — Dashboard Piket: Lock/Unlock Siswa
-- [ ] API (akses: `guru_piket`):
+- [x] API (akses: `guru_piket`):
   - `POST /students/:id/lock` — isi `locked_reason`, set `locked_at`, `locked_by`
   - `POST /students/:id/unlock` — isi `unlock_note`, set `unlocked_at`, `unlocked_by`
-- [ ] Section "Perlu Ditinjau" di `/piket`:
+- [x] Section "Perlu Ditinjau" di `/piket`:
   - Siswa dengan `permits(keluar)` lewat jam kembali + `status_kembali: belum` dari hari-hari sebelumnya (bukan hanya kemarin)
   - Tombol **[Kunci Siswa]** → form isi alasan → POST lock
-- [ ] Section "Siswa Terkunci":
+- [x] Section "Siswa Terkunci":
   - Daftar siswa kampus ini yang `locked_at IS NOT NULL`
   - Tombol **[Buka Kunci]** → form isi catatan → POST unlock
-- [ ] Di T012 (tap logic): tambahkan cek `students.locked_at` — kalau ada → `rejected_locked` di tap_events, response untuk kiosk tampilkan "Hubungi Guru Piket"
+- [x] Di T012 (tap logic): tambahkan cek `students.locked_at` — kalau ada → `rejected_locked` di tap_events, response untuk kiosk tampilkan "Hubungi Guru Piket" *(sudah dikerjakan sejak T012, dikonfirmasi ulang di task ini — bukan pekerjaan baru)*
 
 **Ref:** [[Projek/AbsenSI/06-Features/dashboard-piket|dashboard-piket.md]], [[Projek/AbsenSI/11-Decisions|ADR-017]]
+
+**Catatan implementasi (2026-07-15):**
+- Item terakhir ("cek `locked_at` di tap logic") ternyata **sudah dikerjakan sejak T012** — `AttendanceService.tap()` sudah punya `if (card.student?.lockedAt) { ... return { result: rejected_locked, message: "Hubungi Guru Piket" } }`. Dikonfirmasi ulang lewat curl (tap kartu siswa terkunci → `rejected_locked` + pesan yang tepat + tercatat di `tap_events`), bukan pekerjaan baru — murni verifikasi regresi.
+- **Lock/unlock ditaruh di `StudentsController`** (bukan modul Permits atau modul baru) karena secara REST resource memang milik `/students/:id` — tapi digerbang dengan **override role di level method**: class-level `@Roles(super_admin, card_admin)` (dipakai `GET /students`, `GET /students/:id` untuk admin), method-level `@Roles(guru_piket)` khusus di `lock`/`unlock`/`terkunci`. Pola override ini sudah dipakai sebelumnya di Calendar module (T010) — `RolesGuard` pakai `getAllAndOverride` dari `Reflector`, jadi metadata handler menang atas metadata class. Diverifikasi eksplisit lewat curl: `super_admin` masih bisa `GET /students` normal (200, tidak ada regresi ke fitur admin yang sudah ada) tapi ditolak di `POST /students/:id/lock` (403) — dua route berbeda kewenangan di controller yang sama, keduanya benar.
+- **"Perlu Ditinjau" vs "Belum Kembali" (T025) — beda scope yang disengaja**: "Belum Kembali" (T025) menampilkan SEMUA permit `keluar` yang `jamKembaliDiharapkan` sudah lewat, termasuk yang overdue hari ini juga (kejadian biasa, siswa mungkin baru terlambat sedikit). "Perlu Ditinjau" (T026) HANYA permit dengan `tanggal < hari ini` — sinyal lebih serius (sudah lewat 1 hari lebih, bukan cuma telat beberapa jam). Keduanya BOLEH overlap (permit lama muncul di kedua daftar) — bukan bug, memang dua lensa berbeda atas data yang sama: satu untuk monitoring harian, satu untuk pertimbangan lock.
+- **`lockedReason` tidak dihapus saat unlock** — sengaja dipertahankan sebagai riwayat (kenapa siswa ini pernah dikunci), sementara `lockedAt` di-null-kan (status aktif: tidak terkunci lagi). Field `unlockedAt`/`unlockedById`/`unlockNote` terisi sebagai catatan penutupan kasus. Kalau siswa dikunci lagi di masa depan, `lockedReason` yang lama ditimpa dengan alasan baru — riwayat lock/unlock lengkap idealnya dari `activity_log` (`student.lock`/`student.unlock` sudah tercatat di sana lewat `@LogActivity`), bukan dari kolom `students` yang cuma menyimpan state lock saat ini.
+- **Duplicate-lock & duplicate-unlock dicegah eksplisit** (409 `ConflictException`) — lock siswa yang sudah terkunci, atau unlock siswa yang tidak sedang terkunci, keduanya ditolak alih-alih diam-diam menimpa state. Konsisten dengan ADR-017 (keputusan manual, harus disengaja).
+- **Verifikasi API menyeluruh via curl**: lock berhasil dengan data lengkap (`lockedBy` ter-include); tap kartu siswa terkunci → `rejected_locked` dikonfirmasi nyata (bukan cuma baca kode); `GET /students/terkunci` menampilkan siswa yang tepat; lock kedua kali → 409; unlock berhasil, field terisi benar, riwayat `lockedReason` dipertahankan; tap setelah unlock → `accepted` normal lagi; cross-kampus lock (piket kampus lain) → 403; `super_admin` di endpoint lock → 403 (override method-level dikonfirmasi bekerja) tapi tetap 200 di `GET /students` biasa (tidak ada regresi).
+- **Verifikasi UI end-to-end via Playwright** (browser asli, skenario penuh 5 section sekaligus aktif — papan utama, Belum Kembali, Tidak Tap Pulang Kemarin, Perlu Ditinjau, Siswa Terkunci): login piket dengan data seed campuran (1 siswa sudah terkunci dari sebelumnya, 1 permit overdue 2 hari) → semua 5 section tampil benar dan konsisten dengan design system → klik "Kunci Siswa" di Perlu Ditinjau → dialog isi alasan → submit → LIVE tanpa reload: baris di papan utama berubah badge "Terkunci", section Perlu Ditinjau kosong, section Siswa Terkunci bertambah 1 → klik "Buka Kunci" → dialog isi catatan → submit → LIVE: baris papan utama kembali "Belum Hadir" dengan tombol Izin/Sakit muncul lagi, section Siswa Terkunci berkurang 1.
+- Data uji (akun piket, permit, lock state) sudah dibersihkan seluruhnya setelah verifikasi. **Ini menandai T022–T026 (Blok 7 — Dashboard Piket, Fase 1b) SELESAI SEMUA** — *(update 2026-07-15: item prasyarat deploy print.php eksternal yang disebut di sini sudah tidak berlaku lagi, lihat revisi arsitektur di catatan T024)*.
 
 ---
 
@@ -641,4 +686,4 @@ updated: 2026-07-03
 1. **Sebelum mulai coding setiap task:** baca spec yang direferensikan di bagian `Ref`. Jangan asumsikan — spec sudah lengkap dan ada alasan untuk setiap keputusan.
 2. **ADR adalah hukum:** kalau ada konflik antara instinct coding dan ADR, ADR menang. Kalau ADR dirasa perlu diubah, buka dulu diskusi dan buat ADR baru.
 3. **Setelah Blok 4 selesai:** uji end-to-end dengan hardware reader RFID fisik sebelum lanjut ke Blok 5. Data tap palsu (input manual dari keyboard biasa) tidak cukup untuk validasi debounce dan timing.
-4. **print.php:** edit file di `C:\ProjekSMK\print.php` harus dilakukan **sebelum** T024 di-deploy — ini bukan task coding NestJS/Next.js, tapi blocker untuk fitur cetak surat.
+4. ~~**print.php:** edit file di `C:\ProjekSMK\print.php` harus dilakukan sebelum T024 di-deploy~~ — **tidak berlaku lagi (2026-07-15)**: `print.php` eksternal dihapus total, diganti Route Handler internal `apps/web/src/app/print/struk-izin/route.ts`. Tidak ada lagi dependency ke server `10.10.10.100` untuk fitur cetak surat.
