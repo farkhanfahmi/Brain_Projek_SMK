@@ -1,14 +1,16 @@
 ---
-tags: [absensi, feature, kelas, fase-2, planning]
-status: planning
-updated: 2026-06-25
+tags: [absensi, feature, kelas, fase-2, arsip]
+status: superseded
+updated: 2026-07-21
 ---
 
-# Feature — Absensi Kelas & Mapel (Fase 2 — Planning Only)
+# Feature — Absensi Kelas & Mapel via Tap RFID (ARSIP — Digantikan)
 
-← [[Projek/AbsenSI/00-INDEX|Index]]
+← [[Projek/AbsenSI/00-INDEX AbsenSI|Index]]
 
-> **Belum dikerjakan.** Dokumen ini hanya mencatat rencana & keputusan awal agar skema database fase 1 sudah kompatibel. Detail spec lengkap baru disusun saat fase 2 dimulai.
+> **⚰️ ARSIP — tidak lagi dilanjutkan (2026-07-21).** Pendekatan tap-RFID-di-kelas di dokumen ini digantikan oleh [[Projek/AbsenSI/06-Features/dashboard-guru-jurnal|dashboard-guru-jurnal.md]]. Alasan: blocker "gerbang tanpa penghalang fisik" (lihat bawah) tidak pernah terpecahkan, dan kebutuhan riil sekolah lebih ke arah jurnal mengajar + jadwal blok Minggu A/B daripada reader fisik baru di tiap kelas. Dokumen ini dipertahankan sebagai arsip konteks keputusan, bukan spec aktif.
+
+> Dokumen asli di bawah ini **tidak diubah** — hanya ditandai superseded di atas.
 
 ---
 

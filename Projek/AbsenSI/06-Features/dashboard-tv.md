@@ -6,7 +6,7 @@ updated: 2026-06-25
 
 # Feature — Dashboard TV Realtime
 
-← [[Projek/AbsenSI/00-INDEX|Index]]
+← [[Projek/AbsenSI/00-INDEX AbsenSI|Index]]
 
 > Tampilan realtime rekap kehadiran untuk TV di ruang kepala sekolah. Push via WebSocket, bukan polling.
 

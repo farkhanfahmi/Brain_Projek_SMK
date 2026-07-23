@@ -5,7 +5,7 @@ updated: 2026-06-25
 
 # 02 — Tech Stack & Arsitektur
 
-← [[Projek/AbsenSI/00-INDEX|Index]]
+← [[Projek/AbsenSI/00-INDEX AbsenSI|Index]]
 
 > Keputusan stack ini **berbeda** dari proyek lain di vault ini (DasiPelajar dkk pakai Laravel). Ini keputusan sadar untuk belajar ekosistem TypeScript sebagai blueprint aplikasi sekolah berikutnya. Risiko & alasan didiskusikan penuh — lihat [[Projek/AbsenSI/11-Decisions|ADR-002]].
 >

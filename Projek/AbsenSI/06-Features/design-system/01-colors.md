@@ -22,6 +22,10 @@
 | `--color-success-text` | `#1E9E4C` | Positive delta text/icon ("+3.34%", "+8.02%"). |
 | `--color-danger-bg` | `#FBE2E1` | Negative delta badge background. |
 | `--color-danger-text` | `#E13B3B` | Negative delta text ("-2.89%", "-5%"). |
+| `--color-status-shipped-bg` | `#FDECD1` | **Added 2026-07-22.** Workflow status badge only (data tables), e.g. "Shipped" — NOT for deltas/KPIs. |
+| `--color-status-shipped-text` | `#B8720A` | Paired text for the above. |
+| `--color-status-processing-bg` | `#EDE3F7` | **Added 2026-07-22.** Workflow status badge only, e.g. "Processing" — NOT for deltas/KPIs. |
+| `--color-status-processing-text` | `#7C4FC7` | Paired text for the above. |
 | `--color-white` | `#FFFFFF` | Text-on-primary (buttons, active sidebar item label), card surfaces. |
 | `--color-shadow` | `rgba(23, 20, 18, 0.06)` | Base card shadow color (see shadow scale in `04-layout-spacing.md`). |
 

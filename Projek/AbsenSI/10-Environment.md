@@ -5,7 +5,7 @@ updated: 2026-06-25
 
 # 10 — Environment
 
-← [[Projek/AbsenSI/00-INDEX|Index]]
+← [[Projek/AbsenSI/00-INDEX AbsenSI|Index]]
 
 > Sebagian sudah diputuskan (lihat ADR-011 s/d ADR-013 di [[Projek/AbsenSI/11-Decisions|11-Decisions]]) — arsitektur server & database sudah final, detail provisioning teknis masih menyusul.
 

@@ -1,11 +1,11 @@
 ---
 tags: [absensi, tasks, fase-1]
-updated: 2026-07-03
+updated: 2026-07-17
 ---
 
 # AbsenSI — Task Breakdown Fase 1
 
-← [[Projek/AbsenSI/00-INDEX|Index]]
+← [[Projek/AbsenSI/00-INDEX AbsenSI|Index]]
 
 > **Eksekusi solo.** Urutan task dirancang untuk menjaga konsistensi dengan rancangan — setiap blok membangun fondasi untuk blok berikutnya. Jangan loncat blok kecuali dependensinya sudah selesai.
 >
@@ -25,8 +25,9 @@ updated: 2026-07-03
 | 5 — Realtime & Dashboard | T017–T019 | 3/3 |
 | 6 — Akun Guru | T020–T021 | 2/2 |
 | 7 — Dashboard Piket (Fase 1b) | T022–T026 | 5/5 — semua selesai penuh, tidak ada blocker deploy tersisa |
-| 8 — Kiosk Auth Refactor | T027 | 0/1 |
-| **Total** | | **25/27** |
+| 8 — Kiosk Auth Refactor | T027 | 1/1 — semua 3 fase selesai (Phase 1 backend 2026-07-16; Phase 2 apps/kiosk & Phase 3 UI admin diselesaikan lewat T028d/T028e 2026-07-17) |
+| 9 — Profil Lengkap + Foto + Kiosk Scan | T028a–T028e | 5/5 — semua selesai |
+| **Total** | | **31/32** |
 
 ---
 
@@ -127,7 +128,7 @@ updated: 2026-07-03
 - `SchedulesService` validasi `teacherId`/`kelasId` opsional tapi kalau diisi harus valid (dipakai nanti utk `jam_mengajar` per guru, bukan cuma `jam_sekolah` global).
 
 **Catatan implementasi UI (2026-07-14):**
-- Dibangun sesuai brief design system baru (vault: `session Claude/design-system/*.md`) — palet beige/orange, radius 24px kartu, Plus Jakarta Sans, lucide-react. Lihat memory Claude Code "design_system_absensi" untuk ringkasan.
+- Dibangun sesuai brief design system baru (vault: `06-Features/design-system/*.md`) — palet beige/orange, radius 24px kartu, Plus Jakarta Sans, lucide-react. Lihat memory Claude Code "design_system_absensi" untuk ringkasan.
 - Auth-flow frontend dibangun dari nol karena `apps/web` sebelumnya tidak punya sama sekali: login via Next.js Route Handler (`/api/auth/login`) yang proxy ke NestJS lalu set **httpOnly cookie** (access + refresh token terpisah) — token tidak pernah terjangkau JS browser.
 - `middleware.ts` proteksi semua route admin (redirect ke `/login` kalau cookie tidak ada).
 - `lib/api.ts` (`apiFetch`, server-side only) auto-refresh access token sekali kalau dapat 401, sebelum retry — mengikuti pola rotasi refresh token yang sama dari T003.
@@ -687,17 +688,152 @@ updated: 2026-07-03
 > Task ini breaking change terhadap T003 (KioskGuard) dan T011 (cara kiosk kirim token). Jalankan migration + update sekaligus dalam 1 sesi agar tidak ada periode di mana sistem setengah-lama setengah-baru.
 
 ### T027 — Manajemen Kiosk: Auth Berlapis (Token DB + IP Whitelist)
-- [ ] Tambah tabel `kiosks` ke `schema.prisma` + jalankan migration
-- [ ] Refaktor `KioskGuard`: query token dari DB `kiosks`, validasi `allowed_ip`, update `last_seen_at` fire-and-forget
-- [ ] Update `AttendanceService.tap()`: ambil `kiosk_id` dari `req.kiosk.id` (hasil guard), bukan dari request body — hapus dari `TapDto`
+
+**Phase 1 (backend) selesai & terverifikasi 2026-07-16.** Phase 2 (apps/kiosk) & Phase 3 (UI admin) menyusul — kemungkinan digabung dengan T028 karena keduanya menyentuh form Tambah Kiosk yang sama.
+
+- [x] Tambah tabel `kiosks` ke `schema.prisma` + jalankan migration — pakai `Int @id @default(autoincrement())`, BUKAN `String cuid()` seperti draf awal spec, supaya konsisten dengan seluruh model lain di schema ini.
+- [x] Refaktor `KioskGuard`: query token dari DB `kiosks`, validasi `allowed_ip`, update `last_seen_at` fire-and-forget
+- [x] Update `AttendanceService.tap()`: ambil `kiosk_id` dari `req.kiosk.id` (hasil guard), bukan dari request body — dihapus dari `TapDto`
 - [ ] Update `apps/kiosk`: baca token dari URL param `?device=TOKEN` → simpan ke `localStorage` → kirim ke Route Handler proxy → sertakan di `Authorization: Bearer`
 - [ ] Tampilkan layar error di kiosk kalau tidak ada token (localStorage kosong + tidak ada URL param)
-- [ ] Admin UI di `/kiosk`: tabel kiosk + status online/offline + form tambah kiosk + modal URL+QR code
-- [ ] API endpoints: `GET/POST /kiosks`, `PATCH /kiosks/:id`, `PATCH /kiosks/:id/deactivate`, `PATCH /kiosks/:id/rotate-token`
-- [ ] Hapus `KIOSK_DEVICE_TOKEN` dari `.env`, update `10-Environment.md` dan `CLAUDE.md`
-- [ ] Verifikasi regresi: semua test tap yang sudah jalan di T012–T013 tetap benar setelah refaktor guard
+- [ ] Admin UI di `/kiosk`: tabel kiosk + status online/offline + form tambah kiosk + modal URL+QR code — **form tambah kiosk digabung dengan field Tipe Kiosk dari T028 (ADR-022)**
+- [x] API endpoints: `GET/POST /kiosks`, `GET/PATCH /kiosks/:id`, `PATCH /kiosks/:id/deactivate`, `PATCH /kiosks/:id/rotate-token`
+- [ ] Hapus `KIOSK_DEVICE_TOKEN` dari `.env`, update `10-Environment.md` dan `CLAUDE.md` — ditunda sampai Phase 2 (`apps/kiosk`) selesai, supaya kiosk dev server tidak mendadak berhenti berfungsi di tengah refactor
+- [x] Verifikasi regresi: tap end-to-end via curl (create kiosk → tap sukses dengan token+IP benar → `tap_events.kiosk_id` terisi FK yang benar → token salah/kiosk nonaktif/IP salah semua ditolak dengan status code yang benar → rotate-token invalidate token lama)
+
+**Catatan implementasi:** Ditemukan & diperbaiki bug normalisasi IP saat verifikasi — Node melaporkan loopback sebagai `::1` (bukan `127.0.0.1` literal) dan IPv4 lewat dual-stack socket sebagai `::ffff:x.x.x.x` — `KioskGuard.extractClientIp()` sekarang menormalisasi keduanya ke bentuk IPv4 murni sebelum dibandingkan dengan `allowedIp`.
 
 **Ref:** [[Projek/AbsenSI/06-Features/tasks/T027-manajemen-kiosk|T027-manajemen-kiosk.md]], [[Projek/AbsenSI/11-Decisions|ADR-021]]
+
+---
+
+## 🖼️ Blok 9 — Profil Lengkap + Foto + Kiosk Scan Terpisah
+
+> Dependency: T005 (Students & Teachers), T011 (Kiosk UI dasar), T027 (tabel `kiosks` harus ada dulu sebelum tambah kolom `tipe`)
+> Didiskusikan lewat AskUserQuestion sebelum eksekusi (2026-07-17) — semua keputusan desain besar sudah dikonfirmasi user, dicatat di ADR-022 & ADR-023.
+
+> **Semua keputusan desain final 2026-07-17** (auth foto, realtime tabel guru, textarea, form 1-dialog, batas ukuran foto) — lihat tabel "Keputusan Final" di file task. Dipecah jadi 5 sub-task linear, tiap sub-task diverifikasi (build+test+manual) sebelum lanjut ke berikutnya.
+
+### ✅ T028a — Migrasi Schema
+
+**Selesai 2026-07-17.**
+
+- [x] Enum baru: `JenisKelamin`, `Agama`, `KioskTipe`
+- [x] `Student` +8 kolom biodata (semua nullable): `tempatLahir`, `jenisKelamin`, `agama`, `alamat` (`@db.Text`), `rtRw`, `namaAyah`, `namaIbu`, `foto`
+- [x] `Teacher.nip` → `niy` (RENAME COLUMN manual di SQL migration, bukan drop+add) + tambah `noHp`, `foto`
+- [x] `Kiosk.tipe` (non-nullable — tabel `kiosks` kosong saat migrasi, tanpa backfill)
+- [x] `TapResult` + `rejected_wrong_kiosk_type`
+
+**Catatan implementasi:**
+- Migration ditulis manual (bukan hasil auto `prisma migrate dev`) — dicek dulu lewat `prisma migrate diff --script` untuk lihat apa yang Prisma akan generate secara default: benar seperti dugaan, Prisma mau `DROP COLUMN nip` + `ADD COLUMN niy VARCHAR(191) NOT NULL` (2 operasi terpisah, akan menghapus 5 baris data NIP existing tanpa peringatan). Migration file `20260717004344_add_profil_lengkap_foto_kiosk_tipe/migration.sql` dibuat manual dengan `ALTER TABLE teachers RENAME COLUMN nip TO niy;` sebagai gantinya, plus `RENAME INDEX teachers_nip_key TO teachers_niy_key` supaya nama index tetap konsisten.
+- Diterapkan lewat `prisma migrate deploy` (bukan `migrate dev`, supaya migration file yang sudah ditulis manual tidak ditimpa ulang oleh Prisma).
+- **Verifikasi data selamat:** `SELECT niy, nama FROM teachers` setelah migrasi — semua 5 baris NIP lama (termasuk "198703152011012002 — Ratna Dewi, S.Pd" dst.) utuh di kolom `niy` yang baru, tidak ada yang NULL.
+- `npx prisma generate` sukses, client TypeScript baru menghasilkan tipe `JenisKelamin`, `Agama`, `KioskTipe` dengan benar.
+- **Build `pnpm --filter @absensi/api build` sengaja masih merah (11 error) setelah T028a** — semua error adalah referensi `nip`/`tipe` yang belum diupdate di kode (bukan bug migrasi): `cards.service.ts`, `teachers.service.ts`, `import.service.ts` masih pakai `nip`; `kiosks.service.ts` belum kirim `tipe` saat create. Ini persis scope T028b, bukan regresi — deliberately left for the next sub-task per rencana pemecahan.
+- Jest suite (`pnpm --filter @absensi/api test`) tetap hijau — test yang ada tidak menyentuh flow teacher/kiosk creation, jadi tidak kena efek `nip`/`tipe` yang belum diupdate.
+
+### ✅ T028b — Backend Core
+
+**Selesai 2026-07-17.**
+
+- [x] `KioskGuard` attach `tipe` ke `request.kiosk`; `AttendanceService.tap()` validasi tipe kiosk vs tipe kartu (ADR-022) — kartu salah tipe ditolak, tetap tercatat `tap_events` dengan `result=rejected_wrong_kiosk_type`, TIDAK bikin `attendance_record`
+- [x] DTO Siswa (`create`+`update`, 7 field baru optional, `foto` TIDAK lewat DTO ini) — `PATCH /students/:id` **belum ada sebelumnya**, dibuat baru (`UpdateStudentDto`, `StudentsService.update()`, controller endpoint)
+- [x] DTO Guru (`create`+`update`, `nip`→`niy`, +`noHp`) — `PATCH /teachers/:id` **belum ada sebelumnya**, dibuat baru sama seperti siswa
+- [x] Cari-ganti SEMUA referensi `nip`→`niy` di `apps/api` dan `apps/web` — `grep -rn "\bnip\b"` nol hasil di kedua app setelah selesai
+
+**Catatan implementasi:**
+- File yang disentuh untuk cari-ganti `nip`→`niy`: `cards.service.ts` (5 titik — select/query/interface), `import.service.ts` (`TeacherRow` interface, `importTeachers()`, dan 2 pesan error CSV cards yang menyebut "NIP guru"→"NIY guru" untuk konsistensi terminologi — kolom `nisn_nip` di CSV cards **sengaja dibiarkan** karena itu format gabungan lookup, bukan identifier guru itu sendiri), `users.service.ts` (`USER_SELECT`), `apps/web/src/lib/core-types.ts` (`Teacher.nip`→`niy`, plus tambah `noHp`/`foto`/tipe enum baru `JenisKelamin`/`Agama`), `apps/web/.../guru-view.tsx` (kolom tabel, form, `#nip-guru`→`#niy-guru`), `apps/web/.../import-view.tsx` (contoh CSV teacher).
+- `KioskTipe` juga sempat ketinggalan dari `CreateKioskDto`/`KiosksService.create()` (ditemukan saat build check di akhir T028a) — sekalian diperbaiki di sini karena satu rumpun dengan validasi tipe kiosk.
+- **Verifikasi end-to-end manual (curl):** buat kiosk tanpa `tipe` → ditolak validasi 400; buat kiosk `tipe=siswa` dan `tipe=guru`; tap kartu siswa di kiosk `tipe=guru` → `rejected_wrong_kiosk_type`, `tap_events.kiosk_id` tercatat benar, TIDAK ada `attendance_record` baru; tap kartu siswa yang sama di kiosk `tipe=siswa` → lolos validasi tipe, lanjut ke pemeriksaan berikutnya (debounce, karena tap sebelumnya masih dalam window 30 detik — bukti validasi tipe kiosk berjalan sebagai lapisan terpisah dari debounce). `PATCH /students/:id` dan `PATCH /teachers/:id` diuji langsung dengan field baru, tersimpan dengan benar, lalu direvert lagi ke NULL supaya data tidak tercemar.
+- `pnpm turbo run build` (full monorepo) + `pnpm --filter @absensi/api test` (Jest, 9 test) + `tsc --noEmit` di `apps/web` — semuanya hijau.
+
+### ✅ T028c — Backend Foto (modul `photos`)
+
+**Selesai 2026-07-17.**
+
+- [x] Setup folder `storage/photos/{students,teachers,unmatched}/`, masuk `.gitignore` (dengan `.gitkeep` per folder supaya struktur tetap ter-track)
+- [x] `POST /photos/upload-bulk` — auto-match nama file (tanpa ekstensi) = NISN/NIY, batas 1MB/file (Multer `limits.fileSize` + validasi service-level), JPEG/PNG saja, laporan `{totalFiles, matchedCount, unmatchedCount, unmatched}`
+- [x] `GET /photos/students/:filename`, `GET /photos/teachers/:filename` — guard ganda `PhotoAccessGuard` (token kiosk ATAU JWT admin), bukan public
+- [x] `PATCH /photos/assign` — assign manual file unmatched ke siswa/guru, pindah file + update kolom `foto` + hapus dari folder unmatched
+- [x] **`DELETE /photos/students/:id`, `DELETE /photos/teachers/:id`** (ditambahkan 2026-07-17 setelah user melaporkan "fitur hapus foto belum ada" pasca-T028e) — hapus file dari disk + null-kan kolom `foto`, guard sama seperti create/upload (`super_admin`/`card_admin`). UI: tombol hapus (ikon sampah, overlay hover) di halaman detail siswa (`/siswa/:id`) dan section baru "Foto Tersimpan" di menu `/foto` (daftar semua siswa+guru yang sudah punya foto, dengan thumbnail + tombol hapus per baris — sebelumnya menu ini cuma bisa upload, tidak ada cara lihat/kelola foto yang sudah ada). Diverifikasi lewat API langsung (400 kalau belum punya foto, 404 kalau id tidak ada) dan Playwright UI di kedua lokasi — foto berganti ke fallback avatar / hilang dari daftar tanpa reload.
+
+**Catatan implementasi:**
+- `apps/api/src/photos/photo-access.guard.ts` (baru) — guard custom (bukan kombinasi `@UseGuards` dua guard sekaligus, karena butuh logic "coba A, kalau gagal coba B" bukan "wajib A DAN B"): cek dulu apakah token cocok kiosk aktif di tabel `kiosks`, kalau tidak baru coba `jwtService.verifyAsync()` + cek blacklist (pola sama persis dengan `AttendanceGateway`'s Socket.IO auth di T017).
+- `apps/api/src/photos/photos.service.ts` — pakai `node:fs/promises` murni (bukan library upload pihak ketiga) karena kasusnya simpel: simpan buffer dari Multer ke path yang sudah ditentukan (`{id}.{ext}`), tidak perlu abstraksi storage-provider (konsisten ADR-023, tidak akan pindah ke cloud storage dalam waktu dekat). Upload ulang foto (siswa ganti foto) otomatis hapus file lama dengan ekstensi berbeda dulu, supaya tidak ada file yatim.
+- `@absensi/types` — tambah `PhotoUploadReport`/`PhotoUnmatchedEntry`, dan **tambah `TapResult.REJECTED_WRONG_KIOSK_TYPE`** yang sebelumnya luput dari T028b (enum ini didefinisikan terpisah dari `TapResult` Prisma di `apps/api`, ternyata ada juga salinan di `@absensi/types` yang dipakai `apps/kiosk` — build gagal begitu ditambahkan karena `apps/kiosk/src/lib/tap-messages.ts` pakai `Record<Exclude<TapResult, ACCEPTED>, string>` yang exhaustive, jadi sekalian ditambahkan pesan `"Kartu ini bukan untuk gerbang ini"` di sana supaya build tidak merah — bukan scope creep ke T028e, cuma menjaga tipe tetap valid, styling/UX pesan ini tetap job T028e).
+- **Verifikasi end-to-end manual:** upload 3 file (JPEG asli via Pillow) — 1 nama sesuai NISN siswa, 1 sesuai NIY guru, 1 nama sembarang → hasil 2 matched + 1 unmatched persis sesuai ekspektasi, dicek juga langsung ke DB (`students.foto`/`teachers.foto` terisi) dan filesystem (`storage/photos/{students,teachers,unmatched}/`). Serve foto diuji dengan JWT admin (200), token kiosk aktif (200), tanpa token (401), token sampah (401). Assign manual diuji: file unmatched dipindah ke siswa lain, kolom `foto` update, file hilang dari folder unmatched. Upload file >1MB → ditolak 413 di layer Multer (sebelum sempat masuk service). Upload file `text/plain` menyamar `.jpg` → ditolak service-level dengan pesan jelas, masuk laporan unmatched (bukan crash). Semua data test (kiosk sementara, foto, kolom `foto` di 2 siswa + 1 guru) dibersihkan lagi di akhir.
+- `pnpm turbo run build` (full monorepo, termasuk `apps/kiosk` yang sempat merah karena TapResult enum) + `pnpm --filter @absensi/api test` (Jest, 9 test) — semuanya hijau.
+
+### ✅ T028d — Frontend Admin
+
+**Selesai 2026-07-17.**
+
+- [x] Form Siswa (1 dialog, tidak di-split): tambah 7 field baru, `alamat` pakai `<textarea>` native (bukan komponen baru di `packages/ui`)
+- [x] Form Guru: NIY (bukan NIP, sudah benar sejak T028b) + No HP
+- [x] Halaman detail siswa: tampilkan foto (fallback avatar kalau kosong) + biodata lengkap
+- [x] Menu baru `/foto`: upload bulk + laporan + assign manual untuk unmatched
+- [x] Form Tambah Kiosk: field Tipe Kiosk (Select, wajib) — sekalian bangun seluruh UI `/kiosk` dari nol (T027 Phase 3 belum pernah dikerjakan) termasuk tabel, status online/offline, modal URL+QR code, rotate token, nonaktifkan
+
+**Catatan implementasi:**
+- **Proxy foto binary (masalah baru yang ditemukan):** `apiFetch`/`apiClientFetch`/proxy generik yang sudah ada semua asumsikan respons JSON (selalu `JSON.parse` body) — tidak bisa dipakai untuk `<img src>` yang perlu byte gambar mentah dengan `Content-Type` yang benar. Dibuat route baru `apps/web/src/app/api/photo-proxy/[...path]/route.ts` yang sisipkan access token dari cookie httpOnly (sama seperti proxy biasa) tapi teruskan `response.arrayBuffer()` apa adanya, bukan JSON.
+- **Upload foto tidak butuh route baru** — sempat mau bikin `photo-upload/route.ts` sendiri, tapi ternyata `apps/web/src/app/api/proxy-upload/[...path]/route.ts` (dipakai fitur Import CSV) sudah generik dan pas dipakai ulang untuk `/api/proxy-upload/photos/upload-bulk` tanpa modifikasi — dihapus lagi supaya tidak duplikasi logic.
+- **`NEXT_PUBLIC_KIOSK_URL` (env var baru)** — dibutuhkan untuk generate URL+QR code kiosk yang benar (harus arahkan ke `apps/kiosk`, port 3002, bukan port admin 3000). Ditambahkan ke `.env` dan `.env.example` dengan komentar jelas ganti ke IP LAN saat deploy.
+- **`qrcode.react` (dependency baru)** — dipasang di `apps/web` untuk render QR code di modal URL Kiosk, sesuai spec asli T027 yang memang meminta QR code client-side tanpa backend tambahan.
+- `apps/web/src/lib/core-types.ts` — tambah interface `Kiosk` + type `KioskTipe` (belum ada sebelumnya, T027 cuma sempat bikin backend).
+- UI `/kiosk` dari nol: tabel (Nama/Kampus/Tipe/IP/Status online-offline/Terakhir Aktif/Aksi), dialog Tambah Kiosk (dengan Select Tipe wajib), modal URL+QR (fetch `GET /kiosks/:id` on-demand untuk ambil `deviceToken` — sengaja tidak di-preload di list, sesuai catatan keamanan T027 "JANGAN expose deviceToken di list"), tombol Rotate Token, dialog konfirmasi Nonaktifkan.
+- **Verifikasi Playwright:** create siswa dengan semua 7 field baru → halaman detail (navigasi langsung ke `/siswa/:id`, bukan via klik nama karena ada race-condition timing di test pertama yang screenshot sebelum navigasi selesai — dikonfirmasi ulang dengan navigasi langsung) menampilkan semua field dengan benar termasuk fallback avatar untuk siswa tanpa foto. Guru dengan NIY+No HP tersimpan. Halaman `/foto` termuat dengan instruksi jelas. Form Kiosk punya field Tipe wajib, create sukses dengan badge Tipe tampil di tabel, status Offline benar (belum pernah tap), modal URL+QR menampilkan device token dan IP LAN dari env yang benar.
+- Data test dibersihkan: kiosk test dihapus dari DB (sudah ada endpoint delete lewat SQL manual karena API cuma expose deactivate). Siswa/guru test **dibiarkan** — konsisten dengan keterbatasan yang sama seperti P005 (belum ada endpoint DELETE untuk keduanya, di luar scope T028d).
+- `./scripts/build.sh` (full monorepo, termasuk `apps/kiosk`) dan `./scripts/test.sh @absensi/api` (Jest, 9 test) — semuanya hijau, dijalankan lewat script operasional yang baru dibuat sesi ini.
+
+### ✅ T028e — Kiosk App
+
+**Selesai 2026-07-17. Sub-task terakhir T028 — semua 5/5 selesai.**
+
+- [x] Deteksi tipe kiosk dari data kiosk sendiri (localStorage bareng token), bukan dari kartu
+- [x] Varian siswa: foto+nama+jam (regresi T011 aman)
+- [x] Varian guru: foto+nama+jam + 2 tabel "5 terbaru datang/pulang" — update **realtime via Socket.IO**, BUKAN polling
+- [x] Kartu salah tipe kiosk → pesan jelas di layar, bukan crash
+
+**Catatan implementasi — scope meluas dari rencana awal (dikonfirmasi user sebelum eksekusi):**
+
+Saat survei kode ditemukan **T027 Phase 2 (alur token kiosk) ternyata belum pernah dikerjakan sama sekali** — `apps/kiosk` masih pakai `KIOSK_DEVICE_TOKEN` statis dari env dan `NEXT_PUBLIC_KIOSK_ID` hardcoded, bukan token per-device dari URL seperti ADR-021. T028e tidak bisa jalan tanpa ini (kiosk perlu tahu tipenya dari token), jadi dikerjakan sekalian di sini, bukan ditunda.
+
+Juga ditemukan 2 bug tersembunyi yang jadi blocker realtime guru:
+1. `AttendanceGateway.broadcastAttendanceRecorded()` cuma broadcast kalau `kampusId !== null` — tap GURU selalu kirim `kampusId: null` (guru tidak terikat kelas). Diperbaiki: untuk **absen gerbang** (fokus fase ini, per konfirmasi user — kiosk per-kelas menyusul fase 2), `kampusId` tap guru diambil dari **kampus milik kiosk** yang dipakai tap, bukan data guru.
+2. `AttendanceGateway.handleConnection()` masih validasi kiosk pakai `KIOSK_DEVICE_TOKEN` env statis (sisa sebelum T027) — diperbaiki ke query tabel `kiosks` seperti `KioskGuard`.
+
+**Backend:**
+- `TapResponse`/`TapResultPayload` (`@absensi/types` dan `apps/api`) — tambah field `foto`; `buildAcceptedResponse()` include foto siswa/guru dari record.
+- `KioskRecentEntry`/`KioskRecentPayload` (`@absensi/types`, baru) — bentuk payload tabel "5 terbaru".
+- `AttendanceGateway.computeKioskRecent(kampusId)` — query 5 `attendance_records` terbaru (`teacherId` tidak null, `kiosk.kampusId` cocok) untuk masuk & pulang; dipanggil REST (`GET /attendance/kiosk-recent`, guard `KioskGuard`) untuk initial load, dan otomatis lewat `broadcastAttendanceRecorded()` setelah tap guru sukses (emit ke channel `attendance:kiosk:{kampusId}`, kiosk guru auto-join channel ini saat connect kalau `tipe=guru`).
+- `KiosksController`/`KiosksService` — endpoint baru `GET /kiosks/me` (guard `KioskGuard`, bukan JWT admin) untuk kiosk tahu tipenya sendiri (`findMinimal()`, sengaja TIDAK include `deviceToken`).
+- `AttendanceService.tap()` — signature tambah parameter `kioskKampusId`, dipakai untuk `kampusId` job queue kalau tap dari guru (siswa tetap dari `kelas.kampusId`).
+
+**`apps/kiosk` (rombak signifikan):**
+- `lib/kiosk-init.ts` (baru) — baca `?device=TOKEN` dari URL, simpan `localStorage`, fallback baca localStorage kalau tidak ada URL param (persis ADR-021).
+- `app/api/tap/route.ts` — token dari header `X-Kiosk-Token` (dikirim client), bukan `process.env.KIOSK_DEVICE_TOKEN` — token tetap tidak pernah lewat `NEXT_PUBLIC_*`.
+- `app/api/kiosk-info/route.ts`, `app/api/kiosk-recent/route.ts` (baru) — proxy server-side ke `GET /kiosks/me` dan `GET /attendance/kiosk-recent`, pola sama seperti `/api/tap`.
+- `app/api/photo-proxy/[...path]/route.ts` (baru) — proxy foto untuk `<img src>` kiosk; beda dari route lain, token diterima lewat **query string** karena `<img>` tidak bisa kirim header custom (bukan exposure baru — token yang sama sudah dipegang penuh localStorage kiosk).
+- `lib/tap-client.ts`, `lib/offline-buffer.ts` — `kiosk_id` dihapus dari payload (server sudah tahu dari token, sejak T028b), token dikirim per-call sebagai parameter bukan konstanta modul.
+- `lib/use-kiosk-recent.ts` (baru) — hook Socket.IO, auth `{ deviceToken }` di handshake (beda dari `useAttendanceSocket` versi `apps/web` yang pakai `{ token }` JWT), initial fetch REST + subscribe event `attendance:kiosk:update`.
+- `components/kiosk-avatar.tsx`, `components/kiosk-recent-table.tsx` (baru) — avatar dengan fallback ikon generik (`onError` sembunyikan `<img>` kalau gagal load), tabel dengan varian `light` (dashboard beige) dan gelap (sisa dari draf awal, masih didukung tapi tidak dipakai lagi).
+- `components/not-configured-screen.tsx` (baru) — layar error kalau localStorage kosong DAN tidak ada `?device=` sama sekali.
+
+**Bug desain yang ditemukan & diperbaiki SAAT verifikasi (bukan sebelumnya):** draf pertama menaruh 2 tabel "5 terbaru" di dalam `FeedbackScreen` — cuma muncul 3 detik setelah tap LOKAL kiosk itu sendiri, lalu hilang balik ke idle kosong. Diverifikasi pakai 2 browser context terpisah (satu "observer" idle, satu "tapper") — observer TIDAK menerima update sama sekali karena tabel tidak pernah dirender saat idle. Diperbaiki dengan bikin `components/guru-dashboard.tsx` (baru) — layar default kiosk guru yang SELALU menampilkan kedua tabel secara persisten (bukan cuma sekilas), `FeedbackScreen` disederhanakan jadi overlay sesaat (foto+nama+jam saja) yang numpuk di ATAS dashboard, bukan menggantikannya. Setelah fix, tes ulang dengan 2 context terpisah membuktikan observer menerima update realtime tanpa reload sama sekali.
+
+**Operasional:** `KIOSK_DEVICE_TOKEN` akhirnya dihapus dari `.env`/`.env.example` (mandat T027 yang sempat ditunda sampai `apps/kiosk` tidak lagi menggunakannya) — dicek dengan `grep` di seluruh `apps/`, cuma tersisa di komentar historis dan `dist/` (regenerated).
+
+**Verifikasi end-to-end (Playwright, 2 kiosk device + real browser):**
+- Kiosk tanpa token → layar "belum dikonfigurasi".
+- Kiosk siswa: idle screen tampil, token persist setelah reload tanpa `?device=`.
+- Tap kartu siswa di kiosk siswa → diterima.
+- Tap kartu guru di kiosk siswa → ditolak "Kartu ini bukan untuk gerbang ini" (ADR-022).
+- Tap kartu guru di kiosk guru → diterima, foto fallback + nama + jam tampil, kedua tabel muncul.
+- **2 browser context terpisah** (observer idle vs tapper aktif) — tap di kiosk B ter-refleksi di kiosk A tanpa reload/interaksi apa pun, membuktikan broadcast Socket.IO nyata (bukan cuma initial REST fetch).
+- Semua kiosk/kartu/guru test dibersihkan; siswa/guru test dibiarkan (belum ada endpoint DELETE, konsisten P005/T028d).
+- `./scripts/build.sh` (full monorepo) + `./scripts/test.sh @absensi/api` (Jest, 9 test) — hijau.
+
+**Ref:** [[Projek/AbsenSI/06-Features/tasks/T028-profil-lengkap-foto-kiosk-scan|T028-profil-lengkap-foto-kiosk-scan.md]], [[Projek/AbsenSI/11-Decisions|ADR-022]], [[Projek/AbsenSI/11-Decisions|ADR-023]]
 
 ---
 
@@ -706,4 +842,4 @@ updated: 2026-07-03
 1. **Sebelum mulai coding setiap task:** baca spec yang direferensikan di bagian `Ref`. Jangan asumsikan — spec sudah lengkap dan ada alasan untuk setiap keputusan.
 2. **ADR adalah hukum:** kalau ada konflik antara instinct coding dan ADR, ADR menang. Kalau ADR dirasa perlu diubah, buka dulu diskusi dan buat ADR baru.
 3. **Setelah Blok 4 selesai:** uji end-to-end dengan hardware reader RFID fisik sebelum lanjut ke Blok 5. Data tap palsu (input manual dari keyboard biasa) tidak cukup untuk validasi debounce dan timing.
-4. ~~**print.php:** edit file di `C:\ProjekSMK\print.php` harus dilakukan sebelum T024 di-deploy~~ — **tidak berlaku lagi (2026-07-15)**: `print.php` eksternal dihapus total, diganti Route Handler internal `apps/web/src/app/print/struk-izin/route.ts`. Tidak ada lagi dependency ke server `10.10.10.100` untuk fitur cetak surat.
+lanjut 

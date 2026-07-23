@@ -6,7 +6,7 @@ updated: 2026-06-26
 
 # Feature — Dashboard Piket (Fase 1b)
 
-← [[Projek/AbsenSI/00-INDEX|Index]]
+← [[Projek/AbsenSI/00-INDEX AbsenSI|Index]]
 
 > **Fase 1b** — menyusul setelah inti Fase 1 (Absensi Gerbang, Manajemen Kartu, Import Data Master) stabil. Tidak dikerjakan bersamaan dengan inti Fase 1 untuk menghindari overload tim yang sedang belajar stack baru. Lihat [[Projek/AbsenSI/11-Decisions|ADR-015 s/d ADR-018]] untuk keputusan arsitektur yang melandasi fitur ini.
 
@@ -83,6 +83,13 @@ Ada **dua sub-alur** yang berbeda, keduanya dikelola dari menu Perizinan Keluar:
   - **"Tandai Izin Keluar Tidak Kembali"** → buat `permits(jenis: keluar, status_kembali: pulang)` retroaktif untuk hari kemarin, sistem update `attendance_records` kemarin.
 - Kalau siswa tidak melapor dan tidak ada klarifikasi → record tetap dengan `waktu_pulang = null`. Rekap akan menampilkan ini sebagai "masuk tanpa keterangan pulang" — bukan alfa, tapi data tidak lengkap.
 - Daftar ini **per kampus** (guru piket Kampus 1 hanya lihat siswa Kampus 1, sesuai ADR-015).
+
+### 6b. Direktori Siswa — Pencarian & Filter (BARU, 2026-07-22, lihat T076)
+
+- Menu terpisah "Direktori Siswa" — search by nama + filter Kelas/Jurusan, tiap baris tampilkan foto+nama+kelas
+- **Pengecualian sadar terhadap scope kampus** (beda dari SEMUA fungsi piket lain di atas): direktori ini **LINTAS KAMPUS**, bukan dibatasi `kampus_id` piket yang login — alasan: piket kadang perlu verifikasi identitas siswa dari kampus lain (siswa titipan, dst)
+- Klik siswa → buka halaman detail siswa yang SAMA dipakai admin (foto, biodata, riwayat terlambat/izin/sakit/alfa) — **read-only untuk piket**, tombol edit/upload/hapus disembunyikan untuk role ini
+- **Untuk masa depan** (bukan scope T076): fitur guru BK/PDS mencatat pelanggaran tata tertib terpisah dari kehadiran — nanti akan muncul juga di halaman detail siswa yang sama, belum dibangun sekarang
 
 ### 6. Tinjauan & Lock/Unlock Siswa
 - Di akhir hari, sistem menandai siswa dengan izin "akan kembali" yang masih `status_kembali: belum` sebagai **"Perlu Ditinjau"**.

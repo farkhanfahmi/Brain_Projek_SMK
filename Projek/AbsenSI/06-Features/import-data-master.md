@@ -6,7 +6,7 @@ updated: 2026-06-25
 
 # Feature — Import Data Master (Guru, Siswa, Kartu RFID)
 
-← [[Projek/AbsenSI/00-INDEX|Index]]
+← [[Projek/AbsenSI/00-INDEX AbsenSI|Index]]
 
 > **Naik ke scope Fase 1** (awalnya dianggap fase 3/nice-to-have, dinaikkan karena rollout awal 2.500 kartu tidak praktis kalau input manual satu-satu). Mencakup 3 alur: import data siswa, import data guru, dan pemetaan kartu RFID ke orang.
 

@@ -5,7 +5,7 @@ updated: 2026-06-25
 
 # 09 — Conventions
 
-← [[Projek/AbsenSI/00-INDEX|Index]]
+← [[Projek/AbsenSI/00-INDEX AbsenSI|Index]]
 
 ---
 

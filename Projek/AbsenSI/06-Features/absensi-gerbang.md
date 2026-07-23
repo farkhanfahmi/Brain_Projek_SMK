@@ -6,7 +6,7 @@ updated: 2026-06-25
 
 # Feature — Absensi Gerbang (Fase 1)
 
-← [[Projek/AbsenSI/00-INDEX|Index]]
+← [[Projek/AbsenSI/00-INDEX AbsenSI|Index]]
 
 > Modul utama fase 1. Siswa & guru tap kartu RFID di gerbang masuk utama sekolah. Status hadir/terlambat dihitung terhadap jam masuk sekolah (ADR-005).
 

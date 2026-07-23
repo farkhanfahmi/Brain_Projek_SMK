@@ -1,15 +1,42 @@
 ---
 title: Vault Repair Log
-date: 2026-06-26
+date: 2026-07-21
 status: completed
 ---
 
 # 🔧 Laporan Perbaikan Relasi Vault
 
 ## 📋 Ringkasan
-Vault `Brain_Projek_SMK` telah diperbaiki. **93 broken links** yang tersebar di 27 file telah diidentifikasi dan diperbaiki dengan sukses.
+Vault `Brain_Projek_SMK` telah diperbaiki 2 kali: perbaikan awal 2026-06-26 (93 broken link, lihat Repair #1 di bawah), dan perbaikan lanjutan 2026-07-21 (Repair #2) setelah ditemukan link rusak baru menyebar ke 33 file yang dibuat/diedit setelah repair pertama.
 
-**Status:** ✅ SELESAI
+**Status:** ✅ SELESAI (kedua repair)
+
+---
+
+## 🔧 Repair #2 — 2026-07-21
+
+### Masalah yang Ditemukan
+Audit ulang vault menemukan **33 file** memakai wikilink `[[Projek/AbsenSI/00-INDEX|Index]]` (tanpa suffix " AbsenSI") — target ini tidak pernah cocok dengan nama file sebenarnya (`00-INDEX AbsenSI.md`), termasuk di file-file yang dibuat SETELAH Repair #1 selesai (misal `06-Features/dashboard-piket.md`, `TASKS-FASE-1.md`, `TASKS-POLISH-1.md`, `TASKS-POLISH-2.md`, semua `06-Features/tasks/T0xx-*.md`). Ironisnya Repair #1 sendiri (baris di bawah) sudah pakai target yang benar (`00-INDEX AbsenSI`) — link rusak ini murni dari file-file yang ditulis setelahnya tanpa mengikuti pola itu.
+
+### Perbaikan yang Dilakukan
+1. **Broken link massal:** `[[Projek/AbsenSI/00-INDEX|` → `[[Projek/AbsenSI/00-INDEX AbsenSI|` di 33 file (perbaikan sed, diverifikasi tidak ada sisa pola lama).
+2. **Konten usang disinkronkan dengan kode aktual:**
+   - `00-INDEX AbsenSI.md` — ditulis ulang total, status proyek diupdate (Fase 1 selesai 31/32, Polish 1 selesai 8/8, Polish 2 selesai 8/9), ditambah catatan bahwa dokumen 05/07/08/09/10 & `06-Features/*` masih draft pra-coding.
+   - `04-Database-Schema.md` — ditambah entitas `piket_schedules` (T032, ADR-024) dan kolom `students.late_strike_reset_at` (T037, ADR-025) yang sebelumnya tidak terdokumentasi sama sekali.
+   - `12-Status.md` — ditulis ulang total (sebelumnya masih "belum ada task dibuat" dari fase pra-coding 2026-06-25), sekarang cerminan status modul terkini per app.
+   - `13-Backlog.md` — bagian Fase 1/1b diupdate jadi status selesai, roadmap Fase 2/3 dibiarkan (masih relevan sebagai rencana).
+   - `TASKS-POLISH-2.md` — dibersihkan dari artefak teks sampah ("nggi" tersisip di baris 5), diperbaiki 1 baris tabel progress yang salah nomor task (T036 dipakai 2 kali untuk 2 baris berbeda; "Rekap PDF" seharusnya T035).
+3. **Struktur folder dirapikan:** `session Claude/design-system/` (penamaan tidak konsisten: spasi + mixed-case, satu-satunya folder begitu di vault, dan yatim total — tidak dilink dari index manapun) dipindah ke `06-Features/design-system/`. Referensi inline di `TASKS-FASE-1.md` dan `TASKS-POLISH-1.md` diperbarui mengikuti path baru. Link internal antar file design-system (`./01-colors.md` dst) pakai relative markdown link, bukan wikilink — tidak perlu diubah, tetap valid setelah dipindah.
+4. **`_VAULT-STRUCTURE.md` ditulis ulang total** — direktori fisik, file navigation, dan catatan akurasi dokumen semua diperbarui mencerminkan struktur & status terkini (lihat isi file itu sendiri untuk detail).
+
+### File yang Diproses (Repair #2)
+33 file terkena perbaikan link massal (semua file di root + `06-Features/*.md` + `06-Features/tasks/*.md` + `_claudian/*.md` yang memakai pola link index). Lihat riwayat git untuk diff lengkap.
+
+---
+
+## 🔧 Repair #1 — 2026-06-26
+
+**Status:** ✅ SELESAI (pada saat itu — lihat Repair #2 untuk regresi yang ditemukan kemudian)
 
 ---
 
@@ -26,7 +53,7 @@ Vault `Brain_Projek_SMK` telah diperbaiki. **93 broken links** yang tersebar di 
 
 **SESUDAH (Fixed):**
 ```markdown
-[[Projek/AbsenSI/00-INDEX|Index]]
+[[Projek/AbsenSI/00-INDEX AbsenSI|Index]]
 [[Projek/AbsenSI/02-Tech-Stack|Tech Stack]]
 ```
 
@@ -42,7 +69,7 @@ Vault `Brain_Projek_SMK` telah diperbaiki. **93 broken links** yang tersebar di 
 
 **SESUDAH (Local reference):**
 ```markdown
-[[Projek/AbsenSI/00-INDEX|00-INDEX]]
+[[Projek/AbsenSI/00-INDEX AbsenSI|00-INDEX]]
 ```
 
 ---
@@ -113,8 +140,8 @@ Vault `Brain_Projek_SMK` telah diperbaiki. **93 broken links** yang tersebar di 
 - [x] Frontmatter YAML tetap valid
 - [x] Markdown structure tetap utuh
 
-### Hasil
-✅ **Semua link sudah valid dan terintegrasi dengan benar**
+### Hasil (per 2026-06-26)
+✅ Semua link yang ada SAAT ITU sudah valid — **tapi lihat Repair #2 di atas**: file-file baru yang ditulis setelah tanggal ini kembali memakai target link yang salah (`00-INDEX` tanpa suffix), karena penulis file baru tidak menyalin pola persis dari contoh di bawah. Pelajaran: format link yang benar perlu dicek ulang secara berkala, bukan cuma diperbaiki sekali dan dianggap selesai selamanya.
 
 ---
 
@@ -122,12 +149,12 @@ Vault `Brain_Projek_SMK` telah diperbaiki. **93 broken links** yang tersebar di 
 
 ### Saat Membuat File Baru
 1. Selalu gunakan format link: `[[Projek/AbsenSI/path/to/file|Display Text]]`
-2. Tambahkan "back to index" link di bagian atas: `← [[Projek/AbsenSI/00-INDEX|Index]]`
+2. Tambahkan "back to index" link di bagian atas: `← [[Projek/AbsenSI/00-INDEX AbsenSI|Index]]` — **perhatikan target harus `00-INDEX AbsenSI` (dengan spasi + suffix), BUKAN `00-INDEX` saja** — ini satu-satunya file di vault yang punya suffix nama begitu, sumber paling umum dari broken link di sini.
 3. Cross-link ke file terkait di body text
 
 ### Template untuk Link Back
 ```markdown
-← [[Projek/AbsenSI/00-INDEX|Index]]
+← [[Projek/AbsenSI/00-INDEX AbsenSI|Index]]
 
 # Judul File
 
@@ -138,9 +165,10 @@ Vault `Brain_Projek_SMK` telah diperbaiki. **93 broken links** yang tersebar di 
 - ❌ `[[30.Projects/...]]` - Path lama (sudah dihapus)
 - ❌ `[[70.Systems/...]]` - External path (tidak ada)
 - ❌ Absolute path seperti `[[C:\Brain\...]]` - Gunakan relative
+- ❌ `[[Projek/AbsenSI/00-INDEX|...]]` - Target salah, hilang suffix " AbsenSI" (penyebab Repair #2)
 
 ---
 
-**Last Updated:** 2026-06-26  
-**Repaired by:** Claude Code (Claudian)  
-**Status:** ✅ All broken links fixed and verified
+**Last Updated:** 2026-07-21 (Repair #2)
+**Repaired by:** Claude Code (Claudian)
+**Status:** ✅ All broken links fixed and verified — lihat catatan Repair #2 soal pentingnya cek berkala

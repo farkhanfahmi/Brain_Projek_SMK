@@ -1,11 +1,11 @@
 ---
 tags: [absensi, adr, decisions]
-updated: 2026-06-25
+updated: 2026-07-21
 ---
 
 # 11 — Decisions (ADR)
 
-← [[Projek/AbsenSI/00-INDEX|Index]]
+← [[Projek/AbsenSI/00-INDEX AbsenSI|Index]]
 
 > Setiap keputusan arsitektur permanen dicatat di sini. Format: Konteks → Keputusan → Alasan → Konsekuensi. **Jangan ubah keputusan di sini tanpa diskusi ulang dan catat ADR baru yang men-supersede.**
 
@@ -209,6 +209,80 @@ updated: 2026-06-25
 - **`activity_log`** — log setiap aksi pengguna yang login, insert-only. Mencatat: `actor_id` (FK ke `users`), `action` (string: `permit.create`, `permit.confirm_kembali`, `student.lock`, `student.unlock`, `attendance.manual_pulang`, dsb), `target_type` + `target_id` (record yang diubah), `snapshot_before` + `snapshot_after` (JSON state sebelum/sesudah), `ip_address`, `created_at`.
 **Alasan:** Satu log gabungan tidak bisa melayani dua tujuan sekaligus — tap system events tidak punya `actor_id` (tap tidak punya sesi user), sementara activity log tidak perlu menyimpan raw UID dan kiosk_id yang hanya relevan untuk forensik hardware. Memisahkan keduanya membuat query forensik dan query audit masing-masing sederhana tanpa kolom nullable yang membingungkan.
 **Konsekuensi:** `tap_events.scanned_at` selalu menggunakan **timestamp server** (bukan timestamp dari kiosk client) — clock kiosk bisa drift dan tidak bisa dijadikan sumber kebenaran waktu. `tap_events` diperkirakan tumbuh ±5.000 baris/hari (2.500 siswa × 2 tap) = ±1,8 juta baris/tahun — masih manageable di MySQL dengan index pada `(kiosk_id, scanned_at)`, dan termasuk dalam scope ETL ke data warehouse (ADR-013) agar tidak terus tumbuh tanpa batas di database operasional. Kedua tabel ini tidak boleh punya endpoint DELETE atau UPDATE yang bisa diakses dari aplikasi — hanya INSERT yang diizinkan.
+
+---
+
+## ADR-025: Lock Otomatis Setelah 2x Terlambat — Amandemen ADR-017
+
+**Tanggal:** 2026-07-20
+**Status:** Accepted
+**Supersedes (sebagian):** ADR-017 — menambahkan SATU pengecualian baru pada prinsip "lock selalu manual", bukan mencabut ADR-017 secara keseluruhan (lock untuk kasus "tidak kembali dari izin keluar" tetap manual sepenuhnya seperti sebelumnya).
+**Konteks:** User (kepala sekolah/pemilik produk) secara eksplisit meminta efek jera otomatis untuk siswa yang terlambat berulang: begitu terdeteksi terlambat untuk kedua kalinya, kartu langsung terkunci saat itu juga tanpa menunggu tindakan piket — beda dari kasus "tidak kembali dari izin" (ADR-017) yang memang sengaja dibuat manual karena risikonya (siswa terkunci keliru akibat piket lupa update) lebih besar dari manfaat otomatisasi.
+**Keputusan:**
+1. Sistem menghitung jumlah tap dengan `status = terlambat` milik seorang siswa sejak **counter terakhir direset** (lihat poin 3). Tidak perlu kolom counter terpisah — dihitung dari `COUNT(attendance_records WHERE studentId = X AND status = 'terlambat' AND tanggal > lastResetAt)` saat tap terjadi, konsisten dengan prinsip "jangan simpan yang bisa dihitung" yang sudah dipakai untuk alfa.
+2. Begitu hasil hitung mencapai **2** pada tap yang baru saja diproses (yaitu tap ini sendiri adalah keterlambatan kedua), sistem **langsung mengunci** siswa tersebut sebagai bagian dari alur `tap()` yang sama — `lockedAt` diisi `now()`, `lockedReason` diisi otomatis (misal `"Terlambat 2 kali — hubungi orang tua"`), `lockedById` **null** (bukan piket manapun, sistem yang mengunci). Layar kiosk saat itu juga menampilkan pesan **"Sudah terlambat 2 kali, silahkan hadirkan orang tua"** — bukan pesan tap-diterima biasa, meski tap tetap tercatat sebagai `accepted`/`terlambat` di `attendance_records` (siswa tetap tercatat hadir-terlambat, cuma kartunya langsung nonaktif untuk tap berikutnya).
+3. **Reset counter:** hanya terjadi saat guru piket melakukan **unlock** siswa ini (bukan periodik per semester/tahun ajaran). Field baru `student.lateStrikeResetAt` (nullable, default null) diisi `now()` setiap kali `unlock()` dipanggil untuk siswa dengan alasan lock ini — perhitungan poin 1 di atas memakai `tanggal > lateStrikeResetAt` (kalau null, hitung dari awal data).
+4. Alur unlock yang sudah ada (ADR-017, dialog piket) dipakai ulang tanpa perlu UI terpisah — piket unlock seperti biasa setelah orang tua hadir; hanya bedanya sistem juga menulis `lateStrikeResetAt = now()` di baliknya untuk lock jenis ini.
+**Alasan:** Reset-by-unlock (bukan reset periodik) dipilih karena mencerminkan maksud aslinya: 2 kesempatan itu berlaku sampai insiden itu "diselesaikan" (orang tua dihadirkan), bukan berlaku untuk jendela waktu kalender yang arbitrer. Lock otomatis (bukan cuma badge/saran ke piket) dipilih karena user eksplisit menginginkan efek jera instan tanpa jeda menunggu piket bertindak — ini beda konteks dari ADR-017 (izin tidak kembali) yang risikonya salah-kunci jauh lebih tinggi (piket sering belum tahu situasi lapangan), sedangkan "2x terlambat" adalah fakta objektif dari data tap itu sendiri, tidak butuh penilaian manusia untuk memastikan kebenarannya.
+**Konsekuensi:**
+- `Student` +1 kolom: `lateStrikeResetAt DateTime?`.
+- `AttendanceService.tap()` — setelah `determineStatus()` mengembalikan `terlambat` dan record berhasil dibuat, hitung ulang jumlah keterlambatan sejak `lateStrikeResetAt`; kalau mencapai 2, panggil logic lock (bisa reuse sebagian `StudentsService.lock()` tapi dengan `lockedById: null` — perlu cek apakah kolom itu nullable atau perlu diubah jadi nullable, karena assignment sebelumnya asumsi selalu ada piket yang mengunci).
+- `TapResultPayload`/`TapResponse` (`@absensi/types`) perlu varian pesan baru untuk kasus ini — kemungkinan `result` tetap `accepted` tapi flag tambahan `locked: true` + `message` khusus, ATAU `result` baru `accepted_then_locked` — **desain persis diputuskan saat implementasi**, jangan asumsikan dari sini.
+- `apps/kiosk` — layar feedback perlu varian tampilan ke-3 (bukan cuma accepted/rejected): "diterima tapi langsung terkunci", dengan pesan spesifik yang diminta user persis.
+- Dashboard Piket: siswa yang terkunci lewat mekanisme ini tetap muncul di section "Siswa Terkunci" yang sudah ada (ADR-017) — `lockedReason` yang beda (otomatis vs manual) sudah cukup untuk membedakan tanpa perlu section terpisah.
+- ADR-017 **tidak dicabut** — tetap berlaku penuh untuk kasus "izin keluar tidak kembali". Kalau nanti ditemukan kebutuhan lock-otomatis jenis ketiga, pertimbangkan apakah perlu digeneralisasi jadi satu mekanisme "lock reasons" yang eksplisit, bukan ditambah kondisi khusus lagi satu-satu.
+
+---
+
+## ADR-024: Jadwal Hari Piket per Guru — Login Dibatasi Hari Aktif
+
+**Tanggal:** 2026-07-20
+**Status:** Accepted
+**Konteks:** Saat ini akun `guru_piket` bisa login kapan saja tanpa pembatasan hari — tidak ada konsep "hari piket" di skema sama sekali (dikonfirmasi tidak ada field terkait di model `User`). User meminta agar tiap guru piket cuma bertugas (dan bisa login efektif) pada hari-hari tertentu yang di-assign admin, dengan UI mirip Google Calendar (grid Senin–Sabtu, klik hari untuk assign guru piket ke hari itu).
+**Keputusan:**
+1. Tabel baru `piket_schedules`: `id`, `hari` (Int, 1=Senin..6=Sabtu — **beda dari konvensi `Schedule.hari` yang sudah ada** yang pakai basis MySQL DAYOFWEEK 1=Minggu; perlu keputusan eksplisit yang mana dipakai di sini, dicatat sebagai open point di task, **jangan asumsikan sama dengan basis lama begitu saja**), `userId` (FK ke `users`, harus role `guru_piket`), `createdById`, `createdAt`. Satu hari bisa punya lebih dari satu guru piket (banyak-ke-banyak secara implisit lewat baris terpisah per hari+user).
+2. Guru piket yang login pada hari **di luar** jadwalnya: login tetap **berhasil** (tidak ditolak di endpoint `/auth/login`), tapi begitu masuk Dashboard Piket, semua **aksi tulis dinonaktifkan** (lock/unlock, buat izin, konfirmasi kembali, dsb) — halaman jadi read-only. Pesan jelas ditampilkan (misal banner "Anda tidak bertugas piket hari ini — mode lihat saja").
+3. UI admin baru: halaman kalender mingguan (grid 6 kolom Senin–Sabtu, TANPA Minggu — pola visual mengambil referensi dari `apps/web/src/app/(admin)/kalender/kalender-view.tsx` yang sudah ada, tapi ini bukan kalender bulanan/tahun-ajaran, jadi komponennya baru, cuma mengambil gaya visual). Klik satu hari → popup pilih guru piket (dari daftar user role `guru_piket`) untuk di-assign/dilepas dari hari itu. Nama guru piket yang sudah ter-assign tampil langsung di dalam kotak hari tersebut (gaya Google Calendar).
+**Alasan:** Read-only (bukan block-login-total) dipilih karena guru piket kadang perlu memantau situasi kampusnya di hari libur piketnya sendiri (misal cek apakah ada masalah) tanpa perlu mengganggu alur tugas piket hari itu yang sedang aktif dengan aksi yang tidak semestinya dari orang yang bukan bertugas — ini keputusan yang lebih aman daripada menolak akses sepenuhnya, sekaligus tetap mencegah aksi tulis yang salah pihak.
+**Konsekuensi:**
+- Endpoint baru dibutuhkan: `GET/POST/DELETE /piket-schedules` (admin kelola), `GET /piket-schedules/me/today` atau serupa (dipanggil `(piket)/layout.tsx` untuk tahu apakah user ini bertugas hari ini).
+- `(piket)/layout.tsx` dan semua Server Action/Route Handler penulisan (lock, unlock, buat izin, dst.) perlu cek status "bertugas hari ini" sebelum eksekusi — bukan cuma UI yang disembunyikan, validasi juga harus di backend (guard baru atau cek eksplisit di service), supaya guru piket tidak bisa bypass read-only lewat panggilan API langsung.
+- Definisi "hari ini" harus konsisten timezone — proyek ini belum eksplisit menyatakan timezone standar di ADR manapun, perlu diperjelas saat implementasi (kemungkinan `Asia/Jakarta` mengikuti lokasi sekolah, tapi cek dulu bagaimana `startOfDay()`/tanggal lain di `attendance.service.ts` menangani ini sebelum menambah konvensi baru yang beda).
+
+---
+
+## ADR-023: Foto Profil — Disk Lokal + Upload Bulk Auto-Match by Filename (NISN/NIY)
+
+**Tanggal:** 2026-07-17
+**Status:** Accepted
+**Konteks:** T028 menambahkan foto profil siswa & guru (ditampilkan di layar kiosk saat scan). Perlu diputuskan cara penyimpanan file dan alur upload untuk ratusan foto sekaligus (bukan satu-satu manual per siswa).
+**Keputusan:**
+1. **Storage:** foto disimpan sebagai file di disk lokal server (folder di dalam `apps/api`, di luar `dist`/`src` — misal `apps/api/storage/photos/`), path relatif disimpan di kolom `foto` (`students`/`teachers`). **Bukan** object storage cloud (S3, dsb).
+2. **Alur upload:** admin pilih banyak file sekaligus (bulk, mirip `ImportService` CSV yang sudah ada). Server cocokkan **nama file (tanpa ekstensi) = NISN (siswa) atau NIY (guru)** secara otomatis. File yang cocok langsung ter-assign ke siswa/guru terkait; file yang tidak match dilaporkan ke admin untuk di-assign manual lewat dropdown pencarian siswa/guru di UI.
+**Alasan:** Disk lokal dipilih karena skala project ini on-premise single-server (konsisten dengan MySQL & Redis lokal, tidak ada infra cloud storage yang sudah ada) — menambah dependency S3-compatible storage untuk ribuan foto ukuran kecil adalah over-engineering di tahap ini. Auto-match by filename dipilih karena operator sekolah realistis akan punya folder foto hasil scan/kamera yang sudah dinamai sesuai NISN/NIY siswa (pola umum di sistem sejenis), sehingga upload 500+ foto sekaligus tidak perlu 500 kali klik manual — fallback manual-assign tetap disediakan untuk file yang gagal auto-match (nama file typo, siswa belum ada di sistem, dsb).
+**Konsekuensi:**
+- Endpoint upload baru: terima `multipart/form-data` banyak file sekaligus, proses satu-satu (mirip pola `ImportService.importStudents()`), return laporan `{ matched: [...], unmatched: [...] }`.
+- Validasi tipe file (JPEG/PNG saja) dan batas ukuran **1MB per file** (diputuskan final 2026-07-17) — cukup untuk foto potret kualitas layar kiosk, jaga total volume storage tetap kecil.
+- Volume disk bertambah seiring jumlah siswa/guru (skala ±2.500 siswa × rata-rata foto beberapa ratus KB = order tunggal digit GB, tidak signifikan untuk server sekolah).
+- Backup database **tidak** mencakup foto (foto ada di filesystem, bukan di kolom BLOB) — folder `storage/photos/` harus ikut masuk strategi backup terpisah (dicatat sebagai catatan operasional, bukan blocker implementasi).
+- Kalau nanti sekolah pindah ke infra multi-server/container ephemeral, keputusan disk lokal ini harus dibuka ulang (foto akan hilang kalau container di-recreate tanpa persistent volume) — untuk saat ini diasumsikan deployment tetap single-server dengan disk persisten.
+
+---
+
+## ADR-022: Kiosk Bertipe (Siswa/Guru) — Fisik Terpisah, Kartu Salah Tipe Ditolak
+
+**Tanggal:** 2026-07-17
+**Status:** Accepted
+**Konteks:** Fase data profil (T028) menambahkan tampilan scan berbeda untuk siswa vs guru/karyawan di layar kiosk (siswa: foto+nama+jam; guru: foto+nama+jam + 2 tabel "5 terbaru datang/pulang"). Perlu diputuskan bagaimana kiosk tahu tampilan mana yang harus ditampilkan, dan apa yang terjadi kalau kartu siswa di-tap di kiosk yang salah (atau sebaliknya).
+**Keputusan:**
+1. Setiap kiosk (tabel `kiosks`, ADR-021) punya kolom `tipe` (`siswa` | `guru`), diisi admin saat registrasi kiosk — **bukan** dideteksi otomatis dari kartu yang di-tap. Kiosk secara fisik didedikasikan untuk satu gerbang/tipe (mis. gerbang siswa vs gerbang guru), konsisten dengan model ADR-021 (kiosk = device fisik dengan IP tetap).
+2. `KioskGuard` (atau `AttendanceService.tap()`) memvalidasi tipe pemilik kartu (siswa/guru) terhadap `kiosk.tipe`. Kartu siswa di-tap di kiosk `tipe=guru` (atau sebaliknya) → **ditolak**, direkam di `tap_events` dengan `result=rejected_wrong_kiosk_type` (insert-only, forensik — bukan diam-diam diabaikan), **tidak** membuat/mengubah `attendance_record`. Layar kiosk tampilkan pesan "Kartu ini bukan untuk gerbang ini".
+**Alasan:** Pemisahan fisik kiosk per tipe mencerminkan kenyataan operasional sekolah — gerbang siswa dan ruang guru adalah lokasi fisik berbeda, device kiosknya pun berbeda. Deteksi otomatis dari kartu tidak dipilih karena akan membuat satu device melayani dua UI berbeda tergantung siapa yang tap, yang lebih rumit untuk kiosk mode kios (fullscreen, tanpa navigasi) dan tidak sesuai kebutuhan mengunci akses fisik per gerbang (siswa tidak boleh tap di gerbang guru meski secara teknis bisa).
+**Konsekuensi:**
+- `kiosks.tipe` wajib diisi saat admin membuat kiosk baru — form Tambah Kiosk (T027 UI, belum dikerjakan) perlu field ini.
+- `TapResult` enum tambah varian `rejected_wrong_kiosk_type`.
+- `apps/kiosk` tidak perlu logic deteksi tipe dari kartu — device kiosk sendiri sudah tahu tipenya (dari konfigurasi/URL registrasi kiosk saat setup, sama seperti token ADR-021), dipakai untuk pilih varian tampilan feedback screen.
+- Kalau sekolah nanti butuh 1 device melayani siswa+guru sekaligus (misal gerbang tunggal kecil), keputusan ini harus dibuka ulang — saat ini diasumsikan gerbang siswa dan akses guru/karyawan selalu punya titik masuk fisik terpisah.
 
 ---
 

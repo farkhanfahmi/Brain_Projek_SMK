@@ -6,7 +6,7 @@ updated: 2026-06-25
 
 # Feature — Manajemen Kartu RFID
 
-← [[Projek/AbsenSI/00-INDEX|Index]]
+← [[Projek/AbsenSI/00-INDEX AbsenSI|Index]]
 
 > CRUD mapping UID kartu RFID ↔ siswa/guru. Termasuk proses ganti kartu hilang/rusak — wajib lewat admin (sesuai keputusan diskusi awal).
 

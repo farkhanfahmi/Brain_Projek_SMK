@@ -38,3 +38,4 @@ The reference is a **Dashboard / Overview** page:
 - Content area on beige background, organized in a responsive grid of cards: a 3-up KPI row + 1 "Top Categories" donut card spanning full height on the right; a 2-up analytics row (line chart + radial gauge); a 3-up bottom row (active users list, funnel/conversion metrics, traffic sources segmented bar + legend).
 
 When building other pages (Orders, Products, Customers, etc.) for this project, reuse the same shell (sidebar + top bar) and the same card/KPI/table visual language defined here, adapting only the content.
+

@@ -6,7 +6,7 @@ updated: 2026-06-25
 
 # Feature — Notifikasi Orang Tua (Fase 3 — Jalur Disiapkan, Belum Dibangun)
 
-← [[Projek/AbsenSI/00-INDEX|Index]]
+← [[Projek/AbsenSI/00-INDEX AbsenSI|Index]]
 
 > **Tidak dikerjakan di fase 1.** Hanya jalur arsitektur (event-driven via BullMQ) yang disiapkan dari fase 1, sesuai ADR-006. Dokumen ini placeholder untuk planning detail nanti.
 

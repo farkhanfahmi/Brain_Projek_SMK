@@ -6,7 +6,7 @@ updated: 2026-07-03
 
 # Feature — Kalender Pendidikan (Admin Dashboard)
 
-← [[Projek/AbsenSI/00-INDEX|Index]]
+← [[Projek/AbsenSI/00-INDEX AbsenSI|Index]]
 
 > Fitur pengelolaan kalender akademik sekolah. Dibutuhkan sebagai **fondasi perhitungan alfa** di modul Rekap — tanpa kalender yang terdefinisi, sistem tidak bisa tahu hari mana yang seharusnya ada kehadiran dan hari mana yang libur. Masuk scope **Fase 1** karena rekap tidak bisa akurat tanpa ini.
 
@@ -48,6 +48,17 @@ updated: 2026-07-03
 - Admin buat **tahun ajaran** baru dengan mengisi: nama (misal "2025/2026"), tanggal mulai, tanggal selesai.
 - Hanya boleh ada **1 tahun ajaran aktif** pada satu waktu (`is_active: true`). Saat tahun ajaran baru diaktifkan, yang lama otomatis tidak aktif.
 - Data absensi dan kalender tahun-tahun sebelumnya tetap tersimpan dan bisa diakses untuk rekap historis — tidak dihapus saat tahun ajaran baru dibuat.
+
+### 1b. Semester (Final — Fase 2, 2026-07-22)
+
+> Ditambahkan sebagai perluasan `academic_years` untuk mendukung Dashboard Guru Jurnal ([[Projek/AbsenSI/06-Features/dashboard-guru-jurnal|dashboard-guru-jurnal.md]]) — jadwal mengajar (`schedules`) di-scope PER SEMESTER, bukan cuma per tahun ajaran, karena jadwal riil berubah total antar semester ganjil/genap.
+
+- Setiap `academic_years` punya **2 semester**: Ganjil dan Genap
+- **Tanggal mulai/selesai tiap semester diinput MANUAL oleh admin** (sama seperti tahun ajaran) — bukan otomatis dibagi tengah, karena rentang semester riil tidak selalu simetris (libur panjang bisa menggeser)
+- **1 semester aktif per waktu** (`is_active: true`, pola identik `academic_years.is_active`) — dipakai job harian (generate `teaching_sessions`) untuk resolve jadwal mana yang berlaku hari ini. Admin **switch manual** saat pergantian semester (bukan otomatis dari tanggal)
+- Saat semester baru dibuat, admin_jurnal punya opsi **"Salin jadwal dari semester sebelumnya"** — duplikasi seluruh `schedules` (`type: jam_mengajar`) ke `semester_id` baru, admin tinggal edit yang berubah (lihat [[Projek/AbsenSI/06-Features/dashboard-guru-jurnal|dashboard-guru-jurnal.md]] untuk detail alur ini di sisi Jadwal Mengajar)
+- **Skema baru:** tabel `semesters` — `id`, `academic_year_id` (FK), `nama` (enum: `ganjil`/`genap`), `tanggal_mulai`, `tanggal_selesai`, `is_active` (boolean, hanya 1 true sekaligus lintas SEMUA tahun ajaran — bukan cuma dalam 1 tahun ajaran), `created_by` (FK users), `created_at`
+- **`schedules`** (tipe `jam_mengajar`) tambah kolom **`semester_id`** (FK ke `semesters`, wajib diisi untuk `type: jam_mengajar`) — jadwal gerbang (`type: jam_sekolah`) dan jadwal khusus (`type: jadwal_khusus`) TIDAK perlu `semester_id` (tetap berlaku sepanjang tahun ajaran seperti sebelumnya, tidak berubah)
 
 ### 2. Input Libur Blok (Range)
 

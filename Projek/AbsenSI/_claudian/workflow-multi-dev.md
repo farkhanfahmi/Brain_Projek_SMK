@@ -5,9 +5,9 @@ updated: 2026-06-25
 
 # Workflow Claudian — AbsenSI (Tim 3 Developer)
 
-← [[Projek/AbsenSI/00-INDEX|Index]]
+← [[Projek/AbsenSI/00-INDEX AbsenSI|Index]]
 
-> Ini adalah **varian** dari [[Projek/AbsenSI/00-INDEX|00-INDEX]] global, disesuaikan untuk tim 3 developer yang bekerja paralel di modul berbeda dalam satu monorepo. Prinsip Layer 1/2/3 (Think → Brief → Build) tetap sama. Yang berubah: bagaimana Layer 2 (CONTEXT.md) dikelola supaya tidak collision antar developer.
+> Ini adalah **varian** dari [[Projek/AbsenSI/00-INDEX AbsenSI|00-INDEX]] global, disesuaikan untuk tim 3 developer yang bekerja paralel di modul berbeda dalam satu monorepo. Prinsip Layer 1/2/3 (Think → Brief → Build) tetap sama. Yang berubah: bagaimana Layer 2 (CONTEXT.md) dikelola supaya tidak collision antar developer.
 
 ---
 
@@ -111,5 +111,5 @@ Salin dari [[Projek/AbsenSI/06-Features/tasks/_task-template|_task-template.md]]
 - Layer 1 (Obsidian) tetap satu-satunya source of truth untuk keputusan
 - Prinsip zero-ambiguity tetap berlaku — spec harus jelas siapa pun yang baca
 - Claude Code tetap tidak boleh buat keputusan arsitektur sendiri
-- Model selection guide (Haiku/Sonnet/Opus) tetap sama, lihat [[Projek/AbsenSI/00-INDEX|00-INDEX]] global
+- Model selection guide (Haiku/Sonnet/Opus) tetap sama, lihat [[Projek/AbsenSI/00-INDEX AbsenSI|00-INDEX]] global
 

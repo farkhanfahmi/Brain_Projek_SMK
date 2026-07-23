@@ -5,7 +5,7 @@ updated: 2026-06-25
 
 # 03 — User Roles
 
-← [[Projek/AbsenSI/00-INDEX|Index]]
+← [[Projek/AbsenSI/00-INDEX AbsenSI|Index]]
 
 > Ini role PENGGUNA APLIKASI (siswa, guru, admin sekolah) — bukan role tim developer. Untuk pembagian tim developer lihat [[Projek/AbsenSI/_claudian/team|team.md]].
 
@@ -23,7 +23,15 @@ updated: 2026-06-25
 | **Admin Pengelola Kartu** (`card_admin`) | ✅ Login | **Hanya** CRUD data kartu (registrasi, nonaktifkan, ganti kartu). Tidak bisa edit jadwal, tidak bisa edit data absensi, tidak bisa kelola akun lain |
 | **Kepala Sekolah** (`kepsek`) | ✅ Login — akun khusus tersendiri | Lihat dashboard TV + rekap (read-only). **Resolved:** TV dashboard tetap butuh auth, bukan akses bebas tanpa login meski di ruang terbatas |
 
-**Catatan:** Wali kelas dengan akses lihat data kelasnya (bukan cuma riwayat sendiri) — **dibahas di fase 2**, belum di-desain di fase 1.
+**Catatan:** Wali kelas dengan akses lihat data kelasnya (bukan cuma riwayat sendiri) — **Final (2026-07-21):** bukan role baru, extend akun `guru` existing dengan kolom `kelas_id_wali` (pola identik `guru_piket.kampus_id`). Read-only, scope ke kelas yang diampu. Detail lengkap & isi menu di [[Projek/AbsenSI/06-Features/dashboard-guru-jurnal|dashboard-guru-jurnal.md]] bagian "Wali Kelas".
+
+## Role Baru (Fase 2 — planning, lihat [[Projek/AbsenSI/06-Features/dashboard-guru-jurnal|dashboard-guru-jurnal.md]])
+
+| Role | Login? | Akses |
+|---|---|---|
+| **Admin Jurnal** (`admin_jurnal`) | ✅ Login | Terkunci ke domain jurnal mengajar: kelola jadwal (termasuk Mode Blok A/B), izin guru, monitor+koreksi jurnal, master data mapel. **Tidak** bisa akses `users`, kartu, kalender pendidikan, atau rekap kehadiran siswa — pola sama seperti `card_admin` (ADR-008), dipisah dari Admin Pusat supaya operasional jurnal harian tidak numpuk ke satu role |
+
+Sama seperti `card_admin`, pemisahan ini ditegakkan di level API guard, bukan cuma disembunyikan di UI (lihat "Aturan Tegas" di bawah).
 
 ## Aturan Tegas
 1. **Hanya Admin Pusat dan Admin Pengelola Kartu yang boleh mengubah data.** Guru read-only mutlak — tidak ada exception.

@@ -5,7 +5,7 @@ updated: 2026-06-25
 
 # Team & Module Ownership
 
-← [[Projek/AbsenSI/00-INDEX|Index]]
+← [[Projek/AbsenSI/00-INDEX AbsenSI|Index]]
 
 > Pembagian modul **diusulkan** berdasarkan background yang disampaikan saat diskusi awal. Ini bukan keputusan final — silakan dikoreksi/disesuaikan tim, lalu update file ini.
 

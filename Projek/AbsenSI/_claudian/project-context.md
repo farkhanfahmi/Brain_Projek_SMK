@@ -2,7 +2,7 @@
 
 **Stack:** NestJS + Prisma + PostgreSQL (apps/api) · Next.js + TailwindCSS (apps/web, apps/kiosk) · Turborepo monorepo · Redis + BullMQ
 **Status:** Fase 1 — masih tahap perancangan spec fitur gerbang, belum mulai coding
-**Docs lengkap:** [[Projek/AbsenSI/00-INDEX|00-INDEX]]
+**Docs lengkap:** [[Projek/AbsenSI/00-INDEX AbsenSI|00-INDEX]]
 **Tim:** 3 developer, modular ownership — lihat [[Projek/AbsenSI/_claudian/team|team.md]]
 
 ## Keputusan Aktif

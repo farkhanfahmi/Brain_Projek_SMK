@@ -6,7 +6,7 @@ updated: 2026-07-03
 
 # Feature — Rekap Kehadiran
 
-← [[Projek/AbsenSI/00-INDEX|Index]]
+← [[Projek/AbsenSI/00-INDEX AbsenSI|Index]]
 
 > Fitur rekap memberi akses ke ringkasan data kehadiran dalam rentang waktu tertentu, dengan berbagai filter. Didesain bertahap per fase — Fase 1 melayani **Admin Pusat** dulu, Fase 2 menambahkan akses untuk **Wali Kelas** dan **Guru** (riwayat diri sendiri).
 
@@ -29,7 +29,7 @@ updated: 2026-07-03
 |---|---|---|
 | Fase 1 | `super_admin` | Semua siswa, semua kelas, semua jurusan |
 | Fase 2 | `kepsek` | Semua siswa (read-only, sama dengan admin) |
-| Fase 2 | Wali Kelas (`guru` dengan role tambahan) | Hanya kelas yang dia ampu |
+| Fase 2 | Wali Kelas (`guru` dengan `kelas_id_wali` terisi — bukan role terpisah, lihat [[Projek/AbsenSI/06-Features/dashboard-guru-jurnal|dashboard-guru-jurnal.md]] bagian "Wali Kelas") | Hanya kelas yang dia ampu |
 | Fase 2 | `guru` (riwayat pribadi) | Hanya kehadiran diri sendiri |
 
 ---

@@ -1,11 +1,11 @@
 ﻿---
 tags: [absensi, database, schema]
-updated: 2026-06-25
+updated: 2026-07-21
 ---
 
 # 04 — Database Schema
 
-← [[Projek/AbsenSI/00-INDEX|Index]]
+← [[Projek/AbsenSI/00-INDEX AbsenSI|Index]]
 
 > **Update 2026-06-26:** Keputusan struktur tabel inti & engine database sudah final lewat ADR-010 s/d ADR-014 (lihat [[Projek/AbsenSI/11-Decisions|11-Decisions]]). Skema di bawah merefleksikan keputusan itu. Masih ada Open Questions di level detail kolom (lihat bagian bawah), tapi kerangka dasarnya tidak lagi berubah.
 
@@ -15,9 +15,13 @@ updated: 2026-06-25
 
 ### `students`
 - `id`, `nisn` (unique), `nama`, `kelas_id` (FK), `jurusan_id` (FK), `status` (aktif/nonaktif), `tanggal_lahir` (opsional)
+- **T028 (2026-07-17):** tambahan biodata lengkap, semua opsional — `tempat_lahir`, `jenis_kelamin` (enum: `laki_laki`/`perempuan`), `agama` (enum: `islam`/`kristen`/`katolik`/`hindu`/`buddha`/`konghucu`), `alamat`, `rt_rw`, `nama_ayah`, `nama_ibu`, `foto` (path relatif ke file di disk, lihat ADR-023 — **bukan** BLOB di database)
 
 ### `teachers`
-- `id`, `nip` (unique), `nama`, `status` (aktif/nonaktif)
+- `id`, `niy` (unique — **rename dari `nip`, T028 2026-07-17**, lihat catatan migrasi di bawah), `nama`, `status` (aktif/nonaktif)
+- **T028:** tambahan `no_hp` (opsional), `foto` (path relatif, sama seperti `students.foto`, ADR-023)
+
+> **Catatan migrasi (T028):** Rename `nip`→`niy` **wajib** pakai `RENAME COLUMN` manual di migration SQL, bukan drop+add — Prisma default generate drop+add yang menghapus seluruh data NIP existing. Field ini dulunya "NIP" (istilah PNS), diganti terminologi jadi "NIY" (Nomor Induk Yayasan, lebih umum untuk sekolah swasta) tapi tetap unique identifier tunggal per guru — bukan field tambahan di samping NIP.
 
 > **Catatan desain (ADR-010):** `persons` tunggal resmi dipecah jadi `students` + `teachers` karena field keduanya cukup berbeda (siswa punya kelas/jurusan, guru punya jadwal mengajar). Semua tabel di bawah yang perlu relasi ke "siswa ATAU guru" memakai **pola dual-FK nullable** (`student_id` + `teacher_id`, tepat 1 yang terisi) — bukan polymorphic generik — supaya foreign key constraint asli MySQL tetap berlaku dan integritas data tidak 100% bergantung pada logic aplikasi.
 
@@ -54,6 +58,7 @@ updated: 2026-06-25
 ### Perubahan ke tabel yang sudah ada
 - `kelas` tambah kolom **`kampus_id`** (FK ke `kampus`) — siswa mewarisi kampus lewat relasi ke kelasnya, tidak ada `kampus_id` duplikat di `students`.
 - `students` tambah kolom untuk mekanisme lock (ADR-017): `locked_at` (nullable), `locked_reason` (nullable), `locked_by` (FK ke `users`, nullable), `unlocked_at` (nullable), `unlocked_by` (FK ke `users`, nullable), `unlock_note` (nullable).
+- `students` tambah kolom **`late_strike_reset_at`** (nullable — T037, ADR-025) — timestamp reset counter keterlambatan untuk mekanisme lock otomatis 2x terlambat. Diisi `now()` oleh `unlock()` kalau lock yang dibuka adalah lock otomatis (dideteksi lewat `locked_by IS NULL`, karena lock manual selalu diisi piket yang login). `null` berarti hitung dari seluruh riwayat terlambat sejak awal.
 - `attendance_records` tambah kolom **`pulang_via`** (nullable, enum: `tap` / `piket_izin` / `tap_izin_pulang`) — makna masing-masing nilai:
   - `tap` = tap keluar normal di gerbang, tanpa aksi piket khusus
   - `piket_izin` = piket catat keluar tanpa tap (izin keluar tidak kembali, atau siswa gagal tap dan piket manual input)
@@ -76,7 +81,7 @@ updated: 2026-06-25
 - Kewenangan membuat dan mengubah `permits` hanya role `guru_piket` — ditegakkan di level API guard (lihat ADR-019).
 
 ### `tap_events` (immutable — raw log setiap tap RFID)
-- `id`, `uid` (UID kartu yang di-scan — raw string, bukan FK, supaya tap UID tidak dikenal pun tercatat), `card_id` (FK ke `cards`, nullable — null kalau UID tidak ditemukan), `kiosk_id` (ID mesin scanner, sama dengan yang ada di `attendance_records`), `scanned_at` (**timestamp server**, bukan client — clock kiosk tidak bisa dijadikan sumber kebenaran waktu), `result` (enum: `accepted` / `rejected_inactive` / `rejected_locked` / `rejected_unknown` / `rejected_duplicate`), `attendance_record_id` (FK ke `attendance_records`, nullable — terisi kalau tap berhasil membuat/update record)
+- `id`, `uid` (UID kartu yang di-scan — raw string, bukan FK, supaya tap UID tidak dikenal pun tercatat), `card_id` (FK ke `cards`, nullable — null kalau UID tidak ditemukan), `kiosk_id` (FK ke `kiosks`, nullable — **T027: sekarang proper FK bertipe integer, bukan lagi string self-reported dari kiosk**), `scanned_at` (**timestamp server**, bukan client — clock kiosk tidak bisa dijadikan sumber kebenaran waktu), `result` (enum: `accepted` / `rejected_inactive` / `rejected_locked` / `rejected_unknown` / `rejected_duplicate` / `rejected_wrong_kiosk_type` — nilai terakhir ditambahkan T028, ADR-022), `attendance_record_id` (FK ke `attendance_records`, nullable — terisi kalau tap berhasil membuat/update record)
 
 > **Insert-only.** Tidak ada endpoint DELETE atau UPDATE dari aplikasi. Ini adalah log forensik bukti tap fisik — berguna untuk kasus "siswa klaim sudah tap tapi tidak tercatat." Volume estimasi: ±5.000 baris/hari (2.500 siswa × 2 tap) = ±1,8 juta/tahun. Masuk scope ETL ke data warehouse (ADR-013). Lihat ADR-020.
 
@@ -117,6 +122,29 @@ hari_wajib = tanggal ∈ range academic_years (is_active = true)
 
 **Catatan implementasi:** Tidak perlu field tambahan di skema — aturan "Senin–Jumat wajib, Sabtu opsional" dikode sebagai konstanta di service layer Rekap, bukan data yang bisa dikonfigurasi admin. Kalau suatu saat jadwal berubah (misal ada program Sabtu wajib), baru dipertimbangkan sebagai perubahan skema.
 
+## Entitas Kiosk (T027 ADR-021, T028 ADR-022)
+
+> Ditambahkan 2026-07-16 (T027) — token per-kiosk dari database + IP whitelist, menggantikan static env token. Tipe kiosk ditambahkan 2026-07-17 (T028).
+
+### `kiosks`
+- `id` (Int autoincrement — **bukan** `String cuid()` seperti draf awal spec, disesuaikan supaya konsisten dengan seluruh model lain di schema ini), `nama`, `kampus_id` (FK ke `kampus`), `device_token` (unique, random 256-bit via `nanoid(32)`), `allowed_ip` (IPv4, divalidasi di level DTO), `tipe` (enum: `siswa` / `guru` — **T028, ADR-022**, wajib diisi admin saat registrasi, TIDAK dideteksi otomatis dari kartu), `is_active` (boolean), `last_seen_at` (nullable, update fire-and-forget setiap tap sukses), `last_seen_ip` (nullable), `created_by` (FK ke `users`), `created_at`
+
+**Auth berlapis (ADR-021):** token dari URL (`?device=TOKEN`, admin generate + tampilkan QR code) **DAN** IP harus cocok dengan `allowed_ip` — kombinasi keduanya, bukan salah satu saja. `KioskGuard` query `kiosks` berdasarkan token dari header `Authorization: Bearer`, lalu validasi IP request terhadap `allowed_ip`.
+
+**Kartu salah tipe kiosk (ADR-022):** kartu siswa di-tap di kiosk `tipe=guru` (atau sebaliknya) ditolak dengan `tap_events.result=rejected_wrong_kiosk_type` — tetap tercatat (insert-only, forensik), tapi tidak membuat/ubah `attendance_records`.
+
+**Status online/offline** (dipakai UI admin `/kiosk`, belum dikerjakan): `last_seen_at` dalam 5 menit terakhir → online, lebih dari itu → offline. Bukan kolom tersendiri, dihitung saat query seperti halnya alfa di modul Rekap.
+
+## Entitas Jadwal Piket (T032, ADR-024)
+
+> Ditambahkan 2026-07-21 (T032) — jadwal hari bertugas per akun `guru_piket`, dasar untuk enforcement read-only dashboard piket di hari non-tugas.
+
+### `piket_schedules`
+- `id`, `hari` (Int, **basis independen 1=Senin..6=Sabtu** — **BUKAN** basis DAYOFWEEK yang dipakai `schedules.hari`, sengaja beda karena grid admin cuma 6 kolom Senin-Sabtu tanpa Minggu), `user_id` (FK ke `users`, harus role `guru_piket`), `created_by` (FK ke `users`), `created_at`
+- Constraint unique `(hari, user_id)` — satu guru piket tidak bisa di-assign dobel ke hari yang sama.
+
+**Enforcement (bukan cuma UI):** `PiketOnDutyGuard` di backend cek `piket_schedules` sebelum semua endpoint tulis modul piket (lock/unlock siswa, buat/update permit, konfirmasi kembali, dst) — guru piket yang login di luar hari jadwalnya tetap bisa lihat data, tapi request tulis ditolak 403 walau di-bypass lewat API langsung, bukan cuma disembunyikan di UI.
+
 ---
 
 ## 🏗️ Catatan Infrastruktur (lihat [[Projek/AbsenSI/10-Environment|10-Environment]] untuk detail lengkap)
@@ -125,5 +153,6 @@ Database AbsenSI hidup sebagai 1 schema/database MySQL di server fisik bersama (
 ## 🔗 Lihat Juga
 - [[Projek/AbsenSI/06-Features/absensi-gerbang|absensi-gerbang.md]]
 - [[Projek/AbsenSI/06-Features/absensi-kelas-mapel|absensi-kelas-mapel.md]]
-- [[Projek/AbsenSI/11-Decisions|11-Decisions]] — ADR-010 s/d ADR-014
+- [[Projek/AbsenSI/06-Features/dashboard-piket|dashboard-piket.md]]
+- [[Projek/AbsenSI/11-Decisions|11-Decisions]] — ADR-010 s/d ADR-025
 
