@@ -24,7 +24,7 @@ Ganti halaman Manajemen Akun (`apps/web/src/app/(admin)/akun/akun-view.tsx`) dar
    - Section **Piket** → field `teacherId` (pilih guru existing) + `kampusId` (pilih kampus) tetap muncul, SAMA seperti kondisional existing untuk role `guru_piket` sekarang.
    - Section **Guru** → field `teacherId` muncul (SAMA seperti kondisional existing untuk role `guru`).
    - Section **Pembina Ekstra** → TIDAK perlu `teacherId`/`kampusId` (akun berdiri sendiri, `teacherId` selalu null untuk role ini per desain T096) — cek apakah ada field lain yang relevan (misal assign ke ekstrakurikuler mana — TAPI itu kemungkinan dilakukan dari halaman `ekstra-kurikuler` (assign pembina ke ekstra), BUKAN dari form buat akun ini, JANGAN gabungkan 2 concern berbeda kecuali user eksplisit minta).
-5. **Daftar akun ditampilkan terpisah per section** — bukan 1 tabel gabungan semua role seperti sekarang. Kemungkinan bentuk: 4 tab (mirip pola `Tabs` yang sudah dipakai di halaman Upload Foto, lihat [[06-Features/tasks/T103-sidebar-admin-berkelompok|T103]]) ATAU 4 halaman terpisah — **putuskan/konfirmasi ke user bentuk visual navigasinya sebelum implementasi** (tab dalam 1 halaman vs halaman terpisah dengan sub-nav) — belum eksplisit dibahas di diskusi ini.
+5. **Daftar akun ditampilkan terpisah per section** — bukan 1 tabel gabungan semua role seperti sekarang. Kemungkinan bentuk: 4 tab (mirip pola `Tabs` yang sudah dipakai di halaman Upload Foto, lihat T103 (06-Features/tasks/T103-sidebar-admin-berkelompok.md)) ATAU 4 halaman terpisah — **putuskan/konfirmasi ke user bentuk visual navigasinya sebelum implementasi** (tab dalam 1 halaman vs halaman terpisah dengan sub-nav) — belum eksplisit dibahas di diskusi ini.
 
 ## Spec Detail
 

@@ -1,7 +1,7 @@
 # T102 — Schema+API+UI: Dashboard Pembina Ekstra Lengkap (Daftar Peserta, Kelompok/Sesi Paralel, Jadwal Hari, Auto-Generate Presensi)
 
 ## Depends on
-[[06-Features/tasks/T096-absensi-ekstrakurikuler-pembina|T096]] — SUDAH DIEKSEKUSI (model `EkstraSesi`/`EkstraAbsen`, guard `EkstraPembinaGuard`, halaman dasar `apps/web/src/app/(guru)/guru/ekstrakurikuler/`). **T102 ini AMANDEMEN BESAR terhadap desain T096** — mengubah `EkstraSesi` dari "dibuat manual per tanggal, 1 sesi = seluruh peserta ekstra" menjadi "auto-generate dari jadwal hari, opsional per-kelompok". Baca T096 dulu SEPENUHNYA untuk paham baseline sebelum baca task ini.
+T096 (06-Features/tasks/T096-absensi-ekstrakurikuler-pembina.md) — SUDAH DIEKSEKUSI (model `EkstraSesi`/`EkstraAbsen`, guard `EkstraPembinaGuard`, halaman dasar `apps/web/src/app/(guru)/guru/ekstrakurikuler/`). **T102 ini AMANDEMEN BESAR terhadap desain T096** — mengubah `EkstraSesi` dari "dibuat manual per tanggal, 1 sesi = seluruh peserta ekstra" menjadi "auto-generate dari jadwal hari, opsional per-kelompok". Baca T096 dulu SEPENUHNYA untuk paham baseline sebelum baca task ini.
 
 ## Objective
 3 submenu baru di dashboard pembina ekstra (guru yang jadi pembina ATAU akun `pembina_ekstra` eksternal): **Daftar Peserta** (lihat semua siswa terdaftar, filter+search), **Presensi** (buat/lihat/edit presensi per pertemuan, auto-generate dari jadwal, opsional per-kelompok), **Setting Ekstrakurikuler** (atur hari+jam ekstra, kelola kelompok/sesi paralel + plotting siswa ke kelompok).
@@ -37,7 +37,7 @@
    - Input **hari** ekstra (dan jam, kalau TIDAK ada kelompok) — 1x seminggu, field `hari` (enum/int 1-7 pola sama `Schedule.hari`), bukan tanggal spesifik.
    - Kelola kelompok: buat kelompok baru (nama + jam), lihat daftar kelompok yang sudah ada.
    - **Plotting siswa ke kelompok** — halaman per-kelompok dengan **split view 1 halaman** (dikonfirmasi user, REKOMENDASI final): 2 daftar sekaligus terlihat — "Belum Berkelompok" (siswa terdaftar ekstra ini yang belum masuk kelompok manapun, tombol **+** untuk assign ke kelompok yang sedang dibuka) dan "Anggota Kelompok Ini" (siswa yang sudah di-assign, tombol **X** untuk keluarkan dari kelompok) — kedua daftar update REAL-TIME setelah aksi (tanpa reload), TIAP KLIK langsung API call (bukan batch-save, beda dari alur Presensi di atas — assign/unassign kelompok adalah aksi ringan low-risk, cocok direct-save).
-8. **Menu "Daftar Peserta"** — tabel semua siswa terdaftar (`EkstraPendaftaran`) di ekstra ini, filter Jurusan (dropdown) → Kelas (dropdown, TER-FILTER oleh Jurusan terpilih, pola SAMA PERSIS seperti [[feedback_filter_search_jurusan_kelas_order|urutan filter Search→Jurusan→Kelas]] yang sudah jadi konvensi di codebase — lihat `direktori-siswa-view.tsx` T093 sebagai referensi implementasi), dan search nama.
+8. **Menu "Daftar Peserta"** — tabel semua siswa terdaftar (`EkstraPendaftaran`) di ekstra ini, filter Jurusan (dropdown) → Kelas (dropdown, TER-FILTER oleh Jurusan terpilih, pola SAMA PERSIS seperti urutan filter Search→Jurusan→Kelas (feedback_filter_search_jurusan_kelas_order.md) yang sudah jadi konvensi di codebase — lihat `direktori-siswa-view.tsx` T093 sebagai referensi implementasi), dan search nama.
 
 ## Spec Detail — Skema Baru/Diubah
 
@@ -161,7 +161,7 @@ model EkstraSesi {
 - [x] Klarifikasi ke user SEBELUM implementasi: kapan tombol "Buat Presensi manual" muncul (selalu vs cuma fallback) — jangan asumsikan sendiri.
 - [x] Verifikasi ulang constraint `EkstraKelompokAnggota` (catatan di atas) sebelum menulis migration — pastikan asumsi "1 siswa 1 ekstra total" masih berlaku saat task ini dieksekusi (cek `EkstraPendaftaran.studentId @unique` belum berubah).
 - [x] Tiru pola `TeachingSessionsService.generateForDate()` dan `generate-sessions.processor.ts` SEPERSIS mungkin untuk auto-generate — jangan desain mekanisme cron baru yang berbeda tanpa alasan kuat.
-- [x] Filter Jurusan→Kelas di Daftar Peserta WAJIB ikuti [[feedback_filter_search_jurusan_kelas_order|urutan Search→Jurusan→Kelas]] yang sudah jadi konvensi (lihat memory project, dan implementasi T093 di `direktori-siswa-view.tsx`).
+- [x] Filter Jurusan→Kelas di Daftar Peserta WAJIB ikuti urutan Search→Jurusan→Kelas (feedback_filter_search_jurusan_kelas_order.md) yang sudah jadi konvensi (lihat memory project, dan implementasi T093 di `direktori-siswa-view.tsx`).
 
 ## Implementasi & Verifikasi (2026-07-31)
 

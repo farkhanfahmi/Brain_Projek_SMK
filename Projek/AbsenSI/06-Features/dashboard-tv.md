@@ -6,7 +6,7 @@ updated: 2026-06-25
 
 # Feature — Dashboard TV Realtime
 
-← [[Projek/AbsenSI/00-INDEX AbsenSI|Index]]
+← Index (00-INDEX AbsenSI.md)
 
 > Tampilan realtime rekap kehadiran untuk TV di ruang kepala sekolah. Push via WebSocket, bukan polling.
 
@@ -34,10 +34,10 @@ Filter yang harus didukung:
 - Per rentang tanggal/hari
 - Per status (hadir/terlambat/tidak hadir/bolos — bolos baru relevan fase 2)
 
-**Catatan performa:** dengan data tahunan (2.500 siswa × ±200 hari sekolah/tahun = ±500rb baris/tahun), query filter butuh index komposit yang tepat di kolom `(tanggal, kelas_id)`, `(tanggal, status)`, dst. Desain index final menyusul di [[Projek/AbsenSI/04-Database-Schema|04-Database-Schema]].
+**Catatan performa:** dengan data tahunan (2.500 siswa × ±200 hari sekolah/tahun = ±500rb baris/tahun), query filter butuh index komposit yang tepat di kolom `(tanggal, kelas_id)`, `(tanggal, status)`, dst. Desain index final menyusul di 04-Database-Schema (04-Database-Schema.md).
 
 ## Akun & Auth (Resolved)
-- TV dashboard **tetap butuh autentikasi** — tidak dianggap "tampilan publik" meski di ruang terbatas (lihat [[Projek/AbsenSI/03-User-Roles|03-User-Roles]])
+- TV dashboard **tetap butuh autentikasi** — tidak dianggap "tampilan publik" meski di ruang terbatas (lihat 03-User-Roles (03-User-Roles.md))
 - Role khusus **Kepala Sekolah (`kepsek`)** — akun login tersendiri, read-only
 - **Sesi TV:** akun `kepsek` di TV menggunakan refresh token berumur panjang (**30 hari, sliding renewal**) — setiap kali halaman dimuat atau Socket.IO event masuk, token diperbarui otomatis di background. TV tidak pernah perlu re-login manual selama aktif dipakai. Kalau token expire (TV mati lebih dari 30 hari), admin login ulang sekali dari keyboard/mouse yang tersedia.
 
@@ -52,6 +52,6 @@ Filter yang harus didukung:
 **Status spec:** ✅ Final — siap dipecah jadi task development.
 
 ## 🔗 Lihat Juga
-- [[Projek/AbsenSI/06-Features/absensi-gerbang|Absensi Gerbang]]
-- [[Projek/AbsenSI/02-Tech-Stack|02-Tech-Stack — bagian Realtime]]
+- Absensi Gerbang (06-Features/absensi-gerbang.md)
+- 02-Tech-Stack — bagian Realtime (02-Tech-Stack.md)
 

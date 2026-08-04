@@ -4,13 +4,13 @@
 Tidak ada — murni infrastruktur (docker-compose, folder, git branch), TIDAK mengubah kode aplikasi.
 
 ## Objective
-Menutup celah yang menyebabkan [[06-Features/tasks/T104-akun-section-berbasis-role|insiden database wipe 2026-07-30]]: testing/development TIDAK LAGI berbagi database DAN checkout kode yang sama dengan yang dipakai live sekolah. Disiapkan supaya nanti mudah "naik pangkat" saat server sekolah sungguhan siap — production tinggal `git clone` branch `main` + restore backup, development di komputer ini lanjut sebagai tempat eksperimen permanen.
+Menutup celah yang menyebabkan insiden database wipe 2026-07-30 (06-Features/tasks/T104-akun-section-berbasis-role.md): testing/development TIDAK LAGI berbagi database DAN checkout kode yang sama dengan yang dipakai live sekolah. Disiapkan supaya nanti mudah "naik pangkat" saat server sekolah sungguhan siap — production tinggal `git clone` branch `main` + restore backup, development di komputer ini lanjut sebagai tempat eksperimen permanen.
 
 ## Context
-- **Diskusi 2026-07-31**, lanjutan pasca-insiden [[feedback_insiden_database_wipe_2026-07-30]] dan pemasangan [[project_backup_absensi_terpasang|backup otomatis]].
+- **Diskusi 2026-07-31**, lanjutan pasca-insiden feedback_insiden_database_wipe_2026-07-30.md dan pemasangan backup otomatis (project_backup_absensi_terpasang.md).
 - **Kondisi topologi saat ini** (dikonfirmasi user): komputer ini SEMENTARA berperan sebagai production (diakses sekolah via `10.10.10.198`, sampai server sekolah sungguhan siap). Rencana jangka panjang: pindah ke server sekolah sebagai production permanen, komputer ini kembali murni jadi mesin development.
 - **Temuan penting soal Git** (WAJIB ditindaklanjuti, bagian dari task ini): repo HANYA punya 1 branch (`main`), commit TERAKHIR tanggal **2026-07-23** (`48c6668`), sementara **136 file berubah/baru** belum pernah di-commit — artinya SELURUH pekerjaan T072-T104 (migrasi CSV siswa, sinkronisasi kelas/kampus, fitur ekstrakurikuler lengkap, dashboard piket batch 3, dst) tidak ada jejaknya di GitHub. Kalau mesin ini rusak, kerugian akan sama fatalnya dengan insiden database wipe — kali ini kode, bukan data.
-- **Temuan infra existing**: `docker-compose.yml` di root cuma 2 service (`mysql:8` port 3307→3306, `redis:7` port 6379) — sederhana, mudah diduplikasi untuk dev. Container database production bernama `absensi-mysql-1` (lihat [[project_backup_absensi_terpasang]]).
+- **Temuan infra existing**: `docker-compose.yml` di root cuma 2 service (`mysql:8` port 3307→3306, `redis:7` port 6379) — sederhana, mudah diduplikasi untuk dev. Container database production bernama `absensi-mysql-1` (lihat project_backup_absensi_terpasang.md).
 
 ## Keputusan Final (dikonfirmasi user 2026-07-31)
 
@@ -22,7 +22,7 @@ Menutup celah yang menyebabkan [[06-Features/tasks/T104-akun-section-berbasis-ro
    - `/home/anunnaki/Documents/APP SMK/AbsenSI` (existing) → **PRODUCTION**, branch `main`, port app SAMA seperti sekarang (web 3000, api 3001, kiosk 3002), `.env` menunjuk `absensi-mysql-1`.
    - `/home/anunnaki/Documents/APP SMK/AbsenSI-dev` (BARU, `git clone` dari repo yang sama) → **DEVELOPMENT**, branch `dev`, port BERBEDA (usulan: web 3100, api 3101, kiosk 3102 — cek dulu tidak bentrok port lain yang sudah dipakai container Docker lain di mesin ini, lihat `docker ps` untuk daftar lengkap), `.env` menunjuk `absensi-mysql-dev`.
 4. **Alur kerja Git**: `dev` (atau feature branch dari `dev`) untuk semua eksperimen → setelah teruji, merge `dev` → `main` → push ke GitHub → **folder production** `git pull origin main` + `prisma migrate deploy` (BUKAN `migrate reset`) + restart service.
-5. **Migrasi ke server sekolah nanti**: server sekolah `git clone` branch `main` dari GitHub, restore dump terbaru dari `/media/anunnaki/DataNvme/backups/absensi/` (lihat [[project_backup_absensi_terpasang]]), set `.env` production baru. Komputer ini otomatis jadi development permanen (folder production di sini bisa dihentikan/dihapus setelah migrasi sukses, TIDAK sebelum ada konfirmasi server baru berjalan stabil).
+5. **Migrasi ke server sekolah nanti**: server sekolah `git clone` branch `main` dari GitHub, restore dump terbaru dari `/media/anunnaki/DataNvme/backups/absensi/` (lihat project_backup_absensi_terpasang.md), set `.env` production baru. Komputer ini otomatis jadi development permanen (folder production di sini bisa dihentikan/dihapus setelah migrasi sukses, TIDAK sebelum ada konfirmasi server baru berjalan stabil).
 
 ## Spec Detail — Langkah Implementasi
 
@@ -52,7 +52,7 @@ Menutup celah yang menyebabkan [[06-Features/tasks/T104-akun-section-berbasis-ro
 - Folder production **TIDAK PERNAH** di-checkout ke branch selain `main`.
 - Folder dev **TIDAK PERNAH** dipakai untuk akses langsung dari jaringan sekolah (`10.10.10.198`) — kalau perlu demo ke user/staff sekolah, pakai folder production.
 - Container `absensi-mysql-1` (production) TIDAK PERNAH menerima perintah `migrate reset`/`db push --force-reset`/`TRUNCATE` sembarangan — HANYA `migrate deploy` (apply migration yang sudah final, tidak destruktif terhadap data existing kalau migration ditulis benar).
-- Backup otomatis ([[project_backup_absensi_terpasang]]) TETAP berjalan HANYA untuk `absensi-mysql-1` (production) — database dev TIDAK perlu di-backup (isinya memang boleh hilang kapan saja).
+- Backup otomatis (project_backup_absensi_terpasang.md) TETAP berjalan HANYA untuk `absensi-mysql-1` (production) — database dev TIDAK perlu di-backup (isinya memang boleh hilang kapan saja).
 
 ## Edge Cases
 - Kedua folder jalan bersamaan di mesin yang sama — pastikan TIDAK ADA bentrok port (app maupun database) sebelum start keduanya sekaligus. Cek `docker ps`/`ss -tlnp` sebelum menetapkan port dev final.

@@ -1,7 +1,7 @@
 # T101 — Validasi Tap Pulang Sesuai Jadwal Kelas (BLOCKED — Jangan Eksekusi Sebelum Prasyarat Terpenuhi)
 
 ## Status: 🔴 BLOCKED
-**Prasyarat wajib SEBELUM task ini bisa dikerjakan:** data jadwal pelajaran (`Schedule` type=`jam_mengajar`) untuk SEMUA kelas harus terisi lengkap dan akurat. Saat ditulis (2026-07-30), tabel `schedules` cuma berisi **6 baris data dummy** (bukan jadwal riil), jauh dari cukup untuk fitur ini berfungsi benar. Pengisian jadwal lengkap kemungkinan terkait fitur Jurnal Guru ([[Projek/AbsenSI/TASKS-FASE-2-JURNAL|TASKS-FASE-2-JURNAL]], T038-T051, status 0/14 belum dikerjakan) — **cek status itu dulu, task T101 ini TIDAK BOLEH dimulai sampai prasyarat data terpenuhi**, walau kodenya sendiri bisa ditulis lebih dulu asalkan tidak di-deploy aktif sebelum data siap.
+**Prasyarat wajib SEBELUM task ini bisa dikerjakan:** data jadwal pelajaran (`Schedule` type=`jam_mengajar`) untuk SEMUA kelas harus terisi lengkap dan akurat. Saat ditulis (2026-07-30), tabel `schedules` cuma berisi **6 baris data dummy** (bukan jadwal riil), jauh dari cukup untuk fitur ini berfungsi benar. Pengisian jadwal lengkap kemungkinan terkait fitur Jurnal Guru (TASKS-FASE-2-JURNAL (TASKS-FASE-2-JURNAL.md), T038-T051, status 0/14 belum dikerjakan) — **cek status itu dulu, task T101 ini TIDAK BOLEH dimulai sampai prasyarat data terpenuhi**, walau kodenya sendiri bisa ditulis lebih dulu asalkan tidak di-deploy aktif sebelum data siap.
 
 ## Depends on
 Data jadwal `jam_mengajar` lengkap per kelas (lihat status blocked di atas). Secara kode, tidak bergantung pada task lain di batch T098-T100.
@@ -11,7 +11,7 @@ Siswa TIDAK BOLEH tap pulang sebelum jam pelajaran terakhir kelasnya selesai har
 
 ## Context
 - **App:** `apps/api` + `apps/kiosk` + `apps/web`
-- Diskusi lengkap 2026-07-30, bagian dari rangkaian diskusi [[06-Features/tasks/T100-rename-tidak-tap-pulang|T100]] — user awalnya mengira banyaknya "Tidak Tap Pulang" adalah soal parameter jam, ternyata bukan (lihat T100). Diskusi berlanjut ke usulan besar ini yang MENGUBAH skema tap pulang secara fundamental (bukan lagi murni "tap ke-2 = pulang tanpa syarat apapun").
+- Diskusi lengkap 2026-07-30, bagian dari rangkaian diskusi T100 (06-Features/tasks/T100-rename-tidak-tap-pulang.md) — user awalnya mengira banyaknya "Tidak Tap Pulang" adalah soal parameter jam, ternyata bukan (lihat T100). Diskusi berlanjut ke usulan besar ini yang MENGUBAH skema tap pulang secara fundamental (bukan lagi murni "tap ke-2 = pulang tanpa syarat apapun").
 - **Ini OVERRIDE besar terhadap desain tap existing** (`attendance.service.ts` — tap ke-2 hari itu = pulang, TANPA pengecekan waktu sama sekali, lihat kode `tap()` baris ±150-179). Perubahan ini menyentuh alur inti absensi gerbang yang dipakai SETIAP hari oleh SEMUA siswa — risiko tinggi, WAJIB pengujian ekstensif sebelum live.
 
 ## Keputusan yang Sudah Dikonfirmasi (2026-07-30)

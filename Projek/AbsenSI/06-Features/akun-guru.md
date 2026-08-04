@@ -6,7 +6,7 @@ updated: 2026-06-25
 
 # Feature — Akun & Riwayat Kehadiran Guru
 
-← [[Projek/AbsenSI/00-INDEX AbsenSI|Index]]
+← Index (00-INDEX AbsenSI.md)
 
 > Guru bisa login untuk melihat riwayat kehadirannya sendiri. Scope fase 1 **sengaja sangat sempit** — read-only, tanpa edit apa pun, tanpa akses lihat data kelas/siswa lain. Fitur wali kelas (lihat kehadiran kelas yang diampu) **dibahas di fase 2**.
 
@@ -37,6 +37,6 @@ updated: 2026-06-25
 **Status spec:** ✅ Final — siap dipecah jadi task development.
 
 ## 🔗 Lihat Juga
-- [[Projek/AbsenSI/03-User-Roles|03-User-Roles]]
-- [[Projek/AbsenSI/11-Decisions|ADR-008]]
+- 03-User-Roles (03-User-Roles.md)
+- ADR-008 (11-Decisions.md)
 

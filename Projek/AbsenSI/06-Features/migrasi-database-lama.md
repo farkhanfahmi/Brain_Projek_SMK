@@ -6,7 +6,7 @@ updated: 2026-07-22
 
 # Feature — Migrasi Data dari Database Lama (Laravel/Spatie)
 
-← [[Projek/AbsenSI/00-INDEX AbsenSI|Index]]
+← Index (00-INDEX AbsenSI.md)
 
 > AbsenSI adalah rebuild dari aplikasi absensi lama (Laravel + Spatie Permission, MySQL). File dump lama: `/media/anunnaki/DataNvme/sql_absensi_smk.sql` (65MB, ~359rb baris, 22 tabel). Dokumen ini membandingkan struktur lama vs skema Prisma baru, dan mencatat keputusan migrasi yang sudah dan belum diambil.
 
@@ -94,6 +94,6 @@ Skema lama **tidak punya 1 kolom "nama kelas lengkap"** — nama kelas siswa (mi
 ---
 
 ## 🔗 Lihat Juga
-- [[Projek/AbsenSI/04-Database-Schema|04-Database-Schema]] — skema baru lengkap
+- 04-Database-Schema (04-Database-Schema.md) — skema baru lengkap
 - `apps/api/prisma/schema.prisma` — sumber kebenaran teknis terkini
 - File dump lama: `/media/anunnaki/DataNvme/sql_absensi_smk.sql`

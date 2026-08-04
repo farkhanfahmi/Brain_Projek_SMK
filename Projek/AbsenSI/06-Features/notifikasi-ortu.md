@@ -6,7 +6,7 @@ updated: 2026-06-25
 
 # Feature — Notifikasi Orang Tua (Fase 3 — Jalur Disiapkan, Belum Dibangun)
 
-← [[Projek/AbsenSI/00-INDEX AbsenSI|Index]]
+← Index (00-INDEX AbsenSI.md)
 
 > **Tidak dikerjakan di fase 1.** Hanya jalur arsitektur (event-driven via BullMQ) yang disiapkan dari fase 1, sesuai ADR-006. Dokumen ini placeholder untuk planning detail nanti.
 
@@ -24,5 +24,5 @@ updated: 2026-06-25
 - [ ] Reliability — apa yang terjadi kalau pesan gagal kirim (retry policy)
 
 ## 🔗 Lihat Juga
-- [[Projek/AbsenSI/11-Decisions|ADR-006]]
+- ADR-006 (11-Decisions.md)
 

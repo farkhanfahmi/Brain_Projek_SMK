@@ -6,9 +6,9 @@ updated: 2026-07-21
 
 # Feature — Absensi Kelas & Mapel via Tap RFID (ARSIP — Digantikan)
 
-← [[Projek/AbsenSI/00-INDEX AbsenSI|Index]]
+← Index (00-INDEX AbsenSI.md)
 
-> **⚰️ ARSIP — tidak lagi dilanjutkan (2026-07-21).** Pendekatan tap-RFID-di-kelas di dokumen ini digantikan oleh [[Projek/AbsenSI/06-Features/dashboard-guru-jurnal|dashboard-guru-jurnal.md]]. Alasan: blocker "gerbang tanpa penghalang fisik" (lihat bawah) tidak pernah terpecahkan, dan kebutuhan riil sekolah lebih ke arah jurnal mengajar + jadwal blok Minggu A/B daripada reader fisik baru di tiap kelas. Dokumen ini dipertahankan sebagai arsip konteks keputusan, bukan spec aktif.
+> **⚰️ ARSIP — tidak lagi dilanjutkan (2026-07-21).** Pendekatan tap-RFID-di-kelas di dokumen ini digantikan oleh dashboard-guru-jurnal.md (06-Features/dashboard-guru-jurnal.md). Alasan: blocker "gerbang tanpa penghalang fisik" (lihat bawah) tidak pernah terpecahkan, dan kebutuhan riil sekolah lebih ke arah jurnal mengajar + jadwal blok Minggu A/B daripada reader fisik baru di tiap kelas. Dokumen ini dipertahankan sebagai arsip konteks keputusan, bukan spec aktif.
 
 > Dokumen asli di bawah ini **tidak diubah** — hanya ditandai superseded di atas.
 
@@ -57,7 +57,7 @@ updated: 2026-07-21
 - Modul Attendance fase 1 harus dirancang generic untuk "sesi tap" (bisa sesi gerbang ATAU sesi kelas nanti), bukan hardcode hanya untuk gerbang
 
 ## 🔗 Lihat Juga
-- [[Projek/AbsenSI/06-Features/absensi-gerbang|Absensi Gerbang (Fase 1)]]
-- [[Projek/AbsenSI/11-Decisions|ADR-005]]
-- [[Projek/AbsenSI/13-Backlog|13-Backlog]]
+- Absensi Gerbang (Fase 1) (06-Features/absensi-gerbang.md)
+- ADR-005 (11-Decisions.md)
+- 13-Backlog (13-Backlog.md)
 

@@ -5,7 +5,7 @@ Tidak ada — menambah model baru (`EkstraSesi`, `EkstraAbsen`) dan field baru d
 
 ## Context
 - **App:** `apps/api` + `apps/web`
-- **Ref:** [[06-Features/ekstrakurikuler|Feature — Ekstrakurikuler]] (diperbarui 2026-07-30, baca dulu bagian "Yang Sudah Ada"). Diskusi desain lengkap dengan user 2026-07-30, semua keputusan di bawah sudah dikonfirmasi eksplisit — JANGAN tanya ulang hal yang sudah diputuskan di sini, hanya klarifikasi kalau menemukan kondisi yang benar-benar belum tercakup.
+- **Ref:** Feature — Ekstrakurikuler (06-Features/ekstrakurikuler.md) (diperbarui 2026-07-30, baca dulu bagian "Yang Sudah Ada"). Diskusi desain lengkap dengan user 2026-07-30, semua keputusan di bawah sudah dikonfirmasi eksplisit — JANGAN tanya ulang hal yang sudah diputuskan di sini, hanya klarifikasi kalau menemukan kondisi yang benar-benar belum tercakup.
 - **Pola arsitektur yang ditiru** (sudah teruji di produksi, ikuti strukturnya): `Schedule` → `TeachingSession` → `JournalEntry` + `ClassAttendanceMark` (lihat `apps/api/prisma/schema.prisma` baris ±327-395). Ekstrakurikuler analog tapi TANPA `Schedule` (ekstra tidak instrumentasi jadwal terstruktur) — sesi dibuat manual oleh pembina, bukan auto-generate harian.
 
 ## Keputusan Final (dikonfirmasi user, 2026-07-30)
@@ -146,4 +146,4 @@ model EkstraAbsen {
 - [ ] Scope tidak digabung dengan hal lain (rekap kehadiran ekstra, nilai ekskul — itu di luar scope T096, jangan tergoda menambah)
 - [ ] Baca ulang `apps/api/prisma/schema.prisma` model `TeachingSession`/`ClassAttendanceMark`/`JournalEntry` SEBELUM menulis migration — pastikan pola FK/index konsisten
 - [ ] Baca ulang `apps/api/src/teacher-permits/` SEBELUM implementasi upload bukti — reuse pola `FileInterceptor`/`ParseFilePipeBuilder`, jangan reinvent
-- [ ] Cek dulu bug `isActive` di `apps/web/src/app/(guru)/guru-sidebar.tsx` baris 53 (sama seperti [[S|T094]] di piket) SEBELUM menambah menu baru — kalau belum diperbaiki, menu Dashboard/Jurnal guru akan salah highlight begitu menu "Ekstrakurikuler" ditambahkan, pertimbangkan fix sekalian karena keduanya menyentuh file yang sama
+- [ ] Cek dulu bug `isActive` di `apps/web/src/app/(guru)/guru-sidebar.tsx` baris 53 (sama seperti T094 (S.md) di piket) SEBELUM menambah menu baru — kalau belum diperbaiki, menu Dashboard/Jurnal guru akan salah highlight begitu menu "Ekstrakurikuler" ditambahkan, pertimbangkan fix sekalian karena keduanya menyentuh file yang sama

@@ -5,9 +5,9 @@ updated: 2026-06-25
 
 # 05 — API Endpoints
 
-← [[Projek/AbsenSI/00-INDEX AbsenSI|Index]]
+← Index (00-INDEX AbsenSI.md)
 
-> Draft kasar — detail lengkap menyusul setelah skema database & spec fitur final. Semua endpoint didokumentasikan via OpenAPI/Swagger auto-generate dari NestJS (lihat [[Projek/AbsenSI/02-Tech-Stack|02-Tech-Stack]]) — file ini jadi ringkasan navigasi, bukan duplikasi penuh.
+> Draft kasar — detail lengkap menyusul setelah skema database & spec fitur final. Semua endpoint didokumentasikan via OpenAPI/Swagger auto-generate dari NestJS (lihat 02-Tech-Stack (02-Tech-Stack.md)) — file ini jadi ringkasan navigasi, bukan duplikasi penuh.
 
 ---
 

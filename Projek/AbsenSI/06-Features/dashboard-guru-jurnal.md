@@ -6,9 +6,9 @@ updated: 2026-07-21
 
 # Feature — Dashboard Guru: Jurnal Mengajar & Absensi Mapel (Fase 2 — Prioritas #1)
 
-← [[Projek/AbsenSI/00-INDEX AbsenSI|Index]]
+← Index (00-INDEX AbsenSI.md)
 
-> **Status: masih interview/diskusi, BELUM final.** Dokumen ini menggantikan pendekatan lama di [[Projek/AbsenSI/06-Features/absensi-kelas-mapel|absensi-kelas-mapel.md]] (tap RFID di tiap kelas). Jangan mulai coding dari dokumen ini sampai status berubah jadi `final`.
+> **Status: masih interview/diskusi, BELUM final.** Dokumen ini menggantikan pendekatan lama di absensi-kelas-mapel.md (06-Features/absensi-kelas-mapel.md) (tap RFID di tiap kelas). Jangan mulai coding dari dokumen ini sampai status berubah jadi `final`.
 
 ---
 
@@ -105,7 +105,7 @@ Referensi Jurnale: data izin/sakit/alfa otomatis muncul di jurnal dari hasil pre
 
 ### 2. Jendela Waktu Jadwal
 - Slot hanya aktif (bisa diklik) begitu jam mulai jadwal tercapai
-- **Toleransi keterlambatan configurable** (bukan langsung dianggap telat di menit ke-0) — konsisten dengan prinsip "fully configurable" di [[Projek/AbsenSI/01-Overview|01-Overview]]
+- **Toleransi keterlambatan configurable** (bukan langsung dianggap telat di menit ke-0) — konsisten dengan prinsip "fully configurable" di 01-Overview (01-Overview.md)
 - Keterlambatan dihitung dari selisih jam mulai jadwal (+ toleransi) ke waktu klik "Mulai Mengajar"
 - Sesi **auto-close** otomatis saat jam selesai jadwal tercapai — tidak perlu aksi tutup manual dari guru
 
@@ -165,7 +165,7 @@ Field `kategori` di `teacher_permits`, murni informatif/pelaporan — **tidak me
 
 ## 👤 Role Baru: `admin_jurnal`
 
-> Mengikuti pola existing `card_admin` (ADR-008) — role generik terkunci ke satu domain modul, ditegakkan di level API guard bukan cuma UI, konsisten dengan aturan tegas di [[Projek/AbsenSI/03-User-Roles|03-User-Roles]] ("kalau cuma disembunyikan di frontend, endpoint API tetap bisa diakses langsung").
+> Mengikuti pola existing `card_admin` (ADR-008) — role generik terkunci ke satu domain modul, ditegakkan di level API guard bukan cuma UI, konsisten dengan aturan tegas di 03-User-Roles (03-User-Roles.md) ("kalau cuma disembunyikan di frontend, endpoint API tetap bisa diakses langsung").
 
 **Wewenang `admin_jurnal`** (terkunci murni ke domain jurnal — **tidak** bisa akses `users`, `cards`, `academic_years`/`school_holidays`, atau rekap kehadiran siswa fase 1):
 - Kelola jadwal mengajar: assign guru–kelas–mapel–jam, termasuk konfigurasi Mode Blok A/B vs Normal dan titik acuan minggu aktif
@@ -196,7 +196,7 @@ Field `kategori` di `teacher_permits`, murni informatif/pelaporan — **tidak me
 
 ## 📚 Semester & Loopback Tahun Ajaran (Final — 2026-07-22)
 
-> Detail skema semester ada di [[Projek/AbsenSI/06-Features/kalender-pendidikan|kalender-pendidikan.md]] bagian "1b. Semester" — baca itu dulu untuk struktur tabel `semesters`. Bagian ini fokus ke IMPLIKASI ke Jadwal Mengajar & Rekap yang sudah dispec sebelumnya di dokumen ini.
+> Detail skema semester ada di kalender-pendidikan.md (06-Features/kalender-pendidikan.md) bagian "1b. Semester" — baca itu dulu untuk struktur tabel `semesters`. Bagian ini fokus ke IMPLIKASI ke Jadwal Mengajar & Rekap yang sudah dispec sebelumnya di dokumen ini.
 
 ### Jadwal Mengajar sekarang di-scope per semester
 - `schedules` (`type: jam_mengajar`) **wajib** punya `semester_id` — ini **mengubah** T047/T050 yang sebelumnya hanya scope per tahun ajaran implisit. Jadwal semester ganjil dan genap adalah **set data terpisah sepenuhnya**, tidak otomatis lanjut dari semester sebelumnya
@@ -204,7 +204,7 @@ Field `kategori` di `teacher_permits`, murni informatif/pelaporan — **tidak me
 - **Semester aktif**: 1 semester aktif per waktu (`semesters.is_active`), di-switch manual oleh admin_jurnal (bukan otomatis dari tanggal) — job T040 (generate `teaching_sessions` harian) HARUS resolve dari semester aktif ini untuk tahu `schedules` mana yang berlaku hari ini, bukan lagi query semua `schedules` guru tanpa filter semester
 
 ### Loopback ke Tahun Ajaran/Semester Sebelumnya
-- **Rekap Kehadiran** ([[Projek/AbsenSI/06-Features/rekap-kehadiran|rekap-kehadiran.md]]): tambah filter dropdown "Tahun Ajaran" (dan opsional "Semester") — data historis SUDAH tidak terhapus by design (lihat `kalender-pendidikan.md` poin 1), yang kurang cuma UI untuk memilihnya secara eksplisit. Default filter: tahun ajaran + semester aktif saat ini
+- **Rekap Kehadiran** (rekap-kehadiran.md (06-Features/rekap-kehadiran.md)): tambah filter dropdown "Tahun Ajaran" (dan opsional "Semester") — data historis SUDAH tidak terhapus by design (lihat `kalender-pendidikan.md` poin 1), yang kurang cuma UI untuk memilihnya secara eksplisit. Default filter: tahun ajaran + semester aktif saat ini
 - **Jadwal Mengajar** (Dashboard Admin Jurnal, T050): tambah dropdown "Semester" di halaman jadwal — admin_jurnal bisa lihat/edit jadwal semester manapun (termasuk semester yang belum aktif, untuk persiapan), tapi **generate `teaching_sessions` harian (T040) HANYA pernah baca dari semester yang `is_active: true`** — melihat/menyiapkan jadwal semester lain tidak memengaruhi operasional harian sampai semester itu benar-benar diaktifkan
 - **Ini juga berlaku untuk `block_week_ranges`** (lihat [[#📅 Jadwal: Mode Blok (Minggu A/B) vs Mode Normal]]) — admin boleh input rentang minggu A/B untuk semester genap kapan saja meski ganjil masih berjalan, TAPI validasi no-overlap-antar-semester tetap berlaku real-time. "Boleh disiapkan lebih awal" = keleluasaan kerja, bukan izin tanggal tumpang tindih
 
@@ -216,7 +216,7 @@ Field `kategori` di `teacher_permits`, murni informatif/pelaporan — **tidak me
 
 ## 🏫 Wali Kelas (Final — Fase 2, siap eksekusi)
 
-> **Keputusan (2026-07-21):** Wali Kelas **bukan role baru** — extend pola `guru_piket` (akun `guru` existing + kolom scope tambahan), bukan entitas terpisah. Read-only murni, tidak ada wewenang tulis apapun (konsisten "Aturan Tegas" di [[Projek/AbsenSI/03-User-Roles|03-User-Roles]]: guru read-only mutlak).
+> **Keputusan (2026-07-21):** Wali Kelas **bukan role baru** — extend pola `guru_piket` (akun `guru` existing + kolom scope tambahan), bukan entitas terpisah. Read-only murni, tidak ada wewenang tulis apapun (konsisten "Aturan Tegas" di 03-User-Roles (03-User-Roles.md): guru read-only mutlak).
 
 ### Assignment (menu baru di Dashboard Admin Jurnal)
 - **1 kelas = 1 wali kelas.** Bukan banyak-ke-banyak — kalau kebutuhan co-wali muncul nanti, itu perubahan skema terpisah di luar scope ini.
@@ -229,7 +229,7 @@ Field `kategori` di `teacher_permits`, murni informatif/pelaporan — **tidak me
 **1. Ringkasan Kehadiran Kelas** (halaman utama menu)
 - Angka ringkas hari ini: jumlah hadir / izin / sakit / alfa untuk kelas yang diampu
 - Tabel per siswa dengan filter rentang tanggal (default bulan berjalan): Nama | Hadir | Terlambat | Izin | Sakit | Alfa | % Kehadiran
-- **Reuse logic yang sama persis dengan Rekap Admin** ([[Projek/AbsenSI/06-Features/rekap-kehadiran|rekap-kehadiran.md]]), di-scope 1 `kelas_id` dari `req.user.kelas_id_wali` (bukan dari query param, sama seperti pola scope `guru_piket.kampus_id`) — **tidak** membangun ulang logic hitung alfa, panggil service Rekap yang sudah ada dengan filter kelas terkunci
+- **Reuse logic yang sama persis dengan Rekap Admin** (rekap-kehadiran.md (06-Features/rekap-kehadiran.md)), di-scope 1 `kelas_id` dari `req.user.kelas_id_wali` (bukan dari query param, sama seperti pola scope `guru_piket.kampus_id`) — **tidak** membangun ulang logic hitung alfa, panggil service Rekap yang sudah ada dengan filter kelas terkunci
 
 **2. Rekap Per Mapel (dari sesi kelas)**
 - Breakdown per siswa: berapa kali ditandai `tidak_ada_di_kelas` (dari `class_attendance_marks`) per mapel — beda dari alfa gerbang, ini sinyal "hadir sekolah tapi bolos mapel tertentu"
@@ -245,11 +245,11 @@ Field `kategori` di `teacher_permits`, murni informatif/pelaporan — **tidak me
 
 ## 🗄️ Implikasi Skema (Awal, Belum Final)
 
-Berdasarkan `schedules` yang sudah generic di [[Projek/AbsenSI/04-Database-Schema|04-Database-Schema]] (ADR-005 mengantisipasi ini dari fase 1):
+Berdasarkan `schedules` yang sudah generic di 04-Database-Schema (04-Database-Schema.md) (ADR-005 mengantisipasi ini dari fase 1):
 
 - `schedules` tambah kolom `minggu` (enum: `A` / `B` / `setiap_minggu`, nullable — dipakai hanya kalau mode blok aktif)
-- `schedules` (`type: jam_mengajar`) tambah kolom **`semester_id`** (FK ke `semesters`, wajib) — lihat [[#📚 Semester & Loopback Tahun Ajaran (Final — 2026-07-22)]] dan [[Projek/AbsenSI/06-Features/kalender-pendidikan|kalender-pendidikan.md]] untuk skema tabel `semesters`
-- Entitas baru **`semesters`** — didefinisikan lengkap di [[Projek/AbsenSI/06-Features/kalender-pendidikan|kalender-pendidikan.md]] (bukan diulang di sini, satu sumber kebenaran)
+- `schedules` (`type: jam_mengajar`) tambah kolom **`semester_id`** (FK ke `semesters`, wajib) — lihat [[#📚 Semester & Loopback Tahun Ajaran (Final — 2026-07-22)]] dan kalender-pendidikan.md (06-Features/kalender-pendidikan.md) untuk skema tabel `semesters`
+- Entitas baru **`semesters`** — didefinisikan lengkap di kalender-pendidikan.md (06-Features/kalender-pendidikan.md) (bukan diulang di sini, satu sumber kebenaran)
 - Entitas baru untuk **konfigurasi mode jadwal sekolah**: mode aktif (`blok`/`normal`), titik acuan minggu A/B (tanggal + minggu apa), kemungkinan histori override manual per minggu
 - Entitas baru **`teaching_sessions`** (atau reuse `attendance_sessions` yang sudah generic `location_type: kelas`) — perlu field tambahan: `lokasi_lat`, `lokasi_lng` (capture saat mulai), `started_at`, `closed_at` (auto), `status` (`open`/`closed`)
 - Entitas baru **`journal_entries`** — `session_id` (FK), `teacher_id`, `materi`, `tujuan_pembelajaran`, `tugas_penilaian`, `catatan`, `created_at`, `updated_at`
@@ -283,10 +283,10 @@ Berdasarkan `schedules` yang sudah generic di [[Projek/AbsenSI/04-Database-Schem
 ---
 
 ## 🔗 Lihat Juga
-- [[Projek/AbsenSI/06-Features/absensi-kelas-mapel|absensi-kelas-mapel.md]] — rencana LAMA yang digantikan dokumen ini (tap RFID kelas, dipertahankan sebagai arsip alasan)
-- [[Projek/AbsenSI/06-Features/absensi-gerbang|absensi-gerbang.md]] — sumber data tap gerbang yang jadi basis presensi mapel
-- [[Projek/AbsenSI/06-Features/dashboard-piket|dashboard-piket.md]] — pola akses scoped by `kampus_id`, referensi untuk desain scope Wali Kelas
-- [[Projek/AbsenSI/03-User-Roles|03-User-Roles]] — role Wali Kelas masih catatan terbuka
-- [[Projek/AbsenSI/04-Database-Schema|04-Database-Schema]] — `schedules`, `attendance_sessions` generic (ADR-005)
-- [[Projek/AbsenSI/13-Backlog|13-Backlog]]
+- absensi-kelas-mapel.md (06-Features/absensi-kelas-mapel.md) — rencana LAMA yang digantikan dokumen ini (tap RFID kelas, dipertahankan sebagai arsip alasan)
+- absensi-gerbang.md (06-Features/absensi-gerbang.md) — sumber data tap gerbang yang jadi basis presensi mapel
+- dashboard-piket.md (06-Features/dashboard-piket.md) — pola akses scoped by `kampus_id`, referensi untuk desain scope Wali Kelas
+- 03-User-Roles (03-User-Roles.md) — role Wali Kelas masih catatan terbuka
+- 04-Database-Schema (04-Database-Schema.md) — `schedules`, `attendance_sessions` generic (ADR-005)
+- 13-Backlog (13-Backlog.md)
 - Referensi pembanding: [Jurnale PRO — Panduan](https://pro.jurnale.id/panduan/?p=pendahuluan)

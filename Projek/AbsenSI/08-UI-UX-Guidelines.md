@@ -5,7 +5,7 @@ updated: 2026-06-25
 
 # 08 — UI/UX Guidelines
 
-← [[Projek/AbsenSI/00-INDEX AbsenSI|Index]]
+← Index (00-INDEX AbsenSI.md)
 
 > Belum dirancang detail — placeholder. Akan diisi saat Developer 1 & 2 mulai breakdown task `apps/web` dan `apps/kiosk`.
 

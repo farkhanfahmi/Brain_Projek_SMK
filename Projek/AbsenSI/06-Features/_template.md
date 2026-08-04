@@ -6,7 +6,7 @@ updated: YYYY-MM-DD
 
 # Feature — [Nama Fitur]
 
-← [[Projek/AbsenSI/00-INDEX AbsenSI|Index]]
+← Index (00-INDEX AbsenSI.md)
 
 > Ringkasan satu paragraf tentang fitur ini.
 

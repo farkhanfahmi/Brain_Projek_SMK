@@ -5,7 +5,7 @@ updated: 2026-07-21
 
 # 11 — Decisions (ADR)
 
-← [[Projek/AbsenSI/00-INDEX AbsenSI|Index]]
+← Index (00-INDEX AbsenSI.md)
 
 > Setiap keputusan arsitektur permanen dicatat di sini. Format: Konteks → Keputusan → Alasan → Konsekuensi. **Jangan ubah keputusan di sini tanpa diskusi ulang dan catat ADR baru yang men-supersede.**
 
@@ -31,7 +31,7 @@ updated: 2026-07-21
 - NestJS dipilih (bukan Express polos) karena strukturnya paling dekat dengan konsep Laravel (module, DI, decorator) — transisi developer Laravel paling mulus
 - PostgreSQL dipilih atas MySQL karena kebutuhan query rekap analitik fleksibel (filter multi-dimensi) di masa depan
 **Konsekuensi:**
-- **Risiko diakui secara sadar:** 2 dari 3 developer belum familiar paradigma backend Node/Nest. Mitigasi: pembagian modul disesuaikan kekuatan masing-masing (lihat [[Projek/AbsenSI/_claudian/team|team.md]]), modul Core/paling kritis dipegang developer paling fullstack.
+- **Risiko diakui secara sadar:** 2 dari 3 developer belum familiar paradigma backend Node/Nest. Mitigasi: pembagian modul disesuaikan kekuatan masing-masing (lihat team.md (_claudian/team.md)), modul Core/paling kritis dipegang developer paling fullstack.
 - Tim akan memelihara 2 stack berbeda (Laravel di proyek lama, TS di AbsenSI dst). Ini diterima sebagai trade-off sadar demi belajar.
 - Ini bukan keputusan "JS lebih baik untuk realtime/API" — itu klaim yang ditolak (realtime/API bisa dicapai stack apa pun). Alasan sebenarnya adalah shared-types dan kesiapan tim belajar ekosistem baru untuk proyek-proyek berikutnya.
 
@@ -63,7 +63,7 @@ updated: 2026-07-21
 **Konteks:** Definisi final "guru terlambat" adalah tap kelas melebihi jadwal mengajar (fase 2). Tapi fase 1 hanya punya reader di gerbang, belum ada reader kelas.
 **Keputusan:** Fase 1: status terlambat (siswa & guru) dihitung dari **jam tap gerbang vs jam masuk sekolah** (atau jam mengajar pertama guru hari itu, untuk kasus guru). Logika "terlambat per sesi mengajar" baru aktif di fase 2 saat reader kelas terpasang.
 **Alasan:** Data yang tersedia di fase 1 cuma tap gerbang — tidak cukup untuk menyimpulkan kehadiran per sesi mengajar spesifik.
-**Konsekuensi:** Modul **Schedule** harus sudah punya struktur jadwal mengajar guru dari fase 1 (untuk hitung "jam mengajar pertama"), meskipun reader kelas belum ada. Desain skema DB harus mendukung kedua fase tanpa rebuild — lihat [[Projek/AbsenSI/04-Database-Schema|04-Database-Schema]].
+**Konsekuensi:** Modul **Schedule** harus sudah punya struktur jadwal mengajar guru dari fase 1 (untuk hitung "jam mengajar pertama"), meskipun reader kelas belum ada. Desain skema DB harus mendukung kedua fase tanpa rebuild — lihat 04-Database-Schema (04-Database-Schema.md).
 
 ---
 
@@ -103,14 +103,14 @@ updated: 2026-07-21
 **Konteks:** 3 developer perlu kelola backend, dashboard, dan kiosk app.
 **Keputusan:** Satu repo GitHub, dikelola dengan Turborepo (`apps/api`, `apps/web`, `apps/kiosk`, `packages/types`, `packages/config`).
 **Alasan:** Tim kecil (3 orang), perlu shared types package yang mudah diakses semua app tanpa publish package terpisah. Monorepo minim overhead koordinasi untuk skala ini.
-**Konsekuensi:** Semua developer perlu nyaman kerja di satu repo besar — branch & PR harus disiplin scoped ke modul masing-masing (lihat [[Projek/AbsenSI/09-Conventions|09-Conventions]]).
+**Konsekuensi:** Semua developer perlu nyaman kerja di satu repo besar — branch & PR harus disiplin scoped ke modul masing-masing (lihat 09-Conventions (09-Conventions.md)).
 
 ---
 
 ## ADR-010: Skema `students` + `teachers` Terpisah, Pola Dual-FK untuk Relasi Lintas-Tipe Orang
 **Tanggal:** 2026-06-26
 **Status:** Accepted
-**Konteks:** Skema awal di [[Projek/AbsenSI/04-Database-Schema|04-Database-Schema]] mengusulkan 1 tabel `persons` gabungan untuk siswa & guru dengan kolom generik. Field yang relevan untuk siswa (kelas, jurusan) dan guru (jadwal mengajar, mapel) cukup berbeda. Tabel `cards` (dan tabel lain yang relasi ke "orang") butuh cara menghubungkan ke salah satu dari keduanya.
+**Konteks:** Skema awal di 04-Database-Schema (04-Database-Schema.md) mengusulkan 1 tabel `persons` gabungan untuk siswa & guru dengan kolom generik. Field yang relevan untuk siswa (kelas, jurusan) dan guru (jadwal mengajar, mapel) cukup berbeda. Tabel `cards` (dan tabel lain yang relasi ke "orang") butuh cara menghubungkan ke salah satu dari keduanya.
 **Keputusan:** `persons` dipecah jadi 2 tabel terpisah: `students` dan `teachers`. Relasi dari tabel lain ke salah satu dari keduanya menggunakan **2 kolom foreign key nullable** (misal `student_id`, `teacher_id` — tepat 1 yang terisi, sisanya null), **bukan** pola polymorphic generik (`owner_type` + `owner_id`).
 **Alasan:** Field siswa dan guru cukup berbeda untuk dipisah jadi tabel sendiri-sendiri (query lebih sederhana, tidak ada kolom yang nullable untuk separuh baris). Pola dual-FK nullable dipilih di atas polymorphic association karena memungkinkan foreign key constraint **asli di level database** — pola polymorphic generik tidak bisa diberi constraint FK yang valid di MySQL, sehingga integritas data 100% bergantung pada logic aplikasi (rawan data yatim/orphan kalau ada bug).
 **Konsekuensi:** Semua tabel yang butuh relasi ke "siswa ATAU guru" (`cards`, `schedules`, `attendance_records`, dst) memakai pola dual-FK nullable yang konsisten. Query yang butuh data gabungan siswa+guru (misal 1 laporan kehadiran semua orang) butuh `UNION` atau view gabungan di level query — trade-off yang diterima demi integritas data yang lebih kuat.
@@ -123,7 +123,7 @@ updated: 2026-07-21
 **Konteks:** ADR-002 awalnya memilih PostgreSQL dengan alasan kebutuhan analitik kompleks (window function, partial index) untuk query rekap multi-dimensi. Setelah dikaji ulang, volume data riil AbsenSI (±500rb baris/tahun untuk `attendance_records`) jauh di bawah skala yang benar-benar membutuhkan keunggulan analitik PostgreSQL — MySQL 8 juga sudah mendukung window function, dan index komposit yang tepat sudah cukup untuk kebutuhan filter rekap di skala ini. Tim juga sudah lama familiar dengan MySQL dari proyek-proyek sebelumnya (DasiPelajar, SIMA-Sarpras), sementara di saat yang sama tim sedang belajar stack TypeScript/NestJS yang baru.
 **Keputusan:** Database engine diganti dari PostgreSQL ke **MySQL** di AbsenSI, dan dijadikan standar untuk semua aplikasi ekosistem sekolah berikutnya. ORM tetap **Prisma** (mendukung MySQL dengan baik, tidak perlu ganti ORM).
 **Alasan:** Mengurangi satu sumber kurva belajar baru di tengah tim yang sudah belajar paradigma backend Node/NestJS — keunggulan analitik PostgreSQL tidak signifikan di skala data AbsenSI. Konsistensi 1 jenis engine database di semua aplikasi ekosistem masa depan juga menyederhanakan operasional (tim cuma perlu kuasai dan rawat 1 jenis database, bukan dua).
-**Konsekuensi:** Bagian ADR-002 yang menyebut PostgreSQL sebagai alasan teknis dianggap **superseded** oleh ADR ini — keputusan NestJS, Prisma, dan arsitektur modular monolith dari ADR-002 **tetap berlaku**, hanya database engine yang berubah. [[Projek/AbsenSI/02-Tech-Stack|02-Tech-Stack.md]] perlu diupdate untuk merefleksikan MySQL, bukan PostgreSQL.
+**Konsekuensi:** Bagian ADR-002 yang menyebut PostgreSQL sebagai alasan teknis dianggap **superseded** oleh ADR ini — keputusan NestJS, Prisma, dan arsitektur modular monolith dari ADR-002 **tetap berlaku**, hanya database engine yang berubah. 02-Tech-Stack.md (02-Tech-Stack.md) perlu diupdate untuk merefleksikan MySQL, bukan PostgreSQL.
 
 ---
 
@@ -163,7 +163,7 @@ updated: 2026-07-21
 ## ADR-016: Tabel `permits` untuk Status Kehadiran Manual (Izin/Sakit/Keluar) oleh Guru Piket
 **Tanggal:** 2026-06-26
 **Status:** Accepted
-**Konteks:** Selain tap RFID otomatis di gerbang, ada jalur pencatatan kehadiran manual: guru piket menerima laporan lisan siswa (izin tidak masuk dengan alasan sakit/izin, atau izin keluar sekolah saat jam belajar) dan harus mencatatnya ke sistem. Ini jalur kedua yang menulis ke data kehadiran, terpisah dari tap kartu, dan berpotensi tumpang tindih/ambigu dengan status yang sudah ada dari tap (terutama kasus "lupa tap pulang" yang sudah jadi Open Question di [[Projek/AbsenSI/06-Features/absensi-gerbang|absensi-gerbang.md]]).
+**Konteks:** Selain tap RFID otomatis di gerbang, ada jalur pencatatan kehadiran manual: guru piket menerima laporan lisan siswa (izin tidak masuk dengan alasan sakit/izin, atau izin keluar sekolah saat jam belajar) dan harus mencatatnya ke sistem. Ini jalur kedua yang menulis ke data kehadiran, terpisah dari tap kartu, dan berpotensi tumpang tindih/ambigu dengan status yang sudah ada dari tap (terutama kasus "lupa tap pulang" yang sudah jadi Open Question di absensi-gerbang.md (06-Features/absensi-gerbang.md)).
 **Keputusan:** Tambah 1 tabel `permits` untuk menampung 2 jenis alur (`jenis`: `tidak_masuk` atau `keluar`), dengan UI berbeda untuk masing-masing (tombol cepat [Izin]/[Sakit] di daftar siswa untuk `tidak_masuk`; menu form terpisah untuk `keluar`). Setiap entri `permits` otomatis memperbarui `attendance_records` hari itu (status `izin`/`sakit`, atau `waktu_pulang` + `pulang_via: izin_piket` untuk kasus keluar tanpa kembali) — siswa **tidak perlu tap** saat menerima izin maupun saat keluar fisik.
 **Alasan:** Memisahkan jalur manual (lewat `permits`) dari jalur otomatis (lewat tap) tapi tetap menyatukan dampaknya ke `attendance_records` yang sama, mencegah laporan salah klasifikasi (izin sah dibaca sebagai bolos/lupa tap). 1 tabel untuk 2 jenis (bukan 2 tabel terpisah) karena strukturnya cukup mirip dan keduanya sama-sama "izin yang disetujui piket," cuma beda kelengkapan field.
 **Konsekuensi:** Modul Attendance harus punya logic baru untuk menerima override status dari `permits`, di atas logic tap yang sudah ada — perlu didesain agar prioritas/urutan precedence jelas (status dari `permits` tidak boleh ditimpa balik oleh tap yang terjadi setelahnya di hari yang sama, atau sebaliknya — aturan tegas ini menyusul saat breakdown task modul Attendance).
@@ -174,7 +174,7 @@ updated: 2026-07-21
 **Tanggal:** 2026-06-26
 **Status:** Accepted
 **Konteks:** Siswa yang diberi izin keluar dengan rencana kembali, tapi tidak kembali/tidak ada konfirmasi sampai jam yang dijanjikan, perlu ditindaklanjuti sebelum dianggap "kembali normal" — risiko keselamatan & akuntabilitas (siswa di bawah umur meninggalkan pengawasan sekolah tanpa penyelesaian jelas).
-**Keputusan:** Sistem **menandai** (tidak otomatis mengunci) siswa yang lewat jam kembali tanpa konfirmasi sebagai "perlu ditinjau" di Dashboard Piket. Guru piket **secara manual** memutuskan untuk mengunci (`students.locked_at` dst terisi) setelah peninjauan. Siswa terkunci ditolak tap di gerbang dengan pesan jelas ("Hubungi Guru Piket") dan tetap dicatat sebagai log percobaan (pola sama dengan tap kartu inactive di [[Projek/AbsenSI/06-Features/manajemen-kartu|manajemen-kartu.md]]). Proses BK (bimbingan konseling) tetap berjalan offline/manual seperti biasa — sistem hanya menyimpan catatan ringkas hasil proses tersebut. Guru piket yang membuka kunci setelah proses BK selesai.
+**Keputusan:** Sistem **menandai** (tidak otomatis mengunci) siswa yang lewat jam kembali tanpa konfirmasi sebagai "perlu ditinjau" di Dashboard Piket. Guru piket **secara manual** memutuskan untuk mengunci (`students.locked_at` dst terisi) setelah peninjauan. Siswa terkunci ditolak tap di gerbang dengan pesan jelas ("Hubungi Guru Piket") dan tetap dicatat sebagai log percobaan (pola sama dengan tap kartu inactive di manajemen-kartu.md (06-Features/manajemen-kartu.md)). Proses BK (bimbingan konseling) tetap berjalan offline/manual seperti biasa — sistem hanya menyimpan catatan ringkas hasil proses tersebut. Guru piket yang membuka kunci setelah proses BK selesai.
 **Alasan:** Mengunci otomatis tanpa peninjauan manusia berisiko mengunci siswa yang sebenarnya sudah kembali tapi belum ditandai (human error piket, bukan masalah siswa) — tindakan disipliner dengan konsekuensi nyata (siswa tidak bisa absen) tidak boleh sepenuhnya otomatis. Membangun workflow BK lengkap di dalam sistem dianggap berlebihan untuk kebutuhan yang sebenarnya sederhana — proses BK punya alur sendiri di luar sistem ini.
 **Konsekuensi:** Modul Attendance & Kiosk perlu logic tambahan untuk cek status lock sebelum proses tap, dan UI kiosk perlu pesan error khusus untuk kasus ini (beda dari pesan UID tidak terdaftar). Dashboard Piket butuh 1 halaman/section baru: daftar siswa "perlu ditinjau" dan daftar siswa "terkunci".
 
@@ -310,6 +310,6 @@ updated: 2026-07-21
 **Status:** Accepted
 **Konteks:** Semua aplikasi ekosistem sekolah masa depan akan butuh data master yang sama (siswa, guru, kelas, jurusan, jadwal). Muncul usulan untuk memisahkan data ini jadi "Master Data Service" tersendiri (database + API independen) yang dikonsumsi semua aplikasi dari awal. Namun aplikasi ke-2 dalam ekosistem ini **belum konkret ada** — belum punya spesifikasi, belum jelas data apa persis yang dibutuhkan, seberapa sering diakses, dalam bentuk/kontrak apa.
 **Keputusan:** Master data (siswa, guru, jadwal, kelas, jurusan — modul **Core**) **tetap berada di dalam AbsenSI** sebagai modul internal, sesuai ADR-003 (modular monolith). **Tidak diekstrak** jadi servis atau database terpisah sekarang. Batas modul Core dijaga bersih — semua akses ke data Core, baik dari modul lain di AbsenSI maupun (nanti) dari aplikasi lain, **wajib lewat service layer/API yang disediakan Core**, tidak pernah lewat query langsung ke tabel Core.
-**Alasan:** Mendesain Master Data Service independen sekarang berarti merancang kontrak API untuk konsumen yang masih imajiner (aplikasi ke-2 belum ada) — risiko nyata desainnya salah bentuk dan harus dirombak ulang begitu aplikasi ke-2 benar-benar mulai dibangun dengan kebutuhan riil. Menjaga batas modul yang bersih di dalam AbsenSI sekarang (biaya rendah, sudah jadi konvensi tim di ADR-003 & [[Projek/AbsenSI/09-Conventions|09-Conventions]]) membuat ekstraksi nanti — saat benar-benar dibutuhkan — jauh lebih murah dilakukan, dibanding membangun servis terpisah sekarang berdasarkan spekulasi.
+**Alasan:** Mendesain Master Data Service independen sekarang berarti merancang kontrak API untuk konsumen yang masih imajiner (aplikasi ke-2 belum ada) — risiko nyata desainnya salah bentuk dan harus dirombak ulang begitu aplikasi ke-2 benar-benar mulai dibangun dengan kebutuhan riil. Menjaga batas modul yang bersih di dalam AbsenSI sekarang (biaya rendah, sudah jadi konvensi tim di ADR-003 & 09-Conventions (09-Conventions.md)) membuat ekstraksi nanti — saat benar-benar dibutuhkan — jauh lebih murah dilakukan, dibanding membangun servis terpisah sekarang berdasarkan spekulasi.
 **Konsekuensi:** Saat aplikasi ke-2 mulai konkret dirancang, keputusan ini **harus dibuka kembali**: apakah aplikasi ke-2 cukup memanggil API yang AbsenSI sediakan untuk data Core, atau memang sudah waktunya Core diekstrak jadi servis independen dengan database sendiri. Sampai saat itu tiba, tidak ada pekerjaan tambahan yang perlu dilakukan di luar disiplin menjaga service layer Core tetap bersih dan tidak dilanggar modul lain.
 

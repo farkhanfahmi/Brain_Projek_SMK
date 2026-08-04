@@ -17,7 +17,7 @@
 
 **Temuan:** `PiketSidebar` (`apps/web/src/app/(piket)/piket-sidebar.tsx`) saat ini py 5 menu FLAT: Dashboard, Perizinan Keluar, Input Izin/Sakit, Riwayat Izin, Direktori Siswa. User ingin "Perizinan Keluar" dan "Riwayat Izin" dikelompokkan secara visual.
 
-- [ ] Restrukturisasi `NAV_ITEMS` jadi grup (pola SAMA seperti [[06-Features/tasks/T097-sidebar-guru-berkelompok|T097]] untuk sidebar guru — reuse struktur/komponen kalau T097 sudah dikerjakan lebih dulu, supaya konsisten 1 pola accordion di seluruh aplikasi, JANGAN reinvent pola beda untuk piket).
+- [ ] Restrukturisasi `NAV_ITEMS` jadi grup (pola SAMA seperti T097 (06-Features/tasks/T097-sidebar-guru-berkelompok.md) untuk sidebar guru — reuse struktur/komponen kalau T097 sudah dikerjakan lebih dulu, supaya konsisten 1 pola accordion di seluruh aplikasi, JANGAN reinvent pola beda untuk piket).
 - [ ] Kelompok yang masuk akal: "Dashboard" (link tunggal, tidak berubah), grup "Perizinan" berisi Perizinan Keluar + Input Izin/Sakit + Riwayat Izin (3 menu terkait, semua soal permit), "Direktori Siswa" (link tunggal).
 - [ ] **Klarifikasi ke user SEBELUM eksekusi kalau pengelompokan di atas terasa ambigu** — user cuma eksplisit minta "Perizinan Keluar" + "Riwayat Izin" satu grup, tapi "Input Izin/Sakit" mungkin juga masuk akal di grup yang sama (sama-sama soal permit) — user belum eksplisit menyebut ini, konfirmasi dulu apakah 2 atau 3 menu yang dikelompokkan.
 

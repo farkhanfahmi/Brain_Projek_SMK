@@ -5,11 +5,11 @@ updated: 2026-06-25
 
 # 02 — Tech Stack & Arsitektur
 
-← [[Projek/AbsenSI/00-INDEX AbsenSI|Index]]
+← Index (00-INDEX AbsenSI.md)
 
-> Keputusan stack ini **berbeda** dari proyek lain di vault ini (DasiPelajar dkk pakai Laravel). Ini keputusan sadar untuk belajar ekosistem TypeScript sebagai blueprint aplikasi sekolah berikutnya. Risiko & alasan didiskusikan penuh — lihat [[Projek/AbsenSI/11-Decisions|ADR-002]].
+> Keputusan stack ini **berbeda** dari proyek lain di vault ini (DasiPelajar dkk pakai Laravel). Ini keputusan sadar untuk belajar ekosistem TypeScript sebagai blueprint aplikasi sekolah berikutnya. Risiko & alasan didiskusikan penuh — lihat ADR-002 (11-Decisions.md).
 >
-> **Update 2026-06-26:** Database engine diganti dari PostgreSQL ke **MySQL** — lihat [[Projek/AbsenSI/11-Decisions|ADR-011]] yang men-supersede sebagian ADR-002. Bagian lain ADR-002 (NestJS, Prisma, arsitektur modular monolith) tetap berlaku tanpa berubah.
+> **Update 2026-06-26:** Database engine diganti dari PostgreSQL ke **MySQL** — lihat ADR-011 (11-Decisions.md) yang men-supersede sebagian ADR-002. Bagian lain ADR-002 (NestJS, Prisma, arsitektur modular monolith) tetap berlaku tanpa berubah.
 
 ---
 

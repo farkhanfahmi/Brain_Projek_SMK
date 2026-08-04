@@ -5,9 +5,9 @@ updated: 2026-07-21
 
 # 04 — Database Schema
 
-← [[Projek/AbsenSI/00-INDEX AbsenSI|Index]]
+← Index (00-INDEX AbsenSI.md)
 
-> **Update 2026-06-26:** Keputusan struktur tabel inti & engine database sudah final lewat ADR-010 s/d ADR-014 (lihat [[Projek/AbsenSI/11-Decisions|11-Decisions]]). Skema di bawah merefleksikan keputusan itu. Masih ada Open Questions di level detail kolom (lihat bagian bawah), tapi kerangka dasarnya tidak lagi berubah.
+> **Update 2026-06-26:** Keputusan struktur tabel inti & engine database sudah final lewat ADR-010 s/d ADR-014 (lihat 11-Decisions (11-Decisions.md)). Skema di bawah merefleksikan keputusan itu. Masih ada Open Questions di level detail kolom (lihat bagian bawah), tapi kerangka dasarnya tidak lagi berubah.
 
 ---
 
@@ -45,12 +45,12 @@ updated: 2026-07-21
 - [x] **Engine database** → Resolved: **MySQL** (bukan PostgreSQL seperti rencana awal di ADR-002). Lihat ADR-011.
 
 ## ❓ Open Questions yang Masih Terbuka
-- [ ] Index komposit final untuk filter rekap (kelas, jurusan, tanggal, status) — desain detail kolom menyusul setelah volume data lebih jelas, tapi prinsipnya sudah disetujui (lihat catatan performa di [[Projek/AbsenSI/06-Features/dashboard-tv|dashboard-tv.md]])
+- [ ] Index komposit final untuk filter rekap (kelas, jurusan, tanggal, status) — desain detail kolom menyusul setelah volume data lebih jelas, tapi prinsipnya sudah disetujui (lihat catatan performa di dashboard-tv.md (06-Features/dashboard-tv.md))
 - [ ] Query gabungan siswa+guru (misal laporan kehadiran semua orang dalam 1 tabel hasil) — perlu `UNION` atau view gabungan karena `students`/`teachers` terpisah, desain detail menyusul saat modul rekap dikerjakan
 
 ## Entitas Baru — Dashboard Piket (Fase 1b)
 
-> Ditambahkan 2026-06-26 mengikuti ADR-015 s/d ADR-018. Lihat [[Projek/AbsenSI/06-Features/dashboard-piket|dashboard-piket.md]] untuk spek fitur lengkap.
+> Ditambahkan 2026-06-26 mengikuti ADR-015 s/d ADR-018. Lihat dashboard-piket.md (06-Features/dashboard-piket.md) untuk spek fitur lengkap.
 
 ### `kampus`
 - `id`, `nama` (misal "Kampus 1", "Kampus 2")
@@ -65,7 +65,7 @@ updated: 2026-07-21
   - `tap_izin_pulang` = siswa tap di gerbang, lalu piket konfirmasi tap itu sebagai izin pulang awal resmi (tap ada, tapi konteksnya diubah piket)
   - `null` = siswa belum pulang / belum ada data pulang hari itu
 
-### `users` (akun login — definisi formal pertama kali, sebelumnya cuma dibahas konsep role di [[Projek/AbsenSI/03-User-Roles|03-User-Roles]])
+### `users` (akun login — definisi formal pertama kali, sebelumnya cuma dibahas konsep role di 03-User-Roles (03-User-Roles.md))
 - `id`, `username`, `password_hash`, `role` (`super_admin` / `card_admin` / `guru` / `kepsek` / `guru_piket`), `teacher_id` (FK ke `teachers`, nullable — terisi untuk role `guru`/`guru_piket`/`kepsek` yang merupakan akun seorang guru), `kampus_id` (FK ke `kampus`, nullable — **hanya** terisi untuk role `guru_piket`, jadi scope akses dashboard-nya), `status` (aktif/nonaktif)
 
 ### `permits`
@@ -92,7 +92,7 @@ updated: 2026-07-21
 
 ## Entitas Kalender Pendidikan (Fase 1)
 
-> Ditambahkan 2026-07-03. Dibutuhkan sebagai fondasi perhitungan alfa di modul Rekap. Lihat [[Projek/AbsenSI/06-Features/kalender-pendidikan|kalender-pendidikan.md]] untuk spek fitur lengkap.
+> Ditambahkan 2026-07-03. Dibutuhkan sebagai fondasi perhitungan alfa di modul Rekap. Lihat kalender-pendidikan.md (06-Features/kalender-pendidikan.md) untuk spek fitur lengkap.
 
 ### `academic_years`
 - `id`, `nama` (misal "2025/2026"), `tanggal_mulai` (date), `tanggal_selesai` (date), `is_active` (boolean — hanya 1 yang true sekaligus, ditegakkan di level aplikasi), `created_by` (FK ke `users`), `created_at`
@@ -147,12 +147,12 @@ hari_wajib = tanggal ∈ range academic_years (is_active = true)
 
 ---
 
-## 🏗️ Catatan Infrastruktur (lihat [[Projek/AbsenSI/10-Environment|10-Environment]] untuk detail lengkap)
+## 🏗️ Catatan Infrastruktur (lihat 10-Environment (10-Environment.md) untuk detail lengkap)
 Database AbsenSI hidup sebagai 1 schema/database MySQL di server fisik bersama (bukan VM terpisah, ADR-012), disinkronkan berkala ke data warehouse pusat (ADR-013) untuk laporan lintas-aplikasi ekosistem sekolah. Modul Core (siswa/guru/jadwal) tetap di dalam AbsenSI untuk saat ini, belum diekstrak jadi servis terpisah (ADR-014).
 
 ## 🔗 Lihat Juga
-- [[Projek/AbsenSI/06-Features/absensi-gerbang|absensi-gerbang.md]]
-- [[Projek/AbsenSI/06-Features/absensi-kelas-mapel|absensi-kelas-mapel.md]]
-- [[Projek/AbsenSI/06-Features/dashboard-piket|dashboard-piket.md]]
-- [[Projek/AbsenSI/11-Decisions|11-Decisions]] — ADR-010 s/d ADR-025
+- absensi-gerbang.md (06-Features/absensi-gerbang.md)
+- absensi-kelas-mapel.md (06-Features/absensi-kelas-mapel.md)
+- dashboard-piket.md (06-Features/dashboard-piket.md)
+- 11-Decisions (11-Decisions.md) — ADR-010 s/d ADR-025
 

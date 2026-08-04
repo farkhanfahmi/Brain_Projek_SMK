@@ -6,7 +6,7 @@ updated: 2026-07-30
 
 # Feature — Ekstrakurikuler (Pendaftaran + Absensi oleh Pembina)
 
-← [[Projek/AbsenSI/00-INDEX AbsenSI|Index]]
+← Index (00-INDEX AbsenSI.md)
 
 > Modul di dalam AbsenSI (bukan aplikasi terpisah) — reuse `students`, `users`, RBAC guard, dan infrastruktur JWT yang sudah ada.
 
@@ -18,7 +18,7 @@ updated: 2026-07-30
 |---|---|
 | Pendaftaran ekstra (publik, self-service siswa) | ✅ **Selesai & live** — lihat bagian "Yang Sudah Ada" |
 | Monitoring pendaftaran (admin) | ✅ **Selesai & live** |
-| Absensi ekstra oleh pembina (dashboard baru) | 🟡 **Task ditulis 2026-07-30, belum dikerjakan** — lihat [[06-Features/tasks/T096-absensi-ekstrakurikuler-pembina|T096]] |
+| Absensi ekstra oleh pembina (dashboard baru) | 🟡 **Task ditulis 2026-07-30, belum dikerjakan** — lihat T096 (06-Features/tasks/T096-absensi-ekstrakurikuler-pembina.md) |
 
 **PENTING:** Draft versi 2026-07-27 dokumen ini SUDAH USANG di beberapa bagian — beberapa keputusan sudah berubah lewat implementasi nyata dan diskusi lanjutan 2026-07-30. Perbedaan utama vs draft lama:
 - Pendaftaran ekstra ternyata **self-service oleh siswa sendiri** (halaman publik `/daftar-ekstra`, tanpa login), BUKAN input admin dari formulir kertas seperti draft lama asumsikan.
@@ -65,11 +65,11 @@ model EkstraPendaftaran {
 - Halaman publik: `apps/web/src/app/daftar-ekstra/`
 - Halaman admin: `apps/web/src/app/(admin)/ekstra-kurikuler/`, `apps/web/src/app/(admin)/ekstra-monitoring/`
 
-**Tidak ada** yang perlu diubah di bagian ini untuk fitur absensi — murni penambahan, lihat [[06-Features/tasks/T096-absensi-ekstrakurikuler-pembina|T096]] untuk detail lengkap skema baru dan implementasi.
+**Tidak ada** yang perlu diubah di bagian ini untuk fitur absensi — murni penambahan, lihat T096 (06-Features/tasks/T096-absensi-ekstrakurikuler-pembina.md) untuk detail lengkap skema baru dan implementasi.
 
 ---
 
 ## 🔗 Lihat Juga
-- [[06-Features/tasks/T096-absensi-ekstrakurikuler-pembina|T096 — Absensi Ekstrakurikuler oleh Pembina]] — task detail lengkap, siap dieksekusi
-- [[Projek/AbsenSI/11-Decisions|11-Decisions]] — ADR-010 (dual-FK nullable), ADR-019 (domain eksklusif pencatat lapangan)
+- T096 — Absensi Ekstrakurikuler oleh Pembina (06-Features/tasks/T096-absensi-ekstrakurikuler-pembina.md) — task detail lengkap, siap dieksekusi
+- 11-Decisions (11-Decisions.md) — ADR-010 (dual-FK nullable), ADR-019 (domain eksklusif pencatat lapangan)
 - `apps/api/prisma/schema.prisma` — model `TeachingSession`/`ClassAttendanceMark`/`JournalEntry`, pola arsitektur yang ditiru untuk `EkstraSesi`/`EkstraAbsen`

@@ -5,7 +5,7 @@ updated: 2026-06-25
 
 # 01 — Overview
 
-← [[Projek/AbsenSI/00-INDEX AbsenSI|Index]]
+← Index (00-INDEX AbsenSI.md)
 
 ---
 
@@ -40,7 +40,7 @@ Membangun sistem absensi yang:
 - Tap di kelas mencatat kehadiran **per mapel/sesi pelajaran**, dibandingkan jadwal mengajar guru
 - Guru dinyatakan terlambat **per sesi mengajar** (bukan cuma terlambat sekolah secara umum) berdasarkan tap kelas vs jadwal
 - Siswa yang tap gerbang tapi tidak tap kelas tertentu → tercatat **bolos mapel** itu
-- Catatan risiko (lihat [[Projek/AbsenSI/13-Backlog|13-Backlog]]): gerbang sekolah **tidak punya penghalang fisik** (bukan turnstile), jadi aturan "wajib tap gerbang dulu" punya potensi false-negative kalau siswa fisik masuk tanpa tap. Perlu keputusan UX (hard block vs flag warning) sebelum fase 2 dimulai.
+- Catatan risiko (lihat 13-Backlog (13-Backlog.md)): gerbang sekolah **tidak punya penghalang fisik** (bukan turnstile), jadi aturan "wajib tap gerbang dulu" punya potensi false-negative kalau siswa fisik masuk tanpa tap. Perlu keputusan UX (hard block vs flag warning) sebelum fase 2 dimulai.
 
 ### 🔵 Fase 3 — Notifikasi & Integrasi Lanjutan (ide masa depan, belum direncanakan detail)
 - Notifikasi WA/SMS ke orang tua saat anak tap masuk/keluar
@@ -49,7 +49,7 @@ Membangun sistem absensi yang:
 
 ## Asumsi yang Disepakati
 
-- 1 sekolah saja (bukan SaaS multi-tenant) — lihat ADR terkait di [[Projek/AbsenSI/11-Decisions|11-Decisions]]
+- 1 sekolah saja (bukan SaaS multi-tenant) — lihat ADR terkait di 11-Decisions (11-Decisions.md)
 - Jaringan sekolah baik & internet merata, tapi tetap pakai offline-first sebagai mitigasi
 - RFID reader tipe **USB-HID keyboard emulation** (sudah dikonfirmasi) — bukan SDK/serial proprietary
 - Jadwal (jam masuk, jam mengajar, threshold terlambat) **fully configurable** oleh admin — termasuk skenario jadwal khusus (ujian, sesi berbeda)

@@ -6,7 +6,7 @@ updated: 2026-06-25
 
 # Feature — Manajemen Kartu RFID
 
-← [[Projek/AbsenSI/00-INDEX AbsenSI|Index]]
+← Index (00-INDEX AbsenSI.md)
 
 > CRUD mapping UID kartu RFID ↔ siswa/guru. Termasuk proses ganti kartu hilang/rusak — wajib lewat admin (sesuai keputusan diskusi awal).
 
@@ -34,11 +34,11 @@ updated: 2026-06-25
 3. Tap dari UID yang `inactive` → ditolak dengan pesan jelas, dicatat sebagai log percobaan (untuk audit, bukan attendance record)
 
 ## Role & Akses
-**Resolved (lihat ADR-008 & [[Projek/AbsenSI/03-User-Roles|03-User-Roles]]):** Registrasi & CRUD kartu boleh dilakukan oleh **Admin Pusat (`super_admin`)** maupun **Admin Pengelola Kartu (`card_admin`)** — role kedua ini didedikasikan khusus untuk delegasi tugas kartu (misal ke staff TU), tanpa kasih akses ke fitur lain (jadwal, koreksi absensi, kelola akun). Validasi role wajib dicek di backend API, bukan cuma disembunyikan di UI.
+**Resolved (lihat ADR-008 & 03-User-Roles (03-User-Roles.md)):** Registrasi & CRUD kartu boleh dilakukan oleh **Admin Pusat (`super_admin`)** maupun **Admin Pengelola Kartu (`card_admin`)** — role kedua ini didedikasikan khusus untuk delegasi tugas kartu (misal ke staff TU), tanpa kasih akses ke fitur lain (jadwal, koreksi absensi, kelola akun). Validasi role wajib dicek di backend API, bukan cuma disembunyikan di UI.
 
 ## ✅ Open Questions — Resolved
 
-- [x] **Bulk-import kartu** → Naik ke Fase 1 (sudah dicatat di ADR-009). Dua mode: **Mode A** bulk CSV (untuk UID yang sudah diketahui dari vendor), **Mode B** tap-to-assign (untuk kartu yang UID-nya belum diketahui — admin scan satu per satu di PC admin). Lihat [[Projek/AbsenSI/11-Decisions|ADR-009]] untuk detail flow.
+- [x] **Bulk-import kartu** → Naik ke Fase 1 (sudah dicatat di ADR-009). Dua mode: **Mode A** bulk CSV (untuk UID yang sudah diketahui dari vendor), **Mode B** tap-to-assign (untuk kartu yang UID-nya belum diketahui — admin scan satu per satu di PC admin). Lihat ADR-009 (11-Decisions.md) untuk detail flow.
 
 **Status spec:** ✅ Final — siap dipecah jadi task development.
 

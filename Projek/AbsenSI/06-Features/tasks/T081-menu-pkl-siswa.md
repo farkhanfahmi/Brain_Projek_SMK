@@ -1,7 +1,7 @@
 # T081 — Schema+API+UI: Menu Khusus PKL Siswa Kelas XII
 
 ## Depends on
-Tidak ada — pola dasarnya mereplikasi [[Projek/AbsenSI/06-Features/tasks/T072-input-siswa-baru-paste-nisn|T072 (paste-NISN)]] dan [[Projek/AbsenSI/06-Features/tasks/T073-kenaikan-kelas-massal|T073 (aksi massal per kelas)]] yang sudah ada.
+Tidak ada — pola dasarnya mereplikasi T072 (paste-NISN) (06-Features/tasks/T072-input-siswa-baru-paste-nisn.md) dan T073 (aksi massal per kelas) (06-Features/tasks/T073-kenaikan-kelas-massal.md) yang sudah ada.
 
 ## Context
 - **App:** `apps/api` + `apps/web`
@@ -49,7 +49,7 @@ model StudentPkl {
 
 ### UI — Menu Baru `/siswa/pkl`
 - Menu baru di sidebar admin, dekat menu Siswa/Kelas (bukan submenu tersembunyi)
-- **Bagian 1 — Input manual (paste NISN)**: REUSE pola UI dari [[Projek/AbsenSI/06-Features/tasks/T072-input-siswa-baru-paste-nisn|T072]] (textarea paste banyak NISN sekaligus, validasi live pakai `validate-nisn-batch` endpoint yang sudah ada — extend validasinya untuk kasus PKL: cek juga siswa harus kelas XII, kalau bukan tampilkan error per-baris "Bukan kelas XII")
+- **Bagian 1 — Input manual (paste NISN)**: REUSE pola UI dari T072 (06-Features/tasks/T072-input-siswa-baru-paste-nisn.md) (textarea paste banyak NISN sekaligus, validasi live pakai `validate-nisn-batch` endpoint yang sudah ada — extend validasinya untuk kasus PKL: cek juga siswa harus kelas XII, kalau bukan tampilkan error per-baris "Bukan kelas XII")
 - **Bagian 2 — Tombol massal**:
   - Tombol "PKL-kan Semua Kelas XII" (dengan dialog konfirmasi ringkasan jumlah siswa yang akan diproses, field opsional Tempat PKL kalau seragam)
   - Tombol "Normalkan Semua Kelas XII" (dialog konfirmasi, kembalikan SEMUA siswa XII yang sedang PKL ke status normal)

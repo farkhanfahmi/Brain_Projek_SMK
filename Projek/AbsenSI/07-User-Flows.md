@@ -5,7 +5,7 @@ updated: 2026-06-25
 
 # 07 — User Flows
 
-← [[Projek/AbsenSI/00-INDEX AbsenSI|Index]]
+← Index (00-INDEX AbsenSI.md)
 
 > Draft awal — detail lengkap menyusul setelah Open Questions di absensi-gerbang.md terjawab.
 

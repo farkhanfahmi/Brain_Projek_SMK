@@ -8,7 +8,7 @@ Ganti semua penyebutan "Tidak Tap Pulang" (label UI, komentar, nama variabel/fun
 
 ## Context
 - **App:** `apps/api` + `apps/web`
-- Diskusi 2026-07-30: user awalnya mengira "banyak siswa tidak tap pulang" adalah bug soal parameter jam pulang — sudah diverifikasi lewat data live BUKAN bug (mekanisme tap murni berbasis urutan/count, tidak ada logic jam sama sekali; 44% siswa pada 2026-07-29 memang secara fisik tidak tap kedua kalinya, dikonfirmasi lewat cross-check `tap_events`). Diskusi berlanjut ke ide besar "jam pulang harus sesuai jadwal kelas" — **DITUNDA**, dicatat terpisah di [[06-Features/tasks/T101-validasi-jam-pulang-jadwal-kelas|T101]] (blocked, butuh data jadwal per kelas yang belum diisi). **T100 ini HANYA rename, TIDAK ADA perubahan logic.**
+- Diskusi 2026-07-30: user awalnya mengira "banyak siswa tidak tap pulang" adalah bug soal parameter jam pulang — sudah diverifikasi lewat data live BUKAN bug (mekanisme tap murni berbasis urutan/count, tidak ada logic jam sama sekali; 44% siswa pada 2026-07-29 memang secara fisik tidak tap kedua kalinya, dikonfirmasi lewat cross-check `tap_events`). Diskusi berlanjut ke ide besar "jam pulang harus sesuai jadwal kelas" — **DITUNDA**, dicatat terpisah di T101 (06-Features/tasks/T101-validasi-jam-pulang-jadwal-kelas.md) (blocked, butuh data jadwal per kelas yang belum diisi). **T100 ini HANYA rename, TIDAK ADA perubahan logic.**
 
 ## Kapan Siswa Masuk Kategori Ini (referensi, TIDAK berubah oleh task ini)
 Dari `attendance.service.ts` method `tidakTapPulangKemarin()` (akan di-rename, lihat di bawah): siswa masuk daftar ini kalau (1) `tanggal` = KEMARIN persis, (2) `waktuPulang` masih null (tidak pernah tap kedua kalinya sama sekali), (3) `studentId` terisi (bukan guru), (4) kelasnya di kampus yang sama dengan piket yang login. Ini query LIVE (dihitung ulang tiap dashboard dibuka), bukan dari job terjadwal.
@@ -72,6 +72,6 @@ Dari `attendance.service.ts` method `tidakTapPulangKemarin()` (akan di-rename, l
 **Verifikasi live:** backend+frontend di-restart BERSAMAAN (sesuai warning spec soal endpoint yang berubah). Dibuat akun `guru_piket` disposable (`t100_verify_piket`, dinonaktifkan lagi setelah verifikasi — FK `activity_log.actor_id` mencegah hard delete). Login via Playwright ke `/piket`, kartu "Tidak Absen Pulang" tampil dengan count 182 (cocok dengan count API), klik kartu membuka section "Tidak Absen Pulang Kemarin" dengan tabel data ter-render benar.
 
 ## Validasi Claudian
-- [ ] Ini MURNI rename — kalau saat eksekusi ternyata tergoda "sekalian perbaiki juga logic X", STOP, itu bukan scope T100 (lihat [[06-Features/tasks/T101-validasi-jam-pulang-jadwal-kelas|T101]] untuk perubahan logic yang didiskusikan tapi sengaja ditunda).
+- [ ] Ini MURNI rename — kalau saat eksekusi ternyata tergoda "sekalian perbaiki juga logic X", STOP, itu bukan scope T100 (lihat T101 (06-Features/tasks/T101-validasi-jam-pulang-jadwal-kelas.md) untuk perubahan logic yang didiskusikan tapi sengaja ditunda).
 - [ ] Cek dulu apakah ada file `.spec.ts` yang mock/assert nama-nama ini sebelum menganggap rename selesai — test yang menyentuh nama lama akan gagal kalau tidak ikut di-update.
 - [ ] Backend+frontend WAJIB deploy bersamaan (bukan 2 langkah terpisah) karena perubahan endpoint route.

@@ -6,7 +6,7 @@ updated: 2026-07-03
 
 # Feature — Rekap Kehadiran
 
-← [[Projek/AbsenSI/00-INDEX AbsenSI|Index]]
+← Index (00-INDEX AbsenSI.md)
 
 > Fitur rekap memberi akses ke ringkasan data kehadiran dalam rentang waktu tertentu, dengan berbagai filter. Didesain bertahap per fase — Fase 1 melayani **Admin Pusat** dulu, Fase 2 menambahkan akses untuk **Wali Kelas** dan **Guru** (riwayat diri sendiri).
 
@@ -29,7 +29,7 @@ updated: 2026-07-03
 |---|---|---|
 | Fase 1 | `super_admin` | Semua siswa, semua kelas, semua jurusan |
 | Fase 2 | `kepsek` | Semua siswa (read-only, sama dengan admin) |
-| Fase 2 | Wali Kelas (`guru` dengan `kelas_id_wali` terisi — bukan role terpisah, lihat [[Projek/AbsenSI/06-Features/dashboard-guru-jurnal|dashboard-guru-jurnal.md]] bagian "Wali Kelas") | Hanya kelas yang dia ampu |
+| Fase 2 | Wali Kelas (`guru` dengan `kelas_id_wali` terisi — bukan role terpisah, lihat dashboard-guru-jurnal.md (06-Features/dashboard-guru-jurnal.md) bagian "Wali Kelas") | Hanya kelas yang dia ampu |
 | Fase 2 | `guru` (riwayat pribadi) | Hanya kehadiran diri sendiri |
 
 ---
@@ -118,7 +118,7 @@ Volume estimasi: rekap 1 bulan untuk 2.500 siswa = query ±50.000–75.000 baris
 
 ## ❓ Open Questions
 
-- [x] **Apakah perlu tabel kalender eksplisit?** → Resolved: **Ya**. Admin input kalender pendidikan (tahun ajaran + daftar libur) via dashboard. Lihat [[Projek/AbsenSI/06-Features/kalender-pendidikan|kalender-pendidikan.md]] untuk spek fitur dan [[Projek/AbsenSI/04-Database-Schema|04-Database-Schema]] untuk tabel `academic_years` + `school_holidays`.
+- [x] **Apakah perlu tabel kalender eksplisit?** → Resolved: **Ya**. Admin input kalender pendidikan (tahun ajaran + daftar libur) via dashboard. Lihat kalender-pendidikan.md (06-Features/kalender-pendidikan.md) untuk spek fitur dan 04-Database-Schema (04-Database-Schema.md) untuk tabel `academic_years` + `school_holidays`.
 - [x] **Filter berdasarkan wali kelas?** → Fase 2 — masuk bersamaan dengan akses wali kelas.
 - [x] **Export Excel/PDF?** → Fase 2 — tidak masuk scope Fase 1.
 - [x] **Rekap guru (kehadiran guru)?** → Fase 2 — admin hanya rekap siswa di Fase 1.
@@ -128,8 +128,8 @@ Volume estimasi: rekap 1 bulan untuk 2.500 siswa = query ±50.000–75.000 baris
 ---
 
 ## 🔗 Lihat Juga
-- [[Projek/AbsenSI/04-Database-Schema|04-Database-Schema]] — tabel `attendance_records`, `permits`, `students`
-- [[Projek/AbsenSI/06-Features/absensi-gerbang|Absensi Gerbang (Fase 1)]] — sumber data utama rekap
-- [[Projek/AbsenSI/06-Features/dashboard-piket|Dashboard Piket]] — sumber data `permits` (izin/sakit)
-- [[Projek/AbsenSI/03-User-Roles|03-User-Roles]] — scope akses per role
-- [[Projek/AbsenSI/11-Decisions|ADR-019, ADR-020]]
+- 04-Database-Schema (04-Database-Schema.md) — tabel `attendance_records`, `permits`, `students`
+- Absensi Gerbang (Fase 1) (06-Features/absensi-gerbang.md) — sumber data utama rekap
+- Dashboard Piket (06-Features/dashboard-piket.md) — sumber data `permits` (izin/sakit)
+- 03-User-Roles (03-User-Roles.md) — scope akses per role
+- ADR-019, ADR-020 (11-Decisions.md)

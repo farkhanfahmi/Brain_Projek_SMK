@@ -5,7 +5,7 @@ updated: 2026-06-25
 
 # 09 — Conventions
 
-← [[Projek/AbsenSI/00-INDEX AbsenSI|Index]]
+← Index (00-INDEX AbsenSI.md)
 
 ---
 
@@ -35,7 +35,7 @@ updated: 2026-06-25
 
 ## Environment & Secrets
 - `.env.example` selalu update kalau ada env var baru
-- Jangan commit `.env` asli — detail lengkap di [[Projek/AbsenSI/10-Environment|10-Environment]]
+- Jangan commit `.env` asli — detail lengkap di 10-Environment (10-Environment.md)
 
 ## Bahasa
 - Kode (variable, function, comment teknis): **Bahasa Inggris** — standar industri, lebih mudah cari referensi

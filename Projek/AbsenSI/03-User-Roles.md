@@ -5,9 +5,9 @@ updated: 2026-06-25
 
 # 03 — User Roles
 
-← [[Projek/AbsenSI/00-INDEX AbsenSI|Index]]
+← Index (00-INDEX AbsenSI.md)
 
-> Ini role PENGGUNA APLIKASI (siswa, guru, admin sekolah) — bukan role tim developer. Untuk pembagian tim developer lihat [[Projek/AbsenSI/_claudian/team|team.md]].
+> Ini role PENGGUNA APLIKASI (siswa, guru, admin sekolah) — bukan role tim developer. Untuk pembagian tim developer lihat team.md (_claudian/team.md).
 
 ---
 
@@ -23,9 +23,9 @@ updated: 2026-06-25
 | **Admin Pengelola Kartu** (`card_admin`) | ✅ Login | **Hanya** CRUD data kartu (registrasi, nonaktifkan, ganti kartu). Tidak bisa edit jadwal, tidak bisa edit data absensi, tidak bisa kelola akun lain |
 | **Kepala Sekolah** (`kepsek`) | ✅ Login — akun khusus tersendiri | Lihat dashboard TV + rekap (read-only). **Resolved:** TV dashboard tetap butuh auth, bukan akses bebas tanpa login meski di ruang terbatas |
 
-**Catatan:** Wali kelas dengan akses lihat data kelasnya (bukan cuma riwayat sendiri) — **Final (2026-07-21):** bukan role baru, extend akun `guru` existing dengan kolom `kelas_id_wali` (pola identik `guru_piket.kampus_id`). Read-only, scope ke kelas yang diampu. Detail lengkap & isi menu di [[Projek/AbsenSI/06-Features/dashboard-guru-jurnal|dashboard-guru-jurnal.md]] bagian "Wali Kelas".
+**Catatan:** Wali kelas dengan akses lihat data kelasnya (bukan cuma riwayat sendiri) — **Final (2026-07-21):** bukan role baru, extend akun `guru` existing dengan kolom `kelas_id_wali` (pola identik `guru_piket.kampus_id`). Read-only, scope ke kelas yang diampu. Detail lengkap & isi menu di dashboard-guru-jurnal.md (06-Features/dashboard-guru-jurnal.md) bagian "Wali Kelas".
 
-## Role Baru (Fase 2 — planning, lihat [[Projek/AbsenSI/06-Features/dashboard-guru-jurnal|dashboard-guru-jurnal.md]])
+## Role Baru (Fase 2 — planning, lihat dashboard-guru-jurnal.md (06-Features/dashboard-guru-jurnal.md))
 
 | Role | Login? | Akses |
 |---|---|---|

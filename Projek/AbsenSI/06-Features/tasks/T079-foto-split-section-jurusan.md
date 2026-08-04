@@ -1,7 +1,7 @@
 # T079 — UI: Split Section "Foto Tersimpan" (Guru/Siswa) + Kolom Jurusan
 
 ## Depends on
-Tidak ada — murni refactor UI di `foto-view.tsx`, tidak ada perubahan API/skema (kecuali `include` Prisma bila belum menyertakan jurusan, sama seperti catatan di [[T078-kartu-split-section-filter]]).
+Tidak ada — murni refactor UI di `foto-view.tsx`, tidak ada perubahan API/skema (kecuali `include` Prisma bila belum menyertakan jurusan, sama seperti catatan di T078-kartu-split-section-filter.md).
 
 ## Context
 - **App:** `apps/web`

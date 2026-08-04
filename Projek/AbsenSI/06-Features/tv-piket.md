@@ -6,7 +6,7 @@ updated: 2026-07-22
 
 # Feature — TV Piket (Lorong Piket, Layar Publik)
 
-← [[Projek/AbsenSI/00-INDEX AbsenSI|Index]]
+← Index (00-INDEX AbsenSI.md)
 
 > **Status: FINAL (2026-07-22), siap breakdown task.** Dependensi (`teaching_sessions`, `teacher_permits` dari dashboard guru jurnal — T038-T054) sudah ada kode-nya di working tree (belum di-audit visual lewat T060, tapi datanya siap dikonsumsi). Layout dirancang dari referensi EzMart + komponen generik yang sudah dibuat (`DataTableCard`/T058, `ActivityFeedCard`/T059) — tidak perlu menunggu sketsa lagi, semua keputusan sudah final di bawah.
 
@@ -14,7 +14,7 @@ updated: 2026-07-22
 
 ## 🎯 Konsep
 
-Selain komputer kerja guru piket (dashboard piket existing, lihat [[Projek/AbsenSI/06-Features/dashboard-piket|dashboard-piket.md]]), lorong piket juga punya **TV layar publik** yang bisa dilihat banyak orang (siswa lewat, orang tua, tamu). Berbeda dari dashboard kerja piket (interaktif, perlu login aktif untuk kerja), TV ini murni tampilan pantauan pasif, read-only, mirip semangat [[Projek/AbsenSI/06-Features/dashboard-tv|dashboard-tv.md]] (TV kepsek) tapi dengan isi & scope berbeda.
+Selain komputer kerja guru piket (dashboard piket existing, lihat dashboard-piket.md (06-Features/dashboard-piket.md)), lorong piket juga punya **TV layar publik** yang bisa dilihat banyak orang (siswa lewat, orang tua, tamu). Berbeda dari dashboard kerja piket (interaktif, perlu login aktif untuk kerja), TV ini murni tampilan pantauan pasif, read-only, mirip semangat dashboard-tv.md (06-Features/dashboard-tv.md) (TV kepsek) tapi dengan isi & scope berbeda.
 
 **Semua widget tampil dalam 1 layar** (tidak ada navigasi/klik — sesuai maksud "tv" yang dilihat sambil lewat), layout **bento grid, final (2026-07-22)**:
 
@@ -46,11 +46,11 @@ Draft awal menyebut "3 warna hijau/kuning/merah" — setelah `01-colors.md` dipe
 
 ## Scope: Per Kampus
 
-Konsisten dengan `guru_piket` yang sudah di-scope per `kampus_id` ([[Projek/AbsenSI/06-Features/dashboard-piket|dashboard-piket.md]]) — **setiap kampus TV-nya sendiri**, menampilkan data kampus itu saja. Tidak ada gabungan lintas kampus dalam 1 layar TV.
+Konsisten dengan `guru_piket` yang sudah di-scope per `kampus_id` (dashboard-piket.md (06-Features/dashboard-piket.md)) — **setiap kampus TV-nya sendiri**, menampilkan data kampus itu saja. Tidak ada gabungan lintas kampus dalam 1 layar TV.
 
 ## Isi / Widget (4 kelompok data — dikoreksi dari draft awal yang menyebut "6", isinya sebenarnya 4)
 
-1. **Bar persentase hadir/izin/alfa** — persentase siswa hari itu, di kampus tsb, dihitung dari `attendance_records` + `permits` dengan logic sama seperti modul Rekap ([[Projek/AbsenSI/06-Features/rekap-kehadiran|rekap-kehadiran.md]]) — **reuse service Rekap yang sudah ada, JANGAN hitung ulang logic alfa dari nol**
+1. **Bar persentase hadir/izin/alfa** — persentase siswa hari itu, di kampus tsb, dihitung dari `attendance_records` + `permits` dengan logic sama seperti modul Rekap (rekap-kehadiran.md (06-Features/rekap-kehadiran.md)) — **reuse service Rekap yang sudah ada, JANGAN hitung ulang logic alfa dari nol**
 2. **Nama siswa tidak hadir + keterangan** — daftar siswa alfa/izin/sakit hari itu berikut keterangannya, pakai `DataTableCard` (kolom: Nama, Kelas, Status via `StatusBadge`, Keterangan)
 3. **Guru yang belum absensi/mulai mengajar di kelas** — dari `teaching_sessions` (guru yang jadwalnya sudah lewat jam mulai + toleransi tapi `started_at` masih `null`), pakai `ActivityFeedCard` (icon chip `danger`, teks: nama guru + kelas + mapel + "belum mulai, terlambat X menit")
 4. **Guru yang izin** — dari `teacher_permits` (status "Diizinkan" hari itu), pakai `ActivityFeedCard` (icon chip `primary-soft` kalau tugas sudah diisi, `danger` kalau `follow_up_needed: true` — sinyal "Perlu Ditindaklanjuti" dari T046 harus menonjol di sini juga, bukan cuma di dashboard admin_jurnal)
@@ -71,11 +71,11 @@ Konsisten dengan `guru_piket` yang sudah di-scope per `kampus_id` ([[Projek/Abse
 
 ## 🔗 Terkait — Dashboard Kepsek (Fase 3, dicatat singkat)
 
-Pemilik proyek awalnya minta TV Kepsek juga diperbarui isinya (sama seperti TV Piket + tambahan persentase kehadiran mingguan per kelas & persentase kehadiran mingguan guru) — **diputuskan masuk Fase 3, tidak urgent sekarang**. [[Projek/AbsenSI/06-Features/dashboard-tv|dashboard-tv.md]] (Fase 1, route `/tv`) untuk saat ini **tidak berubah**. Catatan untuk nanti dipakai sebagai starting point saat Fase 3 dimulai — jangan mulai desain ulang `/tv` sebelum itu.
+Pemilik proyek awalnya minta TV Kepsek juga diperbarui isinya (sama seperti TV Piket + tambahan persentase kehadiran mingguan per kelas & persentase kehadiran mingguan guru) — **diputuskan masuk Fase 3, tidak urgent sekarang**. dashboard-tv.md (06-Features/dashboard-tv.md) (Fase 1, route `/tv`) untuk saat ini **tidak berubah**. Catatan untuk nanti dipakai sebagai starting point saat Fase 3 dimulai — jangan mulai desain ulang `/tv` sebelum itu.
 
 ## 🔗 Lihat Juga
-- [[Projek/AbsenSI/06-Features/dashboard-guru-jurnal|dashboard-guru-jurnal.md]] — sumber data guru belum absen kelas & guru izin (dependensi utama)
-- [[Projek/AbsenSI/06-Features/dashboard-piket|dashboard-piket.md]] — pola scope per kampus, dashboard kerja piket yang berdampingan dengan TV ini
-- [[Projek/AbsenSI/06-Features/dashboard-tv|dashboard-tv.md]] — TV kepsek existing (Fase 1, final, tidak berubah untuk sekarang)
-- [[Projek/AbsenSI/06-Features/rekap-kehadiran|rekap-kehadiran.md]] — logic hitung persentase hadir/izin/alfa
-- [[Projek/AbsenSI/13-Backlog|13-Backlog]]
+- dashboard-guru-jurnal.md (06-Features/dashboard-guru-jurnal.md) — sumber data guru belum absen kelas & guru izin (dependensi utama)
+- dashboard-piket.md (06-Features/dashboard-piket.md) — pola scope per kampus, dashboard kerja piket yang berdampingan dengan TV ini
+- dashboard-tv.md (06-Features/dashboard-tv.md) — TV kepsek existing (Fase 1, final, tidak berubah untuk sekarang)
+- rekap-kehadiran.md (06-Features/rekap-kehadiran.md) — logic hitung persentase hadir/izin/alfa
+- 13-Backlog (13-Backlog.md)

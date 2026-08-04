@@ -6,7 +6,7 @@ updated: 2026-06-25
 
 # Feature — Absensi Gerbang (Fase 1)
 
-← [[Projek/AbsenSI/00-INDEX AbsenSI|Index]]
+← Index (00-INDEX AbsenSI.md)
 
 > Modul utama fase 1. Siswa & guru tap kartu RFID di gerbang masuk utama sekolah. Status hadir/terlambat dihitung terhadap jam masuk sekolah (ADR-005).
 
@@ -46,10 +46,10 @@ updated: 2026-06-25
 - **Guru:** tap masuk > (jam mengajar pertama hari itu − **threshold global** yang diset admin di konfigurasi sistem) → status `terlambat`. Threshold berlaku sama untuk semua guru — tidak ada override per-guru.
 
 ### Siswa Tidak Tap Pulang
-Siswa tap masuk tapi tidak tap pulang sampai akhir hari sekolah → `waktu_pulang` tetap `null`. **Tidak ada auto-close.** Sistem menjalankan job harian di akhir hari untuk mengidentifikasi record `waktu_pulang = null` pada hari itu, lalu memunculkan daftar **"Tidak Tap Pulang Kemarin"** di Dashboard Piket keesokan harinya. Siswa harus klarifikasi ke guru piket → piket resolve manual (lihat [[Projek/AbsenSI/06-Features/dashboard-piket|dashboard-piket.md]] — section Antrian Klarifikasi).
+Siswa tap masuk tapi tidak tap pulang sampai akhir hari sekolah → `waktu_pulang` tetap `null`. **Tidak ada auto-close.** Sistem menjalankan job harian di akhir hari untuk mengidentifikasi record `waktu_pulang = null` pada hari itu, lalu memunculkan daftar **"Tidak Tap Pulang Kemarin"** di Dashboard Piket keesokan harinya. Siswa harus klarifikasi ke guru piket → piket resolve manual (lihat dashboard-piket.md (06-Features/dashboard-piket.md) — section Antrian Klarifikasi).
 
 ### Validasi Tap
-- UID kartu harus terdaftar & aktif (lihat [[Projek/AbsenSI/06-Features/manajemen-kartu|manajemen-kartu]]) — kalau UID tidak dikenal, kiosk tampilkan pesan error, tidak membuat record, dicatat di `tap_events` dengan `result: rejected_unknown`
+- UID kartu harus terdaftar & aktif (lihat manajemen-kartu (06-Features/manajemen-kartu.md)) — kalau UID tidak dikenal, kiosk tampilkan pesan error, tidak membuat record, dicatat di `tap_events` dengan `result: rejected_unknown`
 - Idempotency: setiap tap dari kiosk dikirim dengan `client_uuid` unik (untuk dukung offline-retry) — server tolak duplikat `client_uuid`
 
 ---
@@ -77,7 +77,7 @@ Setiap tap berhasil → dispatch event `attendance.recorded` ke BullMQ (lihat AD
 
 ## 🖥️ Dashboard TV
 
-Lihat [[Projek/AbsenSI/06-Features/dashboard-tv|dashboard-tv.md]] untuk detail terpisah.
+Lihat dashboard-tv.md (06-Features/dashboard-tv.md) untuk detail terpisah.
 
 ---
 
@@ -92,7 +92,7 @@ Lihat [[Projek/AbsenSI/06-Features/dashboard-tv|dashboard-tv.md]] untuk detail t
 **Status spec:** ✅ Final — siap dipecah jadi task development.
 
 ## 🔗 Lihat Juga
-- [[Projek/AbsenSI/06-Features/manajemen-kartu|Manajemen Kartu RFID]]
-- [[Projek/AbsenSI/06-Features/absensi-kelas-mapel|Absensi Kelas & Mapel (Fase 2)]]
-- [[Projek/AbsenSI/11-Decisions|ADR-005]]
+- Manajemen Kartu RFID (06-Features/manajemen-kartu.md)
+- Absensi Kelas & Mapel (Fase 2) (06-Features/absensi-kelas-mapel.md)
+- ADR-005 (11-Decisions.md)
 

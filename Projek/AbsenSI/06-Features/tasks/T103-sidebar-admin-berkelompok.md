@@ -1,14 +1,14 @@
 # T103 — UI: Sidebar Admin Berkelompok (Accordion) + Pisah Upload Foto Siswa/Guru
 
 ## Depends on
-Tidak ada secara teknis. Konsisten pola dengan [[06-Features/tasks/T097-sidebar-guru-berkelompok|T097]] (sidebar guru) dan [[Projek/AbsenSI/TASKS-POLISH-3|T099a]] (sidebar piket) — **reuse komponen accordion yang sama** kalau salah satu dari itu sudah dikerjakan lebih dulu, jangan bikin pola accordion berbeda-beda di 3 sidebar berbeda.
+Tidak ada secara teknis. Konsisten pola dengan T097 (06-Features/tasks/T097-sidebar-guru-berkelompok.md) (sidebar guru) dan T099a (TASKS-POLISH-3.md) (sidebar piket) — **reuse komponen accordion yang sama** kalau salah satu dari itu sudah dikerjakan lebih dulu, jangan bikin pola accordion berbeda-beda di 3 sidebar berbeda.
 
 ## Objective
 Kelompokkan 16 menu flat sidebar admin (`apps/web/src/components/shell/nav-items.ts`) jadi 6 grup accordion collapsible, DAN pisahkan halaman "Upload Foto" (sekarang 1 halaman dengan tab Siswa/Guru) jadi 2 menu terpisah — foto siswa masuk grup Siswa, foto guru masuk grup Guru.
 
 ## Context
 - **App:** `apps/web`
-- Diskusi 2026-07-31 (lanjutan diskusi Manajemen Akun berbasis section, [[06-Features/tasks/T104-akun-section-berbasis-role|T104]]) — user diminta pendapat soal pengelompokan menu admin, hasil diskusi di bawah.
+- Diskusi 2026-07-31 (lanjutan diskusi Manajemen Akun berbasis section, T104 (06-Features/tasks/T104-akun-section-berbasis-role.md)) — user diminta pendapat soal pengelompokan menu admin, hasil diskusi di bawah.
 - **File nav existing**: `apps/web/src/components/shell/nav-items.ts` — 14 item `primaryNav` + 2 item `secondaryNav`, semua FLAT tanpa pengelompokan sama sekali.
 - **Halaman Upload Foto existing**: `apps/web/src/app/(admin)/foto/foto-view.tsx` — SUDAH punya struktur `Tabs` dengan `TabsContent value="siswa"` dan `value="guru"` masing-masing merender `<UploadPanel identifierLabel="NISN siswa" .../>` dan `<UploadPanel identifierLabel="NIY guru" .../>` (baris ±155-183) — pemisahan ini LEBIH MUDAH dari perkiraan awal karena logic sudah terpisah lewat tab, tinggal dipecah jadi 2 route berbeda, bukan ditulis ulang dari nol.
 

@@ -6,9 +6,9 @@ updated: 2026-06-26
 
 # Feature — Dashboard Piket (Fase 1b)
 
-← [[Projek/AbsenSI/00-INDEX AbsenSI|Index]]
+← Index (00-INDEX AbsenSI.md)
 
-> **Fase 1b** — menyusul setelah inti Fase 1 (Absensi Gerbang, Manajemen Kartu, Import Data Master) stabil. Tidak dikerjakan bersamaan dengan inti Fase 1 untuk menghindari overload tim yang sedang belajar stack baru. Lihat [[Projek/AbsenSI/11-Decisions|ADR-015 s/d ADR-018]] untuk keputusan arsitektur yang melandasi fitur ini.
+> **Fase 1b** — menyusul setelah inti Fase 1 (Absensi Gerbang, Manajemen Kartu, Import Data Master) stabil. Tidak dikerjakan bersamaan dengan inti Fase 1 untuk menghindari overload tim yang sedang belajar stack baru. Lihat ADR-015 s/d ADR-018 (11-Decisions.md) untuk keputusan arsitektur yang melandasi fitur ini.
 
 ---
 
@@ -36,7 +36,7 @@ Sekolah punya **2 kampus fisik** (Kampus 1, Kampus 2), masing-masing dengan **gu
 |---|---|
 | Guru Piket (per kampus) | Lihat dashboard realtime siswa kampusnya, input status izin/sakit, kelola perizinan keluar + cetak surat, tinjau & kunci/buka-kunci siswa yang tidak kembali dari izin |
 | Siswa | Lapor lisan ke piket (tidak masuk atau mau izin keluar) — **tidak ada interaksi sistem langsung** dari sisi siswa |
-| Admin Pusat (`super_admin`) | Tetap punya kewenangan koreksi data absensi seperti biasa (lihat [[Projek/AbsenSI/03-User-Roles|03-User-Roles]]) — relasinya ke kewenangan piket harus dipertegas saat breakdown task (siapa yang menang kalau ada konflik koreksi) |
+| Admin Pusat (`super_admin`) | Tetap punya kewenangan koreksi data absensi seperti biasa (lihat 03-User-Roles (03-User-Roles.md)) — relasinya ke kewenangan piket harus dipertegas saat breakdown task (siapa yang menang kalau ada konflik koreksi) |
 
 ---
 
@@ -94,7 +94,7 @@ Ada **dua sub-alur** yang berbeda, keduanya dikelola dari menu Perizinan Keluar:
 ### 6. Tinjauan & Lock/Unlock Siswa
 - Di akhir hari, sistem menandai siswa dengan izin "akan kembali" yang masih `status_kembali: belum` sebagai **"Perlu Ditinjau"**.
 - Piket review daftar ini besok pagi — kalau memang belum terselesaikan (bukan cuma piket lupa klik), piket **secara manual** mengunci siswa tersebut (isi `locked_reason`, sistem catat `locked_by` + `locked_at`).
-- Siswa terkunci yang tap di gerbang → **ditolak** dengan pesan jelas di layar kiosk ("Hubungi Guru Piket"), tetap dicatat sebagai log percobaan (pola sama dengan tap kartu inactive, lihat [[Projek/AbsenSI/06-Features/manajemen-kartu|manajemen-kartu.md]]).
+- Siswa terkunci yang tap di gerbang → **ditolak** dengan pesan jelas di layar kiosk ("Hubungi Guru Piket"), tetap dicatat sebagai log percobaan (pola sama dengan tap kartu inactive, lihat manajemen-kartu.md (06-Features/manajemen-kartu.md)).
 - Proses lanjutan (BK) berjalan **offline**, di luar sistem. Setelah selesai, piket buka kunci + isi `unlock_note` ringkas sebagai catatan audit.
 
 ---
@@ -138,8 +138,8 @@ Ada **dua sub-alur** yang berbeda, keduanya dikelola dari menu Perizinan Keluar:
 - [x] **Modifikasi `print.php` untuk parameter `kode` baru** → Script ada di `C:\ProjekSMK\print.php` di server lokal `10.10.10.100`. Dikerjakan **sebelum modul Permits di-deploy** — siapapun yang mengerjakan modul Permits bertanggung jawab koordinasi edit `print.php` ini. Perubahan minimal: tambah 1 blok `<?= $kode ?>` di template HTML surat izin.
 
 ## 🔗 Lihat Juga
-- [[Projek/AbsenSI/06-Features/absensi-gerbang|Absensi Gerbang (Fase 1)]]
-- [[Projek/AbsenSI/06-Features/manajemen-kartu|Manajemen Kartu RFID]]
-- [[Projek/AbsenSI/06-Features/dashboard-tv|Dashboard TV Realtime]]
-- [[Projek/AbsenSI/04-Database-Schema|04-Database-Schema]] — entitas `kampus`, `users`, `permits`
-- [[Projek/AbsenSI/11-Decisions|ADR-015, ADR-016, ADR-017, ADR-018]]
+- Absensi Gerbang (Fase 1) (06-Features/absensi-gerbang.md)
+- Manajemen Kartu RFID (06-Features/manajemen-kartu.md)
+- Dashboard TV Realtime (06-Features/dashboard-tv.md)
+- 04-Database-Schema (04-Database-Schema.md) — entitas `kampus`, `users`, `permits`
+- ADR-015, ADR-016, ADR-017, ADR-018 (11-Decisions.md)

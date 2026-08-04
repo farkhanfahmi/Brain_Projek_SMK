@@ -329,4 +329,4 @@ Foto + nama + jam tap (sama seperti siswa) **+ 2 tabel**:
 - ❌ JANGAN split form Siswa jadi multi-step — tetap 1 dialog sesuai keputusan user.
 
 ## Ref
-[[Projek/AbsenSI/11-Decisions|ADR-022]], [[Projek/AbsenSI/11-Decisions|ADR-023]], [[Projek/AbsenSI/04-Database-Schema|04-Database-Schema]]
+ADR-022 (11-Decisions.md), ADR-023 (11-Decisions.md), 04-Database-Schema (04-Database-Schema.md)

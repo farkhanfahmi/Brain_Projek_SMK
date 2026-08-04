@@ -6,7 +6,7 @@ updated: 2026-07-22
 
 # Feature — Plotting Siswa ke Kelas (Menu Kelas)
 
-← [[Projek/AbsenSI/00-INDEX AbsenSI|Index]]
+← Index (00-INDEX AbsenSI.md)
 
 > **Status: FINAL, siap breakdown task.** Ditemukan sebagai celah 2026-07-22: siswa cuma bisa di-assign ke kelas SEKALI saat form "Tambah Siswa" dibuat — tidak ada mekanisme pindah kelas (individual maupun massal), tidak ada penempatan siswa baru (SPMB) secara batch, dan tidak ada aksi "Tandai Keluar/Lulus" dari UI meski field skemanya (`status`, `alasanNonaktif` dari T063) sudah ada.
 
@@ -52,7 +52,7 @@ Ditambah 1 kebutuhan terkait yang ditemukan saat diskusi: **Tandai Siswa Keluar*
 
 ## 2️⃣ Kenaikan Kelas Massal (Menu Tersendiri — REVISI 2026-07-22, baca T073 untuk detail lengkap)
 
-> **Desain diganti total** dari versi awal (pilih 1 kelas asal + 1 kelas tujuan per proses) — sekarang **1 halaman untuk SEMUA kelas sekaligus**. Spec detail lengkap ada di [[Projek/AbsenSI/06-Features/tasks/T073-kenaikan-kelas-massal|task T073]] (task file itu sumber kebenaran terbaru, ringkasan di bawah).
+> **Desain diganti total** dari versi awal (pilih 1 kelas asal + 1 kelas tujuan per proses) — sekarang **1 halaman untuk SEMUA kelas sekaligus**. Spec detail lengkap ada di task T073 (06-Features/tasks/T073-kenaikan-kelas-massal.md) (task file itu sumber kebenaran terbaru, ringkasan di bawah).
 
 ### Alur (Ringkas)
 1. **Menu tersendiri** `/kelas/kenaikan-massal` — admin pilih dulu **"Naik ke Tahun Ajaran"** (dari tahun ajaran yang SUDAH ADA, dibuat lewat menu Kalender Pendidikan — bukan dibuat di sini)
@@ -112,6 +112,6 @@ model Student {
 - [ ] Apakah kolom "Jumlah Siswa" di tabel Kelas perlu breakdown (misal per jenis kelamin) atau cukup angka total — v1: cukup angka total
 
 ## 🔗 Lihat Juga
-- [[Projek/AbsenSI/06-Features/tasks/T063-schema-data-wali-murid|T063]] — field `alasanNonaktif`/`tahunLulus` yang sudah ada, dipakai Bagian 4
-- [[Projek/AbsenSI/06-Features/tasks/T066-form-siswa-sheet-lengkap|T066]] — form Siswa Sheet+Tabs, tempat status/alasan nonaktif awalnya dirancang (kini sebagian pindah ke halaman detail sesuai Bagian 3/4 di sini)
-- [[Projek/AbsenSI/04-Database-Schema|04-Database-Schema]]
+- T063 (06-Features/tasks/T063-schema-data-wali-murid.md) — field `alasanNonaktif`/`tahunLulus` yang sudah ada, dipakai Bagian 4
+- T066 (06-Features/tasks/T066-form-siswa-sheet-lengkap.md) — form Siswa Sheet+Tabs, tempat status/alasan nonaktif awalnya dirancang (kini sebagian pindah ke halaman detail sesuai Bagian 3/4 di sini)
+- 04-Database-Schema (04-Database-Schema.md)
