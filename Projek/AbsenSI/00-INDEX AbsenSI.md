@@ -47,11 +47,22 @@ updated: 2026-07-21
 - [[Projek/AbsenSI/06-Features/design-system/MASTER|Design System]] — brief visual EzMart-style (warm beige/oranye) dipakai `apps/web` & `apps/kiosk`
 - [[Projek/AbsenSI/06-Features/migrasi-database-lama|Migrasi Database Lama]] — perbandingan struktur lama (Laravel) vs baru, field yang hilang & keputusan migrasi (T061-T063)
 - [[Projek/AbsenSI/06-Features/plotting-siswa-kelas|Plotting Siswa ke Kelas]] — penempatan siswa baru (paste-NISN), kenaikan kelas massal, pindah individual, tandai keluar (T071-T074)
+- [[Projek/AbsenSI/06-Features/ekstrakurikuler|Ekstrakurikuler]] — pendaftaran publik siswa (selesai & live) + monitoring admin (selesai); absensi oleh pembina (T096 model dasar + T102 amandemen besar, keduanya selesai 2026-07-31 — lihat T102)
+- [[Projek/AbsenSI/06-Features/tasks/T097-sidebar-guru-berkelompok|T097 — Sidebar Guru Berkelompok]] — ✅ **selesai & diverifikasi 2026-07-31** (accordion Guru/Ekstrakurikuler + link tunggal Wali Kelas, live di production). **Piket TIDAK termasuk** — didiskusikan tapi sengaja ditunda
+- [[Projek/AbsenSI/06-Features/tasks/T098-auto-lock-izin-tidak-kembali|T098 — Auto-Lock Izin Tidak Kembali]] — amandemen KEDUA ADR-017 (job terjadwal tengah malam), hapus section Perlu Ditinjau, tombol "Tidak Kembali" manual — belum dikerjakan, risiko tinggi (ubah RBAC lock)
+- [[Projek/AbsenSI/06-Features/tasks/T099-polish-ui-dashboard-piket|T099 — Polish UI Dashboard Piket]] — ✅ **selesai & live di production 2026-07-31** (sidebar grup, fix filter Direktori Siswa, board rename "Siswa Belum Hadir", tombol verifikasi Riwayat Izin, hapus badge dobel)
+- [[Projek/AbsenSI/06-Features/tasks/T100-rename-tidak-tap-pulang|T100 — Rename "Tidak Tap Pulang" → "Tidak Absen Pulang"]] — ✅ **selesai & diverifikasi 2026-07-30** (rename menyeluruh UI+kode+endpoint, lihat detail di file task)
+- [[Projek/AbsenSI/06-Features/tasks/T101-validasi-jam-pulang-jadwal-kelas|T101 — Validasi Tap Pulang Sesuai Jadwal Kelas]] — 🔴 BLOCKED, butuh data jadwal jam_mengajar lengkap dulu (baru 6 baris dummy) + banyak pertanyaan desain belum terjawab, JANGAN eksekusi sebelum prasyarat terpenuhi
+- [[Projek/AbsenSI/06-Features/tasks/T102-ekstra-kelompok-sesi-jadwal|T102 — Dashboard Pembina Ekstra Lengkap]] — ✅ **selesai & diverifikasi 2026-07-31** (amandemen besar T096: kelompok/sesi paralel opsional, jadwal hari+jam, auto-generate EkstraSesi harian, 3 submenu Daftar Peserta/Presensi/Setting, sekalian tutup gap route group `(pembina-ekstra)/` yang belum pernah dibuat T096 — lihat detail di file task)
+- [[Projek/AbsenSI/06-Features/tasks/T103-sidebar-admin-berkelompok|T103 — Sidebar Admin Berkelompok]] — 6 grup accordion (konsisten pola T097), pisah Upload Foto jadi Foto Siswa/Foto Guru terpisah — belum dikerjakan
+- [[Projek/AbsenSI/06-Features/tasks/T104-akun-section-berbasis-role|T104 — Manajemen Akun Berbasis Section]] — ✅ **selesai & diverifikasi 2026-07-31** (4 tab Admin/Piket/Guru/Pembina Ekstra, dropdown Role cuma di tab Admin, live di production)
+- [[Projek/AbsenSI/06-Features/tasks/T105-workflow-dev-production-terpisah|T105 — Pisahkan Dev/Production (1 Mesin)]] — 🔴 PRIORITAS TINGGI pasca-insiden wipe: 136 file (T072-T104) belum di-commit ke GitHub sama sekali, DB+folder+branch dev harus dipisah dari production — belum dikerjakan
 
 ### 🎯 Task Execution
 - [[Projek/AbsenSI/TASKS-FASE-1|TASKS-FASE-1]] — 32 task bertahap (T001–T028e), **31/32 selesai**
 - [[Projek/AbsenSI/TASKS-POLISH-1|TASKS-POLISH-1]] — 8 task polish batch 1 (P001–P008), **semua selesai**
 - [[Projek/AbsenSI/TASKS-POLISH-2|TASKS-POLISH-2]] — 9 task polish batch 2 (T029–T037), **8/9 selesai** (T035/Rekap PDF sengaja dilewati, tunggu diskusi format sebelum dikerjakan)
+- [[Projek/AbsenSI/TASKS-POLISH-3|TASKS-POLISH-3]] — 6 task perbaikan dashboard piket batch 3 (T090–T095), **0/6 belum dikerjakan** — dieksekusi kapan pun sesuai kebutuhan
 - [[Projek/AbsenSI/TASKS-FASE-2-JURNAL|TASKS-FASE-2-JURNAL]] — 14 task Dashboard Guru Jurnal (T038–T051), **0/14**, siap eksekusi
 
 ### Proses & Keputusan

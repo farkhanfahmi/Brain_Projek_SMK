@@ -1,0 +1,23 @@
+{
+  "id": "conv-1785135105398-b2lxw9s9w",
+  "providerId": "claude",
+  "title": "Estimate extracurricular tracking app",
+  "titleGenerationStatus": "success",
+  "createdAt": 1785135105398,
+  "updatedAt": 1785135415533,
+  "lastResponseAt": 1785135415533,
+  "sessionId": "869ac32a-f1de-4a35-a4c5-abd43daa1a46",
+  "providerState": {
+    "providerSessionId": "869ac32a-f1de-4a35-a4c5-abd43daa1a46"
+  },
+  "usage": {
+    "model": "sonnet",
+    "inputTokens": 2,
+    "cacheCreationInputTokens": 4524,
+    "cacheReadInputTokens": 72164,
+    "contextWindow": 1000000,
+    "contextTokens": 76690,
+    "percentage": 8,
+    "contextWindowIsAuthoritative": true
+  }
+}
