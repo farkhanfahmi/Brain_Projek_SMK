@@ -23,8 +23,8 @@ updated: 2026-08-04
 | Fase 1 — Absensi Gerbang | ✅ Selesai (31/32, T035 PDF sengaja ditunda) | `_archive/TASKS-FASE-1.md` |
 | Polish Batch 1 | ✅ Selesai (8/8) | `_archive/TASKS-POLISH-1.md` |
 | Polish Batch 2 | ✅ Selesai (8/9, T035 masih ditunda) | `_archive/TASKS-POLISH-2.md` |
-| Fase 2 — Dashboard Guru Jurnal + turunannya (T038-T089) | ✅ Selesai (49/52 kode ada; T055, T060, T088 masih tertunda — lihat tabel di bawah) | `_archive/TASKS-FASE-2-JURNAL.md` |
-| Polish Batch 3 — Dashboard Piket (T090-T095) | ✅ Selesai semua (dikerjakan 2026-07-31) | `_archive/TASKS-POLISH-3.md` |
+| Fase 2 — Dashboard Guru Jurnal + turunannya (T038-T089) | ✅ Selesai (51/52 — hanya T060 belum, lihat tabel di bawah) | `_archive/TASKS-FASE-2-JURNAL.md` |
+| Polish Batch 3 — Dashboard Piket (T090-T095) | ✅ **Selesai semua, terverifikasi ke kode 2026-08-04** (T090-T095 dicek satu-satu langsung ke source, semua ada implementasinya) | `_archive/TASKS-POLISH-3.md` |
 | Ekstrakurikuler + turunannya (T096-T105) | ✅ Selesai semua termasuk CRUD sesi/kelompok/presensi (2026-08-04) | lihat `06-Features/tasks/T096-T105` + histori chat |
 
 **Kode:** semua fase di atas SUDAH ter-commit ke git (`/home/anunnaki/Documents/APP SMK/AbsenSI`, branch `dev`) dan sudah di-deploy ke production (lihat `10-Environment.md` untuk topologi dev/production). Working tree bersih per 2026-08-04.
@@ -33,15 +33,18 @@ updated: 2026-08-04
 
 ## 🔴 Task Aktif / Belum Dikerjakan (WAJIB baca sebelum eksekusi apapun)
 
-| Task | Prioritas | Kenapa belum dikerjakan | Ref |
-|---|---|---|---|
-| T055 — Loopback Rekap (filter tahun ajaran/semester) | Sedang | Belum sempat dikerjakan, tidak ada blocker | `06-Features/tasks/T055` — **belum ada file, cek TASKS-FASE-2-JURNAL arsip Blok 7** |
-| T060 — Audit Visual Menyeluruh Dashboard Guru/Admin Jurnal | Sedang | Belum sempat dikerjakan, tidak ada blocker | `06-Features/tasks/T060` — **belum ada file, cek TASKS-FASE-2-JURNAL arsip Blok 9** |
-| T088 — Migrasi UUID Tabel Sensitif | Rendah | **SENGAJA ditunda** — tunggu instruksi eksplisit user, jangan diprioritaskan tanpa diminta | `06-Features/tasks/T088-uuid-tabel-sensitif.md` |
-| T098 — Auto-Lock Izin Tidak Kembali | Tinggi (risiko) | **Belum dikerjakan** — amandemen KEDUA ADR-017, mengubah RBAC lock, risiko tinggi. Butuh konfirmasi eksplisit sebelum eksekusi | `06-Features/tasks/T098-auto-lock-izin-tidak-kembali.md` |
-| T101 — Validasi Jam Pulang Sesuai Jadwal Kelas | Blocked | 🔴 **BLOCKED** — data jadwal `jam_mengajar` belum lengkap (baru 6 baris dummy), banyak pertanyaan desain belum terjawab. JANGAN eksekusi sebelum prasyarat terpenuhi | `06-Features/tasks/T101-validasi-jam-pulang-jadwal-kelas.md` |
+> **Audit menyeluruh dilakukan 2026-08-04** — setiap task di tabel ini diverifikasi LANGSUNG ke kode (baca file, cek implementasi nyata), bukan cuma percaya dokumen lama. T090-T095 dan T055 yang sebelumnya ditulis "belum dikerjakan" di draf STATUS.md pertama TERBUKTI SALAH — keduanya sudah selesai. Tabel ini sudah dikoreksi.
 
-**T090-T095 (Polish Batch 3)** sudah ditulis "0/6" di dokumen lama tapi tabel di atas (Ringkasan Fase) sudah ditandai ✅ selesai berdasar `00-INDEX AbsenSI.md` yang menyebut T097/T099 dkk selesai 2026-07-31 — **perlu verifikasi 1x lagi ke kode** apakah T090-T095 spesifik (bukan T097-T105) benar sudah dikerjakan, karena ada indikasi campur-aduk penomoran antara Polish Batch 3 (T090-T095) dan rangkaian Ekstrakurikuler (T096-T105) yang ditulis di file berbeda pada tanggal yang sama.
+| Task | Prioritas | Status sebenarnya (terverifikasi ke kode) | Ref |
+|---|---|---|---|
+| T060 — Audit Visual Menyeluruh Dashboard Guru/Admin Jurnal | Sedang | **Belum dikerjakan** (terkonfirmasi tidak ada laporan/artefak audit sistematis 11 halaman) | `06-Features/tasks/T060` — **belum ada file, cek TASKS-FASE-2-JURNAL arsip Blok 9** |
+| T088 — Migrasi UUID Tabel Sensitif | Rendah | **Belum dikerjakan, SENGAJA ditunda** — terkonfirmasi semua model masih `Int autoincrement`, tidak ada kolom UUID. Tunggu instruksi eksplisit user | `06-Features/tasks/T088-uuid-tabel-sensitif.md` |
+| T098 — Auto-Lock Izin Tidak Kembali | Tinggi (risiko) | **Belum dikerjakan** — terkonfirmasi: tidak ada job auto-lock baru, enum `StatusKembali` masih `belum/sudah/pulang` (belum ada `tidak_kembali`), dan section "Perlu Ditinjau" MASIH ADA PENUH di kode (bertentangan langsung dengan spec task yang minta section itu dihapus total). Amandemen KEDUA ADR-017, mengubah RBAC lock — butuh konfirmasi eksplisit sebelum eksekusi | `06-Features/tasks/T098-auto-lock-izin-tidak-kembali.md` |
+| T101 — Validasi Jam Pulang Sesuai Jadwal Kelas | Blocked | 🔴 **BLOCKED, terkonfirmasi** — `tap()` di `attendance.service.ts` tidak ada validasi jadwal kelas sama sekali, tidak ada enum `TapResult` baru untuk ini. Data jadwal `jam_mengajar` belum lengkap. JANGAN eksekusi sebelum prasyarat terpenuhi | `06-Features/tasks/T101-validasi-jam-pulang-jadwal-kelas.md` |
+
+**T055 (Loopback Rekap) dan T090-T095 (Polish Batch 3) SEMUANYA SUDAH SELESAI** — dihapus dari tabel task aktif di atas setelah verifikasi langsung ke kode 2026-08-04:
+- T055: `attendance-report.service.ts` (`resolveDateRange()`) DAN `apps/web/.../rekap/rekap-view.tsx` (dropdown Tahun Ajaran/Semester + validasi rentang tanggal) keduanya sudah lengkap, backend maupun frontend.
+- T090-T095: dicek satu-satu ke source (komentar kode eksplisit menyebut nomor task-nya) — Riwayat Izin dengan filter rentang, exclude PKL dari board, menu Input Izin/Sakit mandiri, filter Kelas-mengikuti-Jurusan, fix bug highlight sidebar, form modern — semua ada.
 
 ---
 
@@ -50,7 +53,7 @@ updated: 2026-08-04
 ### apps/api (NestJS)
 Semua modul Fase 1 + Fase 2 + Ekstrakurikuler CRUD sudah selesai: Auth, Core (Kampus/Kelas/Jurusan/Siswa/Guru/Schedule), Cards, Import, Calendar, Attendance (+ lock otomatis), Permits, Piket Schedules, Kiosks, Photos, Activity Log, Realtime, Queue, Teaching Sessions/Semesters/Block-Week-Ranges/Teacher-Permits/Schedule-Resolver (Fase 2), TV Piket, Ekstra-Absensi (sesi/kelompok/presensi CRUD lengkap).
 
-Yang belum: T055 (loopback filter rekap), T088 (UUID, sengaja ditunda).
+Yang belum: T088 (UUID, sengaja ditunda), T098 (auto-lock izin tidak kembali).
 
 ### apps/web (Next.js Admin)
 Semua menu utama selesai: Login, Dashboard Kampus/Kelas/Jurusan/Siswa/Guru/Kartu, Import, Upload Foto (kini split Siswa/Guru — T103), Kalender, Jadwal Piket, Log Aktivitas, Rekap Kehadiran, Dashboard Piket (sidebar berkelompok — T099a), Dashboard TV, Manajemen Akun (4 section — T104), Cetak Struk Izin (route handler internal), Dashboard Guru Jurnal + Admin Jurnal + Wali Kelas (Fase 2), Sidebar Admin 6 grup accordion (T103), Ekstrakurikuler (pendaftaran, monitoring, dashboard pembina lengkap dengan CRUD sesi/kelompok).

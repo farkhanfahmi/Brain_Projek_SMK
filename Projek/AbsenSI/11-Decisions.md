@@ -180,13 +180,15 @@ updated: 2026-07-21
 
 ---
 
-## ADR-018: Reuse `print.php` yang Sudah Ada untuk Cetak Surat Izin Keluar
-**Tanggal:** 2026-06-26
-**Status:** Accepted
-**Konteks:** Sekolah sudah punya mekanisme cetak surat izin yang berjalan baik di sistem lama (AppSheet) — printer thermal Blueprint ECO 58D terinstal sebagai printer Windows biasa, dipanggil lewat script `print.php` yang berjalan di server lokal yang selalu hidup (`10.10.10.100:8800`), menerima parameter via URL, render preview HTML, petugas klik print manual dari browser.
-**Keputusan:** Dashboard Piket yang baru **memakai ulang** `print.php` yang sudah ada, bukan membangun mekanisme print baru. Sistem baru mengonstruksi URL dengan pola parameter yang sama (`petugas`, `tgl`, `nama`, `kls`, `alasan`, `ket`, `jamkembali`), ditambah 1 parameter baru `kode` untuk kode verifikasi unik per surat (ditambahkan sebagai antisipasi pemalsuan, meski belum pernah ada kasus nyata — keputusan preventif berbiaya rendah).
-**Alasan:** `print.php` sudah terbukti bekerja dengan hardware fisik yang sama selama ini — membangun ulang integrasi printer dari nol untuk hardware yang sama adalah kerja duplikat tanpa manfaat. Reuse ini juga selaras dengan prinsip menghindari over-engineering yang sudah disepakati berkali-kali di proyek ini.
-**Konsekuensi:** `print.php` perlu sedikit modifikasi untuk menerima & menampilkan parameter `kode` baru (akses ke source code sudah dikonfirmasi tersedia). Server yang menjalankan `print.php` (`10.10.10.100`) tetap berdiri independen dari server utama AbsenSI (ADR-012) untuk saat ini — konsolidasi infrastruktur ini dicatat sebagai technical debt opsional, bukan kebutuhan mendesak.
+## ADR-018: Cetak Surat Izin Keluar — Route Handler Internal (REVISI, bukan lagi `print.php` eksternal)
+**Tanggal:** 2026-06-26 (Accepted awal), **direvisi 2026-07-15 pasca-T024**
+**Status:** Superseded — lihat keputusan revisi di bawah, versi awal diarsipkan sebagai histori
+
+**Keputusan awal (2026-06-26, TIDAK LAGI BERLAKU):** Reuse script `print.php` yang berjalan di server lokal `10.10.10.100:8800` (dari sistem lama AppSheet) untuk cetak struk thermal, dashboard baru cuma mengonstruksi URL dengan parameter yang sama.
+
+**Keputusan revisi (2026-07-15, BERLAKU SEKARANG):** `print.php` eksternal **dihapus total**, diganti Next.js Route Handler internal di `apps/web/src/app/print/struk-izin/route.ts`. Parameter tetap sama (`petugas`, `tgl`, `nama`, `kls`, `alasan`, `ket`, `jamkembali`, `kode`). Flow: sistem konstruksi URL relatif (`/print/struk-izin?...`) → `window.open(url)` → auto-print via `window.print()` setelah 500ms, petugas klik Print manual kalau perlu ulang. Template & styling di-port 1:1 dari `print.php` lama (struk 58mm thermal, Blueprint ECO 58D) — TIDAK perlu server PHP terpisah atau host `10.10.10.100` lagi.
+
+**Alasan revisi:** menghilangkan dependency ke server eksternal terpisah (`10.10.10.100`) yang jadi single point of failure di luar kendali AbsenSI — konsolidasi ke dalam monorepo yang sama menghapus technical debt yang disebutkan di keputusan awal.
 
 ---
 

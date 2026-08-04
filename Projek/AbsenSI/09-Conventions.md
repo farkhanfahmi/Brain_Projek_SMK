@@ -9,19 +9,14 @@ updated: 2026-06-25
 
 ---
 
-## Git Workflow — Trunk-Based + Short Feature Branch
+## Git Workflow — Aktual (dikoreksi 2026-08-04)
 
-- `main` selalu deployable
-- Branch fitur umur pendek (idealnya 1-3 hari kerja), naming: `feat/[modul]-[deskripsi-singkat]`
-  - Contoh: `feat/kiosk-offline-buffer`, `feat/core-jadwal-mengajar`, `fix/web-rekap-filter`
-- **Aturan review:**
-  - PR scoped ke `apps/web` saja atau `apps/kiosk` saja → boleh self-merge setelah CI hijau
-  - PR yang sentuh `apps/api` (modul Core) atau `packages/types` → **wajib 1 approval** dari developer lain sebelum merge
-- Commit message: `[modul] deskripsi singkat` — contoh: `[core] add jadwal mengajar schema`, `[kiosk] implement offline buffer with IndexedDB`
+> **Koreksi:** bagian ini sebelumnya menulis workflow tim multi-developer (branch `feat/[modul]-*`, PR review, task ID `task-CORE-XXX`) yang **tidak pernah dipraktikkan** — proyek berjalan sebagai sesi tunggal Claude Code sejak awal (lihat `_archive/_claudian/`). Workflow aktual jauh lebih sederhana:
 
-## Penamaan Task & Branch
-- Task ID berprefix modul: `task-CORE-XXX`, `task-WEB-XXX`, `task-KIOSK-XXX`
-- 1 task = idealnya 1 branch = 1 PR
+- 2 branch: `dev` (kerja harian) dan `main` (khusus folder production, lihat `10-Environment.md`) — TIDAK ada feature branch per task.
+- Commit message: `feat: T0xx — deskripsi singkat` / `fix: T0xx — deskripsi` / `chore: deskripsi` (prefix conventional-commit-style, nomor task kalau relevan). Contoh nyata dari histori: `feat: T103 — sidebar admin dikelompokkan (accordion) + pisah Upload Foto Siswa/Guru`.
+- Commit ke `dev` otomatis auto-deploy ke production via git post-commit hook (lihat `10-Environment.md`) — tidak ada proses PR/review manual.
+- Task ID: `T0xx` polos (tanpa prefix modul) — didefinisikan di `06-Features/tasks/T0xx-*.md`, statusnya di-track di `STATUS.md`.
 
 ## Coding Standard (TypeScript)
 - ESLint + Prettier config shared via `packages/config` — jangan override per-app tanpa diskusi

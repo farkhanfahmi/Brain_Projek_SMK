@@ -34,13 +34,20 @@ Membangun sistem absensi yang:
 - Rekap fleksibel dengan filter (kelas, jurusan, hari, dll.)
 - Jalur arsitektur untuk notifikasi disiapkan (event-driven), **tapi notifikasi WA TIDAK dibangun di fase ini**
 
-### 🟡 Fase 2 — Absensi Kelas & Mapel (planning, belum dikerjakan)
+### ⚰️ Fase 2 — Absensi Kelas & Mapel via Tap RFID (ARSIP, DIBATALKAN — digantikan pendekatan di bawah)
+
+> **Koreksi 2026-08-04:** rencana di bawah ini TIDAK PERNAH dilanjutkan — dibatalkan karena blocker "gerbang tanpa penghalang fisik" (poin risiko di bawah) tidak pernah terpecahkan, dan sekolah lebih butuh jurnal mengajar + fleksibilitas jadwal blok A/B daripada reader fisik di tiap kelas. Digantikan oleh **Dashboard Guru — Jurnal Mengajar** (lihat `06-Features/dashboard-guru-jurnal.md`), yang SUDAH dikerjakan & live — absensi mapel diturunkan dari data tap gerbang + koreksi manual guru, bukan reader kelas baru. Detail lengkap fitur yang sudah selesai ada di `STATUS.md`.
+
 - Reader RFID di setiap ruang kelas + ruang praktek
 - Siswa **wajib tap gerbang dulu** sebelum bisa tap kelas — kalau belum tap gerbang, tap kelas ditolak sistem
 - Tap di kelas mencatat kehadiran **per mapel/sesi pelajaran**, dibandingkan jadwal mengajar guru
 - Guru dinyatakan terlambat **per sesi mengajar** (bukan cuma terlambat sekolah secara umum) berdasarkan tap kelas vs jadwal
 - Siswa yang tap gerbang tapi tidak tap kelas tertentu → tercatat **bolos mapel** itu
-- Catatan risiko (lihat 13-Backlog (13-Backlog.md)): gerbang sekolah **tidak punya penghalang fisik** (bukan turnstile), jadi aturan "wajib tap gerbang dulu" punya potensi false-negative kalau siswa fisik masuk tanpa tap. Perlu keputusan UX (hard block vs flag warning) sebelum fase 2 dimulai.
+- Catatan risiko yang jadi alasan pembatalan: gerbang sekolah **tidak punya penghalang fisik** (bukan turnstile), jadi aturan "wajib tap gerbang dulu" punya potensi false-negative kalau siswa fisik masuk tanpa tap.
+
+### ✅ Fase 2 (aktual, SUDAH SELESAI) — Dashboard Guru: Jurnal Mengajar & Absensi Mapel
+
+Menggantikan rencana tap-RFID-kelas di atas. Absensi mapel diturunkan dari data tap gerbang + koreksi manual guru. Termasuk jadwal Mode Blok (Minggu A/B) vs Mode Normal, gating geofence + toleransi keterlambatan untuk "Mulai Mengajar", alur izin guru (role `admin_jurnal`), dan role Wali Kelas. Detail lengkap: `06-Features/dashboard-guru-jurnal.md`. Status implementasi: `STATUS.md`.
 
 ### 🔵 Fase 3 — Notifikasi & Integrasi Lanjutan (ide masa depan, belum direncanakan detail)
 - Notifikasi WA/SMS ke orang tua saat anak tap masuk/keluar

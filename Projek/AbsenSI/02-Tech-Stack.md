@@ -40,22 +40,34 @@ updated: 2026-06-25
 ┌──────────────────────────────────────────────────────────┐
 │                    MONOREPO (Turborepo)                   │
 │                                                            │
-│  apps/api/        ← NestJS — modul: Core, Attendance,    │
-│                      Card, Schedule, Notification(stub)   │
-│  apps/web/         ← Next.js — Dashboard admin            │
+│  apps/api/        ← NestJS — banyak modul, sudah jauh     │
+│                      melebihi 5 modul awal (lihat kode    │
+│                      aktual `apps/api/src/*` untuk daftar  │
+│                      lengkap — Core, Attendance, Card,     │
+│                      Permits, Piket, Kiosk, Photo, Log,    │
+│                      Teaching Sessions, Semester, Ekstra,   │
+│                      TV Piket, dst)                        │
+│  apps/web/         ← Next.js — Dashboard admin+guru+piket │
+│                      +admin_jurnal+pembina_ekstra          │
 │  apps/kiosk/        ← Next.js — Halaman tap gerbang +      │
 │                      TV display (kiosk mode)               │
 │                                                            │
 │  packages/types/   ← Shared TS types/interface            │
-│  packages/config/   ← Shared eslint/tsconfig               │
+│  packages/config/   ← Shared eslint/tsconfig/tailwind      │
+│  packages/ui/       ← shadcn/ui components (dipakai web+   │
+│                      kiosk)                                │
 └──────────────────────────────────────────────────────────┘
                           │
                 ┌─────────┴──────────┐
-                │   PostgreSQL +     │
+                │   MySQL 8 +        │
                 │   Redis (queue/    │
                 │   cache)           │
                 └────────────────────┘
 ```
+
+> Diagram di atas cuma peta kasar arsitektur — untuk daftar modul `apps/api/src/*` yang
+> sebenarnya (jauh lebih banyak dari 5 modul awal Fase 1), lihat kode langsung atau
+> STATUS.md. Jangan jadikan diagram ini acuan lengkap.
 
 ### Batas Modul di dalam `apps/api`
 

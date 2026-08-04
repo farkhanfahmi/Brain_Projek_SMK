@@ -8,6 +8,16 @@ updated: 2026-07-21
 ← Index (00-INDEX AbsenSI.md)
 
 > **Update 2026-06-26:** Keputusan struktur tabel inti & engine database sudah final lewat ADR-010 s/d ADR-014 (lihat 11-Decisions (11-Decisions.md)). Skema di bawah merefleksikan keputusan itu. Masih ada Open Questions di level detail kolom (lihat bagian bawah), tapi kerangka dasarnya tidak lagi berubah.
+>
+> **⚠️ PERINGATAN AKURASI (ditambahkan 2026-08-04):** Dokumen ini HANYA mencakup skema
+> sampai Fase 1b (Dashboard Piket, T032). Skema aktual (`apps/api/prisma/schema.prisma`)
+> sudah JAUH lebih besar — mencakup Fase 2 penuh (Teaching Sessions, Semester,
+> Block Week Ranges, Teacher Permits, Wali Kelas), TV Piket, Ekstrakurikuler
+> (Ekstrakurikuler, EkstraKelompok, EkstraSesi, EkstraAbsen, EkstraPendaftaran), Student
+> PKL, dan banyak kolom biodata tambahan (T028, T061-T066) yang TIDAK didokumentasikan
+> di bawah ini. **Untuk skema terkini, selalu baca `apps/api/prisma/schema.prisma`
+> langsung** — dokumen ini cuma akurat untuk histori keputusan desain awal (dual-FK
+> nullable, insert-only tables, dst), bukan daftar tabel lengkap yang ada sekarang.
 
 ---
 
