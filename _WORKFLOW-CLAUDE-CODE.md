@@ -77,3 +77,29 @@ Per proyek, idealnya ada:
 - Klaude BOLEH mengelola/restrukturisasi vault secara penuh (termasuk ubah struktur folder) demi kemudahan dirinya membaca, TANPA perlu mengoptimalkan untuk keterbacaan manusia — user akan bertanya langsung ke Claude kalau butuh memahami isi vault, bukan membaca file mentah sendiri.
 - Sebelum restrukturisasi besar apa pun ke vault/dokumen penting, buat backup/commit dulu (kalau ada git) sebagai jaring pengaman reversible.
 - Keputusan arsitektur besar (bukan sekadar preferensi gaya kerja) TIDAK langsung ditulis sebagai aturan wajib permanen tanpa didiskusikan detailnya dulu — beda dari preferensi kerja yang bisa langsung disimpan sebagai memory.
+
+---
+
+## 7. Mode kerja sesi — diskusi vs eksekusi vs campuran (ditambahkan 2026-08-05)
+
+**Masalah yang mendasari ini:** memory saja tidak cukup untuk menjaga preferensi
+"sesi ini diskusi-only vs boleh eksekusi" tetap konsisten — Claude bisa lupa cek
+memory yang relevan sebelum bertindak (ini pernah terjadi nyata: Claude eksekusi
+coding langsung padahal ada memory eksplisit bilang "cek konteks tiap kali").
+
+**Solusi:** 3 file mode di root vault ini, dipanggil EKSPLISIT oleh user di awal
+setiap sesi baru — bukan bergantung pada Claude mengingat sendiri:
+
+- `mode-diskusi.md` — sesi ini HANYA riset+diskusi+tulis task ke vault, TIDAK ada
+  perubahan kode sama sekali.
+- `mode-eksekusi.md` — sesi ini boleh langsung coding tanpa tanya "diskusi dulu?"
+  di tiap permintaan baru.
+- `mode-campuran.md` — default aman: Claude tanya per-topik yang mana yang
+  dimaksud, tidak berasumsi.
+
+**Cara pakai:** User ketik nama file itu (atau minta Claude membacanya) di pesan
+pertama sesi baru — misal *"baca mode-diskusi.md dulu"*. Ini portable ke proyek
+apa pun (file-nya generik, tidak spesifik AbsenSI), sama seperti dokumen ini.
+
+**Kalau tidak dipanggil sama sekali** di awal sesi — default-nya adalah perilaku
+`mode-campuran.md` (tanya dulu per topik), BUKAN diam-diam asumsi salah satu mode.
