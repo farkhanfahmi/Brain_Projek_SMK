@@ -43,12 +43,21 @@ Pisahkan tampilan "jadwal hari ini" dari halaman Jurnal (yang saat ini melebur j
 - **Jangan sentuh:** logic sort/filter `myToday()` selain menambah field response, `POST /:sessionId/start` (reuse apa adanya).
 
 ## Acceptance Criteria
-- [ ] Admin bisa isi field Ruangan saat Tambah/Edit Kelas.
-- [ ] `/guru/jadwal` menampilkan daftar sesi hari ini ascending jam, tiap kartu tampilkan kelas, mapel, jam, **ruangan**, **kampus**.
-- [ ] Tombol "Mulai Belajar" tetap berfungsi sama seperti sebelumnya (guard `sudahTapGerbang`+jendela waktu TIDAK berubah).
-- [ ] Kelas dengan ruangan NULL tidak crash, tampil placeholder jelas.
-- [ ] Build + type-check `apps/web`+`apps/api` hijau, jest existing tetap pass.
+- [x] Admin bisa isi field Ruangan saat Tambah/Edit Kelas.
+- [x] `/guru/jadwal` menampilkan daftar sesi hari ini ascending jam, tiap kartu tampilkan kelas, mapel, jam, **ruangan**, **kampus**.
+- [x] Tombol "Mulai Belajar" tetap berfungsi sama seperti sebelumnya (guard `sudahTapGerbang`+jendela waktu TIDAK berubah — tidak disentuh sama sekali).
+- [x] Kelas dengan ruangan NULL tidak crash, tampil placeholder jelas ("Ruangan belum diatur" di kartu, "-" di tabel admin) — diverifikasi live.
+- [x] Build + type-check `apps/web`+`apps/api` hijau, jest existing tetap pass (379/379).
 
 ## Validasi Claudian
-- [ ] Konfirmasi endpoint `/teaching-sessions/my-today` TIDAK mengubah sort/filter existing, HANYA menambah field response.
-- [ ] Konfirmasi migration `ruangan` NULLABLE (tidak retroactive wajib).
+- [x] Konfirmasi endpoint `/teaching-sessions/my-today` TIDAK mengubah sort/filter existing, HANYA menambah field response — `sort` di akhir `getMyToday()` (`.sort((a,b) => jamMulai.localeCompare(...))`) tidak disentuh, `include` bertambah nested `kampus: true` di dalam `kelas`, TIDAK mengubah kondisi `where` apa pun.
+- [x] Konfirmasi migration `ruangan` NULLABLE (tidak retroactive wajib) — `String?` di schema, diverifikasi live seluruh kelas existing di dev DB tetap NULL pasca-migration (0 regresi).
+
+## Status Eksekusi (2026-08-15)
+Selesai. Ringkasan implementasi lengkap di `STATUS.md` (baris T169).
+
+**Temuan+perbaikan bug dari T168**: link bottom-nav/sidebar-desktop "Jurnal" sebelumnya salah arah ke `/guru/jurnal-mengajar` (path yang saya asumsikan salah di sesi T168, sebelum spec T171 dibaca lengkap). Dikonfirmasi ke user dan diperbaiki sebagai bagian task ini: link sekarang ke `/guru/jurnal` (path lama, sesuai spec T171 sebenarnya — "Alihfungsikan route `/guru/jurnal` jadi tab Jurnal Mengajar... REUSE path, bukan hapus file").
+
+**Halaman `/guru/jurnal` pasca-T169**: dikosongkan jadi placeholder minimal (bukan dihapus filenya) — pesan "Halaman ini sedang disiapkan... buka menu Jadwal". Isi sesungguhnya (daftar sesi + status "jurnal sudah/belum diisi") adalah scope T171, BUKAN task ini — sengaja TIDAK saya kerjakan sebagian supaya tidak tumpang tindih dengan implementasi T171 nanti.
+
+**Live-verify**: dev DB awalnya tidak punya semester aktif sama sekali (kosong), jadi dibuat data dummy lengkap (semester+opsi jam pelajaran+aktivasi+schedule+teaching_session, ditandai jelas "TEST T169") untuk melihat kartu jadwal terisi sungguhan — termasuk menemukan+mengatasi mismatch timezone MySQL container (UTC) vs host (WIB) yang bikin `CURDATE()` MySQL beda hari dengan `new Date()` Node.js API. Semua data test dihapus bersih di akhir (diverifikasi count=0 pasca-cleanup).

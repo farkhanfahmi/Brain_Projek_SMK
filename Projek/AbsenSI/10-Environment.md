@@ -27,12 +27,117 @@ updated: 2026-08-04
 - Port: web 3000, api 3001, kiosk 3002 (tidak berubah dari sebelum T105 — kiosk fisik gerbang & bookmark staff tidak perlu dikonfigurasi ulang). Diakses via `http://10.10.10.198:3000` dst.
 - Database: Docker `absensi-mysql-prod` (host port 3309) — **data sekolah ASLI**, dimulai kosong pasca insiden wipe 2026-07-30.
 - Redis: Docker `absensi-redis-prod` (port host 6380).
-- Jalankan: `./scripts/start-production.sh` (install → migrate deploy → prisma generate → build → restart. Build gagal = exit 1 sebelum service lama dimatikan, production tidak pernah mati gara-gara deploy baru gagal build).
+- Jalankan: `./scripts/start-production.sh` (install → migrate deploy → prisma generate → build → restart via systemd, lihat bagian "Process Management" di bawah — T117. Build gagal = exit 1 sebelum service lama dimatikan, production tidak pernah mati gara-gara deploy baru gagal build).
 
 ### Auto-deploy (git hook)
 - `.git/hooks/post-commit` di folder DEV: commit ke branch `dev` otomatis → push ke GitHub (`origin`) + push ke `production` remote (`dev:main`, path lokal `file://`) → trigger `start-production.sh` di background.
 - Folder production: `git config receive.denyCurrentBranch updateInstead` — working tree ter-update otomatis saat menerima push.
 - **Trade-off disengaja:** restart production full otomatis tanpa jeda cek manual — risiko kode belum teruji langsung live, dipilih demi kemudahan workflow "push dari dev".
+
+## Process Management — Systemd (T117, sejak 2026-08-06)
+
+**Insiden pemicu**: API production mati sejak reboot mesin 2026-08-06 (proses Node
+dijalankan via `nohup`/`setsid` manual, tidak ada watchdog) — 646 tap kiosk menumpuk
+di buffer offline berjam-jam sebelum ketahuan.
+
+- **Production SAJA** yang didaftarkan systemd (`absensi-prod-api`, `absensi-prod-web`,
+  `absensi-prod-kiosk`) — dev SENGAJA tetap manual via `dev-start.sh`/`dev-stop.sh`
+  (keputusan 2026-08-06: auto-restart saat development bisa menyembunyikan crash yang
+  harusnya jadi sinyal bug ke developer).
+- Unit file template ada di repo: `scripts/systemd/*.service` — salinan untuk provisioning
+  ulang server, sumber kebenaran AKTIF tetap `/etc/systemd/system/` di mesin ini.
+- `Restart=on-failure` (bukan `always`) — stop manual (`systemctl stop`, misal maintenance)
+  TIDAK langsung dihidupkan ulang systemd. Auto-restart hanya untuk crash/exit tidak normal.
+- `StartLimitBurst=5` dalam `StartLimitIntervalSec=300` — crash 5x dalam 5 menit = systemd
+  berhenti mencoba restart (butuh `systemctl reset-failed` manual), mencegah crash-loop
+  tanpa henti membebani CPU tanpa sinyal jelas ada masalah serius.
+- **Instalasi lengkap (langkah demi langkah, semua butuh sudo)**: `scripts/systemd/README.md`.
+
+### Diagnosis Cepat
+
+```bash
+sudo systemctl status absensi-prod-api absensi-prod-web absensi-prod-kiosk
+sudo journalctl -u absensi-prod-api -n 50 -f    # -f = live tail
+sudo systemctl restart absensi-prod-api          # restart manual 1 service
+```
+
+### Auto-deploy + sudoers (T105 x T117)
+
+`scripts/start-production.sh` sekarang restart service lewat `sudo -n systemctl restart
+absensi-prod-{api,web,kiosk}` (bukan lagi `setsid nohup` manual) — dipanggil TANPA
+TTY oleh git hook, jadi butuh baris sudoers NOPASSWD ter-scope KETAT hanya untuk
+`systemctl restart/status/start/stop` 3 unit ini (`scripts/systemd/absensi-systemd.sudoers`,
+install ke `/etc/sudoers.d/absensi-systemd`). Kalau sudoers belum terpasang, auto-deploy
+gagal JELAS di log (`/tmp/absensi-post-commit.log`) dengan pesan sudo — bukan macet
+diam-diam menunggu password.
+
+## ⚠️ Insiden T215 Auto-Deploy Migrasi Destruktif ke Production (2026-08-19)
+
+**Kejadian**: commit di `dev` yang berisi migration T215 (`DROP TABLE` 5 tabel jadwal lama:
+`block_week_ranges`, `jam_pelajaran_aktivasi`, `jam_pelajaran_option_tingkat`,
+`jam_pelajaran_options`, `jam_pelajaran_slots`, plus drop 4 kolom di `kelas`/`schedules`/
+`semesters`) otomatis ter-deploy ke **production** lewat hook auto-deploy (baris 32-35 di
+atas) — TANPA gerbang konfirmasi, ~4 detik setelah `git commit` di dev. Sesi yang commit
+BELUM sempat cek row count/backup sebelum migrasi jalan (baru cek SETELAH selesai — urutan
+terbalik dari protokol wajib pasca-insiden wipe 2026-07-30). Ini terjadi WALAUPUN keputusan
+eksplisit sebelumnya (sesi diskusi terpisah) sudah bilang "T215 dijalankan di dev dulu saja"
+— keputusan itu tidak pernah benar-benar mencegah apa pun karena TIDAK ADA mekanisme yang
+menegakkannya secara teknis, hanya niat verbal.
+
+**Dampak**: data inti (siswa/guru/kelas/tap_events/permits/ekstrakurikuler) 100% AMAN, tidak
+tersentuh migrasi ini sama sekali. Yang hilang PERMANEN: 1 tabel `jam_pelajaran_options`
+berisi 68 baris slot jam pelajaran (fitur "Jam Pelajaran" lama, T158/T159) — dikonfirmasi
+TIDAK ADA di backup manapun (harian NVMe terakhir 2026-08-05, backup manual pre-deploy
+2026-08-10 & 2026-08-13 — SEMUA dicek langsung isinya, 0 baris `INSERT INTO jam_pelajaran_options`
+di semuanya) karena fitur itu baru dibuat SETELAH tanggal backup terakhir yang valid. **Tidak
+bisa dipulihkan — perlu input ulang manual** lewat menu Alokasi Waktu yang baru (T203+).
+
+**Temuan kedua (independen dari insiden di atas)**: backup harian NVMe (`backup-absensi.sh`,
+cron 02:00) TERNYATA sudah gagal diam-diam selama 14 hari (2026-08-05 s.d. 2026-08-19) —
+cron TERBUKTI jalan tiap hari (ada di `journalctl`), tapi TIDAK ADA file baru tercipta dan
+`backup.log` juga berhenti tercatat di tanggal yang sama. Dijalankan manual (2026-08-19)
+berhasil sempurna (3.1MB, jauh lebih besar dari backup 08-05 yang 378KB) — jadi SCRIPT-nya
+sendiri TIDAK rusak. Akar penyebab kegagalan cron 14 hari itu TIDAK BERHASIL diidentifikasi
+(semua kondisi teknis — permission, PATH, container, mount — tampak sehat saat diperiksa;
+tidak ada MTA terpasang jadi error asli cron tidak pernah tercatat ke mana pun). **Artinya:
+selama 14 hari itu, KALAU terjadi insiden apa pun ke production, tidak ada jaring pengaman
+backup harian sama sekali** — baru ketahuan karena investigasi insiden T215 ini, bukan
+karena ada yang memantau backup secara rutin.
+
+### 🔒 Aturan WAJIB Sebelum Commit di Dev yang Mengandung Migration DROP/ALTER Destruktif
+
+Karena auto-deploy dev→production TIDAK PUNYA gerbang teknis (baris 32-35, trade-off sadar
+demi kemudahan), satu-satunya pertahanan HANYA disiplin manual SEBELUM `git commit`:
+
+1. **WAJIB baca isi file migration** (`apps/api/prisma/migrations/<nama>/migration.sql`)
+   SEBELUM commit — cari kata `DROP TABLE`, `DROP COLUMN`, `TRUNCATE`. Kalau ADA salah satu
+   itu, STOP, jangan commit dulu — lanjut ke langkah 2.
+2. **WAJIB backup manual production SEBELUM commit** (bukan andalkan cron harian — insiden
+   di atas membuktikan cron bisa gagal diam-diam tanpa siapa pun tahu):
+   ```bash
+   bash /home/anunnaki/scripts/backup-absensi.sh
+   # VERIFIKASI file baru benar-benar muncul dan ukurannya wajar (bandingkan ke backup
+   # sebelumnya) SEBELUM lanjut commit — jangan asumsikan sukses dari exit code saja.
+   ls -lh /media/anunnaki/DataNvme/backups/absensi/ | tail -3
+   ```
+3. **WAJIB cek row count tabel yang akan ter-DROP, SEBELUM commit** (lewat DB dev yang
+   sudah diverifikasi identik strukturnya, ATAU langsung ke production kalau punya akses):
+   ```bash
+   docker exec absensi-mysql-prod mysql -u root -ppassword absensi_db \
+     -e "SELECT COUNT(*) FROM jam_pelajaran_options;"  # ganti nama tabel sesuai migration
+   ```
+   Kalau row count > 0 DAN tabel itu belum dipastikan datanya sudah dipindah/tidak
+   dibutuhkan lagi — JANGAN commit dulu, konfirmasi ke user dulu secara eksplisit (bukan
+   asumsi "kemungkinan sudah tergantikan").
+4. **Commit HANYA setelah 1-3 di atas beres** — begitu `git commit` dijalankan di dev,
+   TIDAK ADA jeda untuk membatalkan (hook jalan otomatis ~4 detik kemudian, background).
+5. **SEGERA setelah commit** (bukan nanti) — cek `/tmp/absensi-post-commit.log` untuk
+   konfirmasi migrasi berhasil TANPA error, dan cek row count SEKALI LAGI di production
+   untuk konfirmasi hasil sesuai ekspektasi.
+
+**Kalau ragu apakah sebuah migration "aman" atau "destruktif"** — anggap destruktif dan
+ikuti langkah di atas. Salah menganggap aman padahal destruktif jauh lebih mahal (data
+hilang permanen) daripada backup manual yang ternyata tidak terpakai (biaya beberapa detik).
 
 ## Database Engine — MySQL 8 (ADR-011)
 
@@ -48,6 +153,63 @@ Docker (`mysql:8`, BUKAN MariaDB). Host tidak punya binary `mysqldump` — semua
   gunzip -c /media/anunnaki/DataNvme/backups/absensi/absensi_TANGGAL.sql.gz | \
     docker exec -i absensi-mysql-prod mysql -u root -ppassword absensi_db
   ```
+
+## Monitoring Server Production + Backup Lapis ke-4 Google Drive (T223, sejak 2026-08-19)
+
+Dipicu insiden T215 auto-deploy (section di atas) — 2 celah pemantauan yang ditemukan
+lewat insiden itu (backup gagal diam-diam 14 hari, tidak ada gambaran kondisi server)
+sekarang tertutup lewat modul `apps/api/src/server-health/`.
+
+- **Halaman monitoring**: `(admin)/server-kesehatan/` — CPU load average, RAM/disk
+  usedPercent, status 3 unit systemd (`absensi-prod-{api,web,kiosk}`), info backup
+  terakhir (tanggal/ukuran/umur), riwayat alert. Fetch snapshot saat buka halaman +
+  tombol Refresh manual (BUKAN Socket.IO — data berubah lambat, beda dari kiosk).
+- **Cron cek aktif** — BullMQ job tiap 20 menit (`server-health-check-20min`),
+  bandingkan snapshot ke threshold (disk >85%, memory >90%, service manapun bukan
+  "active", backup bukan "ok") → insert `ServerHealthAlert` (insert-only). Log
+  eksplisit tiap kali job jalan (bahkan semua sehat) — supaya "job ini sendiri
+  berhenti jalan" (skenario PERSIS backup-absensi.sh yang memicu task ini) bisa
+  dideteksi dari ketiadaan log terbaru, bukan diam-diam gagal lagi 14 hari.
+- **Backup manual 1-klik** — tombol "Backup Sekarang" di halaman monitoring, `POST
+  /server-health/backup/trigger`, REUSE `backup-absensi.sh` apa adanya via
+  `child_process` (JANGAN logic mysqldump ditulis ulang di TypeScript). Async +
+  gate anti-dobel-jalan (`BackupTriggerService`, in-memory) — mencegah 2 mysqldump
+  jalan bersamaan (klik 2x, atau bentrok cron 02:00).
+- **Backup ke Google Drive (lapis ke-4)** — TAMBAHAN di luar 3 lapis existing di atas
+  (harian NVMe/mingguan+bulanan HDD), BUKAN pengganti. OAuth scope SEMPIT
+  `drive.file` (hanya file yang dibuat aplikasi ini sendiri). Refresh token
+  disimpan TERENKRIPSI (AES-256-GCM, `apps/api/src/common/token-encryption.ts`) di
+  `GoogleDriveBackupConfig` (singleton, 1 akun untuk seluruh sistem).
+
+### ⚙️ Setup Prasyarat Google OAuth (WAJIB dilakukan manual SEKALI oleh developer)
+
+Fitur backup ke Google Drive TIDAK BISA dites end-to-end sampai langkah ini selesai
+— kodenya sudah lengkap (T223), tapi butuh kredensial OAuth sungguhan:
+
+1. Buka [Google Cloud Console](https://console.cloud.google.com/) → buat/pilih project.
+2. **APIs & Services → Library** → aktifkan **Google Drive API**.
+3. **APIs & Services → Credentials** → **Create Credentials → OAuth client ID**:
+   - Application type: **Web application**
+   - Authorized redirect URIs: isi PERSIS sama dengan `GOOGLE_DRIVE_REDIRECT_URI`
+     di `.env` production (default: `https://<domain-production>/api/server-health/google-drive/callback`)
+4. **APIs & Services → OAuth consent screen** — scope yang diminta HARUS
+   `https://www.googleapis.com/auth/drive.file` SAJA (least-privilege, bukan `drive`
+   penuh — data backup sekolah sensitif).
+5. Salin **Client ID** dan **Client Secret** ke `.env` production:
+   ```
+   GOOGLE_CLIENT_ID="..."
+   GOOGLE_CLIENT_SECRET="..."
+   GOOGLE_DRIVE_REDIRECT_URI="https://<domain-production>/api/server-health/google-drive/callback"
+   SERVER_HEALTH_ENCRYPTION_KEY="$(openssl rand -hex 32)"   # WAJIB, key enkripsi refresh token
+   ```
+6. Restart service `absensi-prod-api` supaya `.env` baru terbaca.
+7. Di halaman `(admin)/server-kesehatan/`, super_admin klik "Hubungkan Google Drive"
+   → login akun Google yang akan dipakai → approve consent → tempel link folder
+   Drive tujuan (folder harus sudah dibuat manual di Drive akun itu dulu).
+
+**Sampai langkah 5-6 di atas dikerjakan** (isi `.env` production), tombol "Hubungkan
+Google Drive" akan gagal dengan error dari `ConfigService.getOrThrow()` — ini
+DIHARAPKAN, bukan bug, sampai kredensial sungguhan terisi.
 
 ## Migrasi ke Server Sekolah (nanti, belum diputuskan jadwalnya)
 

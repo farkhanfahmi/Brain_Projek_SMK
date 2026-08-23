@@ -62,18 +62,21 @@ Riset mengonfirmasi `Teacher.niy` UNIQUE (kandidat matching AMAN), sementara `Te
 - **Jangan sentuh:** `importStudents`/`importTeachers`/`importCards` (existing, TIDAK diubah — task ini MENAMBAH method baru, REUSE helper `parseCsv` saja).
 
 ## Acceptance Criteria
-- [ ] Admin bisa upload CSV format PERSIS seperti contoh user (No, Minggu, Hari, Nama Guru, Mata Pelajaran, Kelas, Jam Ke Awal, Jam Ke Akhir, Catatan) lewat halaman Import.
-- [ ] Baris dengan kolom Minggu terisi ("Minggu A"/"Minggu B") → `Schedule.minggu` terisi BENAR, DAN `Kelas.modeJadwal` kelas terkait otomatis jadi `blok` kalau belum.
-- [ ] Baris dengan kolom Minggu kosong → `Schedule.minggu = null`, mode kelas TIDAK dipaksa berubah.
-- [ ] Baris dengan Guru/Mapel/Kelas yang TIDAK ditemukan → gagal dengan pesan jelas per baris, TIDAK menghentikan proses baris lain.
-- [ ] Baris dengan Jam Ke yang TIDAK ADA di opsi jam pelajaran aktif untuk hari itu → gagal dengan pesan jelas.
-- [ ] Baris yang bentrok jadwal (sesama file ATAU vs existing) → gagal dengan pesan jelas menyebut baris/jadwal yang bentrok.
-- [ ] Ringkasan hasil import (total/berhasil/gagal + detail error per baris) ditampilkan ke admin setelah proses selesai.
-- [ ] `@LogActivity` mencatat ringkasan operasi import.
-- [ ] Build + type-check `apps/api` dan `apps/web` hijau.
+- [x] Admin bisa upload CSV format PERSIS seperti contoh user (No, Minggu, Hari, Nama Guru, Mata Pelajaran, Kelas, Jam Ke Awal, Jam Ke Akhir, Catatan) lewat halaman Import.
+- [x] Baris dengan kolom Minggu terisi ("Minggu A"/"Minggu B") → `Schedule.minggu` terisi BENAR, DAN `Kelas.modeJadwal` kelas terkait otomatis jadi `blok` kalau belum.
+- [x] Baris dengan kolom Minggu kosong → `Schedule.minggu = null`, mode kelas TIDAK dipaksa berubah.
+- [x] Baris dengan Guru/Mapel/Kelas yang TIDAK ditemukan → gagal dengan pesan jelas per baris, TIDAK menghentikan proses baris lain.
+- [x] Baris dengan Jam Ke yang TIDAK ADA di opsi jam pelajaran aktif untuk hari itu → gagal dengan pesan jelas.
+- [x] Baris yang bentrok jadwal (sesama file ATAU vs existing) → gagal dengan pesan jelas menyebut baris/jadwal yang bentrok.
+- [x] Ringkasan hasil import (total/berhasil/gagal + detail error per baris) ditampilkan ke admin setelah proses selesai.
+- [x] `@LogActivity` mencatat ringkasan operasi import (pola `logImportSummary` existing, action `import.schedules`).
+- [x] Build + type-check `apps/api` dan `apps/web` hijau.
 
 ## Validasi Claudian
-- [ ] **JANGAN** kerjakan sebelum T158 dan T159 selesai — dependency ini KRITIKAL, import ini butuh keduanya untuk validasi Jam Ke dan mode kelas.
-- [ ] **REUSE** `parseCsv<T>()`, pola validasi-per-baris, dan `ensureNoBentrok` yang SUDAH ADA — JANGAN tulis ulang logic yang sudah teruji.
-- [ ] Matching Guru pakai `nama` (bukan NIY) KARENA format CSV asli user tidak menyebut NIY — JANGAN memaksa user mengubah format tanpa diminta, tapi TETAP tangani kasus ambigu (>1 guru nama sama) dengan gagal jelas, bukan asal pilih.
-- [ ] Auto-set `Kelas.modeJadwal = blok` HANYA terjadi kalau kolom Minggu di CSV terisi untuk kelas itu — JANGAN mengubah mode kelas untuk baris yang kolom Mingu-nya kosong.
+- [x] **JANGAN** kerjakan sebelum T158 dan T159 selesai — dependency ini KRITIKAL, import ini butuh keduanya untuk validasi Jam Ke dan mode kelas. (Keduanya sudah selesai saat T160 dikerjakan, 2026-08-15.)
+- [x] **REUSE** `parseCsv<T>()`, pola validasi-per-baris SUDAH DIPAKAI. `ensureNoBentrok` TIDAK BISA di-reuse langsung (private method di `SchedulesService`, hanya cek DB) — logic overlap direplikasi di `ImportService` dengan pola identik (termasuk aturan minggu-null=setiap_minggu dari T182), ditambah pengecekan bentrok ANTAR BARIS dalam file yang sama (kebutuhan spesifik import, tidak ada di `ensureNoBentrok`).
+- [x] Matching Guru pakai `nama` (bukan NIY) KARENA format CSV asli user tidak menyebut NIY — kasus ambigu (>1 guru nama sama) gagal jelas, bukan asal pilih.
+- [x] Auto-set `Kelas.modeJadwal = blok` HANYA terjadi kalau kolom Minggu di CSV terisi untuk kelas itu — diverifikasi via test khusus.
+
+## Status Eksekusi (2026-08-15)
+Selesai. Ringkasan implementasi lengkap di `STATUS.md` (baris T160). 40 test baru (`import.service.spec.ts`), full backend suite 376/376 hijau, `tsc --noEmit` apps/api+web bersih.

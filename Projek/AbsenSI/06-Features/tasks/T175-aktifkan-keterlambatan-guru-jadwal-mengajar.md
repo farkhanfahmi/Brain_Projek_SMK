@@ -45,15 +45,34 @@ Prasyarat komentar itu ("jadwal mengajar guru belum diinput") **SUDAH TERPENUHI*
 - **Jangan sentuh:** logic keterlambatan siswa (cabang `if(studentId)`, TIDAK diubah), `applyLateStrikeLock` (batasan `card.studentId` TETAP, TIDAK diperluas ke guru).
 
 ## Acceptance Criteria
-- [ ] Guru dengan jadwal mengajar hari itu, tap SETELAH jam mulai+toleransi → status `terlambat`.
-- [ ] Guru dengan jadwal mengajar hari itu, tap SEBELUM/PAS jam mulai → status `hadir`.
-- [ ] Guru TANPA jadwal mengajar hari itu → tetap `hadir` (perilaku lama dipertahankan untuk kasus ini).
-- [ ] Guru dengan beberapa jadwal hari itu → patokan jadwal PALING PAGI.
-- [ ] Lock 2x-terlambat TIDAK terpicu untuk guru (verified, batasan `studentId` masih ada).
-- [ ] Method lain dengan logic duplikat (`myHistory`) konsisten dengan `determineStatus()`.
-- [ ] Build + type-check hijau, jest existing tetap pass, jest baru untuk skenario guru terlambat/tidak ditambahkan.
+- [x] Guru dengan jadwal mengajar hari itu, tap SETELAH jam mulai+toleransi → status `terlambat`.
+- [x] Guru dengan jadwal mengajar hari itu, tap SEBELUM/PAS jam mulai → status `hadir`.
+- [x] Guru TANPA jadwal mengajar hari itu → tetap `hadir` (perilaku lama dipertahankan untuk kasus ini).
+- [x] Guru dengan beberapa jadwal hari itu → patokan jadwal PALING PAGI.
+- [x] Lock 2x-terlambat TIDAK terpicu untuk guru (verified, batasan `studentId` masih ada — bahkan `Teacher` model TIDAK PUNYA kolom `lockedAt` sama sekali, secara struktural mustahil).
+- [x] Method lain dengan logic duplikat (`myHistory`) konsisten dengan `determineStatus()`.
+- [x] Build + type-check hijau, jest existing tetap pass, jest baru untuk skenario guru terlambat/tidak ditambahkan.
 
 ## Validasi Claudian
-- [ ] Konfirmasi sumber toleransi keterlambatan guru (reuse config siswa existing, ATAU ditemukan sudah ada pemisahan — laporkan yang mana, jangan putuskan sepihak kalau ambigu).
-- [ ] Konfirmasi resolusi jam mulai jadwal mengajar SESUAI kondisi T158 saat task ini dieksekusi (jamKe vs jamMulai string langsung — cek dulu, jangan asumsi).
-- [ ] Konfirmasi perubahan ini TIDAK retroaktif ke data lama (hanya tap baru sejak deploy).
+- [x] Konfirmasi sumber toleransi keterlambatan guru — DITEMUKAN: siswa TIDAK PAKAI `schedule_config.toleransiTerlambatMenit` sama sekali di `determineStatus()` (field itu cuma dipakai display, deadline siswa = `jamMulai` MENTAH tanpa toleransi tambahan). Guru dibuat KONSISTEN dengan pola siswa yang sudah ada: deadline = jam mulai jadwal mengajar MENTAH, tanpa toleransi tambahan — bukan menambah sumber toleransi baru yang malah tidak konsisten.
+- [x] Konfirmasi resolusi jam mulai jadwal mengajar — DICEK schema.prisma: `Schedule.jamMulai` masih `String` (`HH:mm`) langsung, TIDAK ADA `jamKeAwal`/`JamPelajaranOption`. T158 BELUM dikerjakan (dikonfirmasi user saat eksekusi task ini, boleh lanjut tanpa T158).
+- [x] Konfirmasi perubahan ini TIDAK retroaktif — implementasi murni logic baru di `determineStatus()`, tidak ada backfill/migrasi data.
+
+## Status Eksekusi (2026-08-14)
+
+**Selesai.**
+
+- Ditemukan `ScheduleResolverService.getJadwalHariIni(teacherId, tanggal)` (`apps/api/src/schedule-resolver/schedule-resolver.service.ts`) SUDAH JADI 1 sumber kebenaran resolusi jadwal mengajar guru per tanggal (resolve semester aktif untuk tanggal itu, filter hari + minggu blok A/B kalau relevan, `orderBy jamMulai asc`) — dipakai `TeachingSessionsService`. REUSE langsung, tidak duplikasi logic resolusi jadwal.
+- `apps/api/src/attendance/attendance.module.ts` — import `ScheduleResolverModule`.
+- `apps/api/src/attendance/attendance.service.ts` — inject `ScheduleResolverService`; cabang guru di `determineStatus()` diganti dari `return hadir` statis menjadi: `getJadwalHariIni(teacherId, scannedAt)` → kosong → `hadir`; ada → ambil elemen pertama (paling pagi, sudah ter-sort) → `combineDateAndTime` vs `scannedAt` → `terlambat`/`hadir`, PERSIS pola siswa.
+- `myHistory()` dicek — HANYA baca `record.status` yang sudah tersimpan (tidak re-derive status), TIDAK ADA duplikasi logic, TIDAK diubah. `piketBoard()` dicek — khusus siswa (`prisma.student.findMany`), tidak ada cabang guru, TIDAK diubah.
+- `apps/api/src/attendance/attendance.service.spec.ts` — 5 test baru (`determineStatus` diakses bracket-notation, private): guru tanpa jadwal → hadir; guru terlambat; guru tepat waktu; guru multi-jadwal → patokan paling pagi; logic siswa tidak terpengaruh (`getJadwalHariIni` tidak dipanggil untuk cabang siswa).
+
+**Verifikasi live** (dev DB port 3307, API dev port 3101, production tidak disentuh, kartu+jadwal test dibuat untuk 2 guru existing):
+1. Guru dengan jadwal 07:00, tap 10:00 lokal → `status: terlambat`.
+2. Guru sama, tap 06:30 lokal (sebelum jadwal) → `status: hadir`.
+3. Guru tanpa jadwal mengajar sama sekali, tap 17:00 lokal → tetap `status: hadir` (tidak ada patokan).
+4. Guru dengan 2 jadwal (09:00 dan 14:00), tap 12:30 lokal (lewat jadwal pertama, belum jadwal kedua) → `status: terlambat` — konfirmasi patokan jadwal PALING PAGI, bukan terakhir.
+5. Semua tap di atas TIDAK memicu lock (`Teacher` model dikonfirmasi tidak punya kolom `lockedAt` di schema).
+6. Data uji (2 kartu test, attendance_records, tap_events, 3 schedules jam_mengajar test, 1 semester test, `kiosks.allowed_ip` override) dibersihkan, dikonfirmasi via re-query.
+7. `tsc --noEmit` bersih, `jest` — 22 suite / 282 test lulus 100%.

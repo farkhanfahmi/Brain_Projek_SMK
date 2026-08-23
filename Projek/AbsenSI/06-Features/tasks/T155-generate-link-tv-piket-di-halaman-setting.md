@@ -50,14 +50,36 @@ Di BAWAH 5 toggle blok yang sudah ada (T143), untuk kampus yang SEDANG DIPILIH d
 - **Jangan sentuh:** `apps/api/src/tv-sessions/tv-sessions.service.ts` method `create()` (SUDAH BENAR mengembalikan token mentah sekali, JANGAN diubah), `LIST_SELECT` di `findAll()` (SENGAJA exclude token, JANGAN diubah untuk "mempermudah" — itu akan melemahkan keamanan by-design).
 
 ## Acceptance Criteria
-- [ ] Halaman Setting TV Piket, untuk kampus yang dipilih, menampilkan daftar token aktif (tanpa nilai token) + tombol Cabut per token.
-- [ ] Tombol "Generate Link Baru" berhasil membuat token baru dan menampilkan LINK LENGKAP siap-pakai dalam dialog, dengan tombol salin.
-- [ ] Link yang dihasilkan format benar: `{origin}/tv-piket/{kampusId}?token={token}`, dikonfirmasi BISA dibuka dan berfungsi (verifikasi manual: buka link itu di browser, halaman TV Piket kampus terkait tampil normal).
-- [ ] Dialog generate TIDAK mudah tertutup tidak sengaja, ada peringatan jelas "hanya sekali tampil".
-- [ ] Tombol Cabut token — konfirmasi dialog jelas sebelum eksekusi, token yang dicabut hilang dari daftar aktif setelahnya.
-- [ ] Build + type-check `apps/web` (dan `apps/api` kalau poin filter opsional dikerjakan) hijau.
+- [x] Halaman Setting TV Piket, untuk kampus yang dipilih, menampilkan daftar token aktif (tanpa nilai token) + tombol Cabut per token.
+- [x] Tombol "Generate Link Baru" berhasil membuat token baru dan menampilkan LINK LENGKAP siap-pakai dalam dialog, dengan tombol salin.
+- [x] Link yang dihasilkan format benar: `{origin}/tv-piket/{kampusId}?token={token}`, dikonfirmasi BISA dibuka dan berfungsi (verifikasi manual: buka link itu di browser, halaman TV Piket kampus terkait tampil normal).
+- [x] Dialog generate TIDAK mudah tertutup tidak sengaja, ada peringatan jelas "hanya sekali tampil".
+- [x] Tombol Cabut token — konfirmasi dialog jelas sebelum eksekusi, token yang dicabut hilang dari daftar aktif setelahnya.
+- [x] Build + type-check `apps/web` hijau (poin filter `?kampusId=` backend opsional TIDAK dikerjakan — filter client-side dipilih, sesuai rekomendasi spec untuk skala kecil).
 
 ## Validasi Claudian
-- [ ] **JANGAN** mengubah `LIST_SELECT`/desain reveal-once token — itu keputusan keamanan disengaja, bukan bug atau keterbatasan yang perlu "diperbaiki".
-- [ ] **JANGAN** membatasi sistem ke 1 token per kampus — biarkan tetap fleksibel (banyak token aktif per kampus dibolehkan), UI cukup informatif soal token existing.
-- [ ] Pastikan origin link yang disusun benar — VERIFIKASI apakah halaman admin (`(admin)/tv-piket-setting`) dan halaman publik TV (`/tv-piket/[kampusId]`) memang satu aplikasi Next.js yang sama (`apps/web`), sehingga `window.location.origin` di halaman admin SAMA dengan origin yang harus diakses TV — kalau ternyata beda (misal ada reverse proxy/domain berbeda untuk publik), sesuaikan sumber origin yang dipakai.
+- [x] **JANGAN** mengubah `LIST_SELECT`/desain reveal-once token — TIDAK disentuh, `tv-sessions.service.ts`/`tv-sessions.controller.ts` 0 diff, backend reuse 100% apa adanya.
+- [x] **JANGAN** membatasi sistem ke 1 token per kampus — TIDAK dibatasi, UI menampilkan "Kampus ini sudah punya N link aktif" sebagai info, generate tetap selalu diizinkan.
+- [x] Origin link — DIKONFIRMASI via riset kode: `(admin)/tv-piket-setting` dan `/tv-piket/[kampusId]` sama-sama di `apps/web` (bukan app terpisah seperti kiosk), `window.location.origin` valid dipakai apa adanya. Verified live: link yang di-generate dari halaman admin (`http://localhost:3100/...`) berhasil dibuka dan menampilkan data TV Piket normal.
+
+## Status Eksekusi (2026-08-14)
+
+**Selesai.** Backend 100% reuse (0 perubahan), frontend baru, verified live end-to-end.
+
+**Frontend (`apps/web/src/app/(admin)/tv-piket-setting/tv-piket-setting-view.tsx`)**:
+- Section baru "Link Akses TV Piket" di bawah 5 toggle blok existing (T143), mengikuti kampus yang dipilih di dropdown yang sama.
+- Daftar token aktif — `GET /tv-sessions` di-fetch sekali, difilter client-side by `kampusId` (backend TIDAK diperluas, sesuai rekomendasi spec untuk skala kecil). Tiap baris: `id`, `createdAt` (format lokal id-ID), tombol "Cabut" (`confirm()` native browser, konsisten pola existing `kartu-view.tsx` — bukan dialog custom, sesuai konvensi proyek untuk aksi destruktif sederhana).
+- Tombol "Generate Link Baru" — `POST /tv-sessions`, link disusun `${window.location.origin}/tv-piket/${kampusId}?token=${token}`.
+- Dialog "Link Baru" (Radix `Dialog` langsung, BUKAN `confirm()` — butuh copy-to-clipboard + close-eksplisit): `onOpenChange={() => {}}` (no-op) + `onPointerDownOutside`/`onEscapeKeyDown` di-`preventDefault()` supaya TIDAK bisa ditutup via klik-luar/Escape; tombol X bawaan Radix disembunyikan via `className="[&>button]:hidden"` di `DialogContent` (CSS selector direct-child, tanpa perlu ubah `packages/ui`); tombol "Selesai, Sudah Disalin" DISABLED sampai admin klik "Salin Link" dulu (pengaman tambahan di luar spec literal, konsisten tujuan "pastikan sudah menyalin sebelum tertutup").
+- Setelah dialog ditutup — `refreshSessions()` otomatis, token baru muncul di daftar tanpa nilai token.
+- `apps/web/src/lib/core-types.ts` — `TvSessionListItem` (tanpa `token`) dan `TvSessionCreated` (dengan `token`, 1 response yang mengandungnya) baru, tipenya eksplisit terpisah untuk mencegah salah pakai shape yang salah di kode lain nanti.
+
+**Verifikasi live** (dev DB port 3307, dev web port 3100, production tidak disentuh, akun `adminSU` password di-override sementara TestPass123 lalu DIKEMBALIKAN persis — dikonfirmasi via SELECT sebelum/sesudah, browser Playwright):
+1. State awal "Belum ada link aktif untuk kampus ini" tampil benar untuk Kampus 1.
+2. Klik "Generate Link Baru" → dialog muncul, link lengkap `http://localhost:3100/tv-piket/1?token=...` tampil.
+3. Tekan Escape saat dialog terbuka → dialog TIDAK tertutup (dikonfirmasi snapshot tetap sama).
+4. Klik "Salin Link" → tombol berubah jadi "Tersalin", tombol "Selesai, Sudah Disalin" berubah dari disabled ke aktif.
+5. Buka link hasil generate di tab baru → halaman TV Piket Kampus 1 tampil NORMAL dengan data live (bar persentase, tabel siswa alfa) — BUKAN error auth, token valid diterima backend.
+6. Klik "Selesai, Sudah Disalin" → dialog tertutup, daftar refresh otomatis menampilkan "Kampus ini sudah punya 1 link aktif" + "Link #1" (TANPA nilai token) + tombol Cabut.
+7. Klik "Cabut" → dialog `confirm()` native muncul dengan pesan jelas + peringatan konsekuensi ("TV yang sedang memakai link ini akan BERHENTI BERFUNGSI") → diterima → daftar kembali ke "Belum ada link aktif untuk kampus ini".
+8. `tsc --noEmit` bersih `apps/web` dan `apps/api` (tidak disentuh, dipastikan tetap hijau).

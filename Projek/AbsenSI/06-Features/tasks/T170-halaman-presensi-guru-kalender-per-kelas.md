@@ -45,13 +45,20 @@ Halaman baru `/guru/presensi` — guru pilih salah satu kelas yang diajar, lihat
 - **Jangan sentuh:** `PATCH /teaching-sessions/:id/attendance` (cara isi presensi TIDAK berubah), `ClassAttendanceMark` model (reuse apa adanya).
 
 ## Acceptance Criteria
-- [ ] `/guru/presensi` menampilkan daftar kelas yang diajar guru login.
-- [ ] Pilih kelas → kalender bulan tampil dengan tanda di tanggal yang sudah ada presensi (sesi selesai).
-- [ ] Klik tanggal bertanda → tampil daftar siswa + status, MURNI READ-ONLY (tidak ada kontrol edit sama sekali di halaman ini).
-- [ ] Guru A tidak bisa lihat kalender/presensi kelas yang diajar guru lain (verified via filter teacherId dari JWT, bukan trust client).
-- [ ] Bulan kosong tidak error, tampil kalender polos.
-- [ ] Build + type-check hijau, jest existing tetap pass.
+- [x] `/guru/presensi` menampilkan daftar kelas yang diajar guru login.
+- [x] Pilih kelas → kalender bulan tampil dengan tanda di tanggal yang sudah ada presensi (sesi selesai) — diverifikasi live, dot oranye muncul benar di tanggal test.
+- [x] Klik tanggal bertanda → tampil daftar siswa + status, MURNI READ-ONLY (tidak ada kontrol edit sama sekali di halaman ini) — diverifikasi live, kolom "Aksi" TIDAK muncul sama sekali.
+- [x] Guru A tidak bisa lihat kalender/presensi kelas yang diajar guru lain (verified via filter teacherId dari JWT, bukan trust client) — unit test + kode: `getKalenderBulan(kelasId, teacherId, ...)` filter `where: { kelasId, teacherId }` kombinasi, `teacherId` selalu dari `requireTeacherId(user)` di controller.
+- [x] Bulan kosong tidak error, tampil kalender polos — unit test "bulan kosong → array kosong, TIDAK query student/mark".
+- [x] Build + type-check hijau, jest existing tetap pass (385/385).
 
 ## Validasi Claudian
-- [ ] Konfirmasi endpoint kalender WAJIB filter `teacherId` dari JWT (bukan dari query param client) — cross-tenant leak check.
-- [ ] Konfirmasi tampilan detail tanggal TIDAK punya jalur submit/PATCH apa pun (murni read-only, tidak ada tombol simpan tersembunyi).
+- [x] Konfirmasi endpoint kalender WAJIB filter `teacherId` dari JWT (bukan dari query param client) — cross-tenant leak check. `teacherId` diambil `requireTeacherId(user)` dari `@CurrentUser()`, TIDAK ADA di query string endpoint (hanya `kelasId`+`bulan`).
+- [x] Konfirmasi tampilan detail tanggal TIDAK punya jalur submit/PATCH apa pun (murni read-only, tidak ada tombol simpan tersembunyi) — `AttendanceTable readOnly` menghilangkan TOTAL kolom "Aksi" dari DOM (bukan disabled), fungsi `updateStatus` tetap ada di komponen tapi tidak pernah terpanggil karena tidak ada tombol yang memicunya saat `readOnly=true`.
+
+## Status Eksekusi (2026-08-15)
+Selesai. Ringkasan implementasi lengkap di `STATUS.md` (baris T170).
+
+**Keputusan implementasi**: endpoint baru ditaruh di `journal.controller.ts`/`journal.service.ts` (bukan `teaching-sessions.controller.ts`) karena domain presensi/jurnal existing (`:sessionId/detail`, `:sessionId/attendance`) sudah di sana — konsisten, bukan menambah controller baru untuk domain yang sama. Path literal (`my-classes`, `calendar`) WAJIB dideklarasikan sebelum `:sessionId/detail` supaya tidak ke-capture sebagai parameter.
+
+**Live-verify**: dibuat data dummy (guru+mapel+schedule+2 teaching_session closed di tanggal berbeda+1 class_attendance_mark) via docker exec ke dev DB, login browser, navigasi 3 step lengkap (pilih kelas → kalender dengan dot penanda → detail read-only), dikonfirmasi visual kolom Aksi benar-benar tidak ada. Semua data test dihapus bersih setelahnya (diverifikasi count=0).

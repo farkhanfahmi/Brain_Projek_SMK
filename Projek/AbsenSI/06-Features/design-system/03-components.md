@@ -165,7 +165,7 @@ Header row: card title (text-h2) left, action cluster right —
 
 ### Struktur Internal: Section Bertahap dengan Tabs, bukan 1 Kolom Panjang Vertikal
 - Field dikelompokkan jadi **section bermakna** (bukan 1 daftar vertikal panjang tanpa jeda) — contoh untuk form Siswa: "Data Pokok" (NISN, nama, kelas), "Biodata" (tempat/tanggal lahir, jenis kelamin, agama), "Kontak & Alamat" (no HP, alamat, RT/RW), "Data Wali" (nama & no HP ayah/ibu)
-- Navigasi antar section pakai **Tabs horizontal** di bagian atas body Sheet (primitif BARU, belum ada di `packages/ui`, lihat companion task) — styling Tabs: pill-style (`radius-full`) mengikuti pola Secondary Button non-aktif / Primary Button untuk tab aktif, BUKAN underline-style tab generik
+- Navigasi antar section pakai **Tabs horizontal** di bagian atas body Sheet — styling Tabs: pill-style (`radius-full`) mengikuti pola Secondary Button non-aktif / Primary Button untuk tab aktif, BUKAN underline-style tab generik. **Update 2026-08-16**: `Tabs`/`TabsList`/`TabsTrigger`/`TabsContent` (wrapper Radix) SUDAH ADA di `packages/ui` dan general-purpose (dipakai luas, termasuk pola tab-via-query-param untuk halaman yang perlu bookmark ke tab tertentu, lihat T189 di CONTEXT.md repo) — REUSE komponen ini, JANGAN bangun primitif tab baru.
 - Semua tab tetap dalam **1 form HTML tunggal** (submit sekali di akhir, bukan wizard multi-step terpisah) — tab murni navigasi visual untuk mengurangi kepadatan, bukan validasi bertahap yang mem-block pindah tab
 
 ### Field Layout dalam Tiap Section
@@ -180,6 +180,53 @@ Header row: card title (text-h2) left, action cluster right —
 - Form ≤6 field yang sederhana (misal form Mapel: nama+kode, form Kampus: nama saja) — Dialog kecil TETAP cocok, JANGAN dipaksa jadi Sheet kalau kesederhanaannya memang pas
 - Konfirmasi aksi (hapus, aktivasi, dst) — tetap Dialog kecil sesuai pola existing
 - Aturan praktis: **>6 field ATAU field yang butuh pengelompokan section bermakna → Sheet dengan Tabs. ≤6 field datar → Dialog kecil tetap dipertahankan.**
+
+## Bottom Navigation (Mobile Shell — T168, `(guru)/*`)
+
+> **Added 2026-08-15.** Pola UI PERTAMA jenisnya di proyek — sebelum ini semua route group pakai Sidebar (spec di atas), tidak pernah bottom-tab-bar. Muncul dari redesign shell `(guru)/*` ke pola mobile-app. **Pakai spec ini sebagai referensi WAJIB kalau role lain butuh shell serupa di masa depan** — jangan re-derive dari nol.
+
+- **Breakpoint**: shell HYBRID, bukan mobile-only — breakpoint tunggal `md` (768px). Di bawah `md`: bottom-nav + top-bar + drawer profil (Sheet). Di `md` ke atas: Sidebar biasa (spec existing di atas) + top-bar dropdown avatar (bukan drawer). **Kedua shell dirender sekaligus di DOM**, disembunyikan via Tailwind `hidden`/`md:hidden` — BUKAN render kondisional JS berbasis `window.innerWidth`, supaya tidak ada hydration mismatch SSR↔client.
+- **Container**: `fixed bottom-0`, full width, background solid `--color-bg-surface` (putih, TIDAK transparan/blur), shadow tipis di sisi ATAS untuk memisahkan dari konten (`box-shadow: 0 -2px 12px rgba(23,20,18,0.06)`), TIDAK ada radius di sudut manapun (nempel penuh ke tepi layar, beda dari Card biasa).
+- **Item nav**: flex kolom (icon di atas, label kecil di bawah), lebar sama rata (`flex-1`) untuk semua item, tinggi total container ~64-72px + safe-area-inset-bottom (perangkat dengan home-indicator iOS).
+  - Icon: 22-24px, `lucide-react` (KONSISTEN aturan anti-emoji proyek).
+  - Label: `text-caption` (11-12px), TIDAK bold di state default.
+  - **State aktif**: icon + label warna `--color-primary` (oranye solid), label jadi `font-weight: 600` — TIDAK pakai background-fill pill seperti Sidebar Nav Item aktif (beda treatment: sidebar = background solid, bottom-nav = warna teks/icon saja, karena ruang vertikal terlalu sempit untuk pill background yang nyaman disentuh).
+  - **State default (inactive)**: icon+label `--color-text-secondary` (abu warm), tidak ada background apa pun.
+- **Jumlah item**: idealnya 4-5 (lebih dari itu, tiap item jadi terlalu sempit disentuh di layar kecil — kalau butuh lebih banyak menu, pindahkan ke drawer profil, bukan dipaksa masuk bottom-nav).
+- **Konten** di belakang bottom-nav WAJIB punya padding-bottom cukup (≥ tinggi bottom-nav + margin aman) supaya elemen terakhir tidak ketutup — kesalahan klasik fixed-bottom-nav yang HARUS dicek tiap kali dipakai di halaman baru.
+
+## Drawer Profil (Sheet dari Kanan-Atas Avatar — T168)
+
+> **Added 2026-08-15.** Pasangan dari Bottom Navigation di atas — top-bar mobile-shell.
+
+- **Top bar mobile**: judul halaman aktif KIRI (`text-h2`/`text-h1` sesuai konteks), avatar (inisial nama atau foto kalau tersedia, `radius-full` 36-40px) KANAN — **konvensi ini WAJIB diikuti, JANGAN pernah taruh avatar di kiri** (dikonfirmasi lewat diskusi eksplisit: kiri dicadangkan untuk judul/back-button, kanan konvensi dominan mobile app — Gojek/Instagram/WhatsApp/Google).
+- Klik avatar → buka **Sheet dari sisi kanan** (REUSE primitif Sheet yang sama dengan Form Input Panjang di atas, bukan primitif baru) — isi: header (foto/inisial besar + nama + role), lalu daftar menu (masing-masing baris ikon+label, style sama List Row), lalu Logout paling bawah (dipisah jarak/divider tipis dari menu lain, supaya tidak ter-klik tidak sengaja).
+- Menu di dalam drawer BOLEH kondisional (tampil/hilang tergantung hak akses user, misal "Wali Kelas" hanya untuk guru yang jadi wali) — drawer HARUS tetap valid/tidak kosong-aneh kalau SEMUA menu kondisional itu tidak ada (fallback: langsung Header → Logout).
+
+## Filter Berjenjang (Search → Dropdown Induk → Dropdown Anak)
+
+> **Added 2026-08-15.** Sudah jadi aturan proyek berulang (CLAUDE.md: "Search → Jurusan → Tingkat → Kelas") tapi belum pernah didokumentasikan sebagai SPEC VISUAL — hanya urutan logisnya yang tertulis. Ditambahkan supaya konsisten secara visual juga, bukan cuma urutan field.
+
+- **Urutan kiri-ke-kanan (atau atas-ke-bawah di mobile)**: Search box dulu (paling kiri/atas — filter paling umum/sering dipakai), lalu dropdown/pill-toggle berjenjang dari cakupan TERLUAS ke TERSEMPIT (contoh: Jurusan → Tingkat → Kelas, karena Kelas = gabungan Jurusan+Tingkat+rombel — pilih induk dulu baru anak masuk akal).
+- **Search box**: spec SAMA seperti Top Bar search (pill, `radius-full`, height 44px, placeholder icon), TAPI lebar mengikuti kontainer (bukan fixed ~200-240px seperti di dalam card kecil) — pada mobile, full-width sendiri di barisnya.
+- **Dropdown/pill berjenjang**: spec SAMA seperti Secondary Button dropdown filter (pill, border tipis, trailing chevron) UNTUK dropdown biasa; UNTUK filter multi-select (contoh: filter Tingkat X/XI/XII yang bisa pilih lebih dari satu) pakai **pill-toggle** bukan dropdown — beberapa pill sejajar, tiap pill togglable independen, state aktif = fill `--color-primary` solid + teks putih (SAMA treatment Sidebar Nav Item aktif), state tidak aktif = outline tipis `--color-border-subtle` + teks `--color-text-secondary`.
+- **Filter anak yang bergantung filter induk** (misal dropdown Kelas menunggu Jurusan dipilih) — kalau induk BELUM dipilih, dropdown anak TAMPIL tapi **disabled** (bukan disembunyikan total) — supaya struktur filter tetap terlihat konsisten/tidak "meloncat" layout-nya saat induk baru dipilih.
+- **Auto-apply, bukan tombol "Terapkan"**: SEMUA filter di proyek ini menerapkan hasil LANGSUNG begitu diisi/diubah (`onChange`, bukan `onSubmit`) — TIDAK ADA dan TIDAK PERLU tombol "Terapkan Filter" terpisah, ini KONSISTEN dan DISENGAJA di seluruh proyek, bukan sesuatu yang kurang/lupa ditambahkan.
+
+## Responsivitas & Skala Padding (WAJIB, Lintas Semua Komponen)
+
+> **Added 2026-08-15.** Bukan komponen baru, tapi PENEKANAN eksplisit yang berulang kali jadi sumber diskusi — ditulis di sini supaya siapa pun yang menulis UI baru langsung tahu tanpa perlu ditanyakan ulang.
+
+- **Mobile-first WAJIB** (bukan sekadar disarankan): base Tailwind class (tanpa prefix) = tampilan LAYAR SEMPIT, baru tambah `sm:`/`md:`/`lg:` untuk memperluas ke desktop. JANGAN merancang desktop dulu lalu "menyusutkan" pakai media query — proses berpikirnya harus mulai dari sempit.
+- **Setiap halaman/komponen BARU wajib teruji minimal di 2 lebar acuan** sebelum dianggap selesai: **375px** (mobile umum, representatif HP kelas menengah-bawah yang dipakai mayoritas siswa/wali/guru) dan **1440px** (desktop admin/piket kantor) — kalau ada breakpoint tengah (tablet ~768px) yang perilakunya beda signifikan, tes itu juga.
+- **Skala padding KONSISTEN** — pakai token spacing yang SAMA persis di seluruh proyek, jangan reka nilai px baru per komponen:
+  - `4px` (`space-1`) — jarak mikro dalam 1 elemen kecil (icon ke label pendek).
+  - `8px` (`space-2`) — jarak antar elemen sangat rapat (baris dalam List Row).
+  - `12px` (`space-3`) — jarak antar item dalam grup (Activity Feed rows, form field ke helper text).
+  - `16px` (`space-4`) — padding standar komponen sedang (Button, Dropdown item, Table cell horizontal).
+  - `24px` (`space-6`) — padding Card, gap antar Card dalam grid, padding section besar.
+  - **Aturan praktis**: kalau butuh nilai di ANTARA token ini, itu tanda salah pilih token — bulatkan ke token terdekat, JANGAN buat nilai custom (misal `18px`/`20px` sporadis) kecuali sudah ada preseden eksplisit tertulis di spec komponen lain di file ini (misal search input `padding-left: 20px` sudah tertulis eksplisit di Top Bar — itu preseden yang SAH, bukan alasan untuk menambah nilai custom baru di komponen lain).
+- **Tabel lebar di layar sempit** — WAJIB strategi eksplisit, TIDAK BOLEH overflow tak terkontrol: pilih salah satu — (a) `overflow-x-auto` dengan scroll horizontal terkontrol dalam container yang jelas batasnya, atau (b) card-view alternatif (tiap baris tabel jadi Card mini bertumpuk vertikal di layar sempit, kolom jadi label:value di dalam card itu) — putuskan per kasus mana yang lebih nyaman dibaca, tapi WAJIB salah satu, JANGAN biarkan tabel mentah men-scroll seluruh halaman secara horizontal tak terkendali.
 
 ## In-Page Footer
 

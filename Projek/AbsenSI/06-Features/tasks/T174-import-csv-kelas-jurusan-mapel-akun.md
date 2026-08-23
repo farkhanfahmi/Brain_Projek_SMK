@@ -47,16 +47,41 @@ Tambah 4 method baru, REPLIKASI PERSIS pola yang sudah ada (`importStudents`/`im
 - **Jangan sentuh:** `importStudents`/`importTeachers`/`importCards` existing (REUSE pola, TIDAK diubah perilakunya), komponen `ImportDialog` (reuse apa adanya, TIDAK direfaktor kecuali benar-benar perlu prop baru yang backward-compatible).
 
 ## Acceptance Criteria
-- [ ] Admin bisa import CSV untuk Kelas (dengan lookup Jurusan+Kampus, opsional ruangan kalau T169 sudah ada).
-- [ ] Admin bisa import CSV untuk Jurusan.
-- [ ] Admin bisa import CSV untuk Mapel.
-- [ ] Admin bisa import CSV untuk User/Akun — role sensitif (super_admin) DITOLAK atau butuh konfirmasi eksplisit tambahan, password TIDAK tersimpan mentah tanpa hash.
-- [ ] Semua endpoint baru guard `super_admin`, `@LogActivity` terpasang — verified tercatat.
-- [ ] Error per baris ditampilkan jelas ke admin (nama field yang salah, alasan spesifik) — konsisten pola 3 import existing.
-- [ ] Build + type-check hijau, jest untuk 4 method baru pass.
+- [x] Admin bisa import CSV untuk Kelas (dengan lookup Jurusan+Kampus, kolom `ruangan` diterima tapi DIABAIKAN karena T169 belum dikerjakan).
+- [x] Admin bisa import CSV untuk Jurusan.
+- [x] Admin bisa import CSV untuk Mapel.
+- [x] Admin bisa import CSV untuk User/Akun — role `super_admin` DITOLAK EKSPLISIT dengan pesan keamanan, password DARI KOLOM CSV (keputusan user) tapi DI-HASH sebelum simpan (tidak pernah mentah), `mustChangePassword` HARDCODE `true` untuk semua akun hasil import.
+- [x] Semua endpoint baru guard `super_admin` — verified 403 untuk `card_admin`, log ringkasan tercatat via `ActivityLogService.record()` (pola sama 3 import existing, BUKAN `@LogActivity` decorator per-baris karena bulk).
+- [x] Error per baris ditampilkan jelas ke admin (nama field yang salah, alasan spesifik) — konsisten pola 3 import existing, verified live tiap skenario.
+- [x] Build + type-check hijau, jest untuk 4 method baru pass (25 test baru).
 
 ## Validasi Claudian
-- [ ] Konfirmasi keputusan role mana yang BOLEH dibuat via import User (super_admin dikecualikan atau tidak) — klarifikasi ke user kalau ragu, JANGAN putuskan sepihak untuk hal sesensitif ini.
-- [ ] Konfirmasi password hasil import User di-hash dengan cara YANG SAMA seperti create-user manual (reuse, bukan implementasi baru).
-- [ ] Konfirmasi `@LogActivity` terpasang di 4 endpoint baru (cek [[feedback_wajib_log_activity]]).
-- [ ] Kalau T169 belum dikerjakan saat task ini dieksekusi — konfirmasi kolom `ruangan` di CSV Kelas diabaikan dengan aman (tidak error), bukan diasumsikan sudah ada.
+- [x] Konfirmasi keputusan role mana yang BOLEH dibuat via import User — **DIKONFIRMASI via AskUserQuestion 2026-08-14**: semua role KECUALI `super_admin` (guru, guru_piket, kepsek, admin_jurnal, card_admin, pembina_ekstra).
+- [x] Konfirmasi password hasil import User — **DIKONFIRMASI via AskUserQuestion 2026-08-14**: dari kolom CSV apa adanya (BUKAN auto-generate), di-hash dengan bcrypt SALT_ROUNDS 10 (SAMA persis `UsersService.create()`), `mustChangePassword` HARDCODE `true` (bukan `ForcePasswordChangeConfigService.shouldForceFor()` yang bisa di-toggle off — mitigasi wajib tidak boleh dimatikan untuk jalur CSV).
+- [x] `@LogActivity` — pola bulk import TIDAK pakai decorator itu (konsisten `importStudents`/`importTeachers`/`importCards` existing), dipakai `logImportSummary()` manual via `ActivityLogService.record()`, 1 entry ringkasan per operasi — verified tercatat live untuk keempat endpoint baru.
+- [x] T169 belum dikerjakan saat eksekusi (dikonfirmasi `Kelas.ruangan` tidak ada di schema) — kolom `ruangan` di CSV Kelas diterima via `KelasRow` interface tapi TIDAK dipakai/divalidasi, verified live tidak error.
+
+## Status Eksekusi (2026-08-14)
+
+**Selesai.**
+
+**Backend (`apps/api/src/import/`)**:
+- `import.service.ts` — 4 method baru (`importKelas`, `importJurusan`, `importMapel`, `importUsers`), REPLIKASI PERSIS pola 3 method existing (validasi wajib isi → duplikat dalam file → duplikat/lookup DB → create → kumpulkan error). `IMPORTABLE_ROLES` const eksplisit exclude `super_admin`. `importUsers()` replikasi manual constraint `UsersService.ensureLinksValid()` (guru/guru_piket wajib teacherId via lookup NIY, guru_piket wajib kampusId via lookup nama) — TIDAK reuse `UsersService` langsung (private method, tidak diekspor modul, konsisten pola 3 method lama yang juga tidak panggil service lain kecuali `CardsService.create()` publik).
+- `import.controller.ts` — 4 endpoint baru (`POST /import/kelas`, `/jurusan`, `/mapel`, `/users`), guard `@Roles(super_admin)` level controller (TIDAK diperluas seperti `/cards` yang juga terima `card_admin`), `logImportSummary()` dipanggil di semuanya.
+- `import.service.spec.ts` (baru) — 25 test: lookup jurusan/kampus, validasi tingkat enum, kolom ruangan diabaikan aman, dedup file+DB untuk Jurusan/Mapel (termasuk `kode` unique), DAN untuk User — role super_admin ditolak eksplisit, password di-hash (bukan mentah), guru/guru_piket wajib link valid, password <8 karakter ditolak, username duplikat.
+
+**Frontend**:
+- `apps/web/src/app/(admin)/kelas/kelas-jurusan-view.tsx` — 2 `ImportDialog` terpisah (Jurusan di `JurusanCard`, Kelas di `KelasCard`), `router.refresh()` + `useEffect` sync state lokal dari props Server Component setelah refetch.
+- `apps/web/src/app/(admin-jurnal)/admin-jurnal/mapel/mapel-view.tsx` — prop baru `canImport` (default `false`, backward-compatible), `ImportDialog` HANYA tampil kalau `true` — mencegah `admin_jurnal` (yang pakai komponen SAMA via route lain) melihat tombol yang akan gagal 403 (endpoint `/import/mapel` guard `super_admin` saja).
+- `apps/web/src/app/(admin)/mapel/page.tsx` — pass `canImport` (route super_admin).
+- `apps/web/src/app/(admin)/akun/akun-view.tsx` — `ImportDialog` untuk User/Akun (halaman ini 100% super_admin, tidak perlu conditional).
+
+**Verifikasi live** (dev DB port 3307, API dev port 3101, production tidak disentuh, akun `adminSU`+`adminKartu` password di-override sementara lalu DIKEMBALIKAN):
+1. `POST /import/jurusan` — 1 baris baru berhasil, 1 duplikat (DKV existing) ditolak dengan pesan jelas.
+2. `POST /import/kelas` — lookup jurusan+kampus berhasil; jurusan tidak ditemukan DITOLAK; tingkat "XIII" (invalid) DITOLAK; kolom `ruangan` diterima TANPA error (diabaikan).
+3. `POST /import/mapel` — 1 baris berhasil, duplikat DALAM FILE (nama sama 2x) terdeteksi.
+4. `POST /import/users` — skenario lengkap dalam 1 file: `super_admin` DITOLAK dengan pesan keamanan eksplisit; guru tanpa `niy` DITOLAK; password <8 karakter DITOLAK; `admin_jurnal` (tanpa link) BERHASIL; `guru` dengan NIY valid BERHASIL (teacherId ter-resolve); `guru_piket` dengan NIY+kampus valid BERHASIL (teacherId+kampusId ter-resolve). SELECT DB konfirmasi: `must_change_password=1` untuk SEMUA 3 akun sukses, `password_hash` berformat bcrypt (`$2b$10$...`, bukan mentah). Username duplikat (lintas request) DITOLAK.
+5. `activity_log` — 5 entri `import.jurusan`/`import.kelas`(x2)/`import.mapel`/`import.users` tercatat dengan ringkasan `{filename, totalRows, successCount, failedCount}`.
+6. Role `card_admin` → `POST /import/kelas` dan `/import/users` → 403 Forbidden, dikonfirmasi guard `super_admin`-only bekerja di endpoint baru.
+7. Semua data uji (users, kelas, jurusan, mapel, activity_log dengan penanda `t174`) dibersihkan, password hash 2 akun test dikembalikan PERSIS, dikonfirmasi via SELECT.
+8. `tsc --noEmit` bersih `apps/api` dan `apps/web`, `jest` — 25 suite / 327 test lulus 100%.

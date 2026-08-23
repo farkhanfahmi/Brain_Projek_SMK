@@ -51,16 +51,23 @@ modeJadwal ScheduleMode @default(normal) @map("mode_jadwal")
 - **Jangan sentuh:** `BlockWeekRange` (kalender global, TIDAK berubah), `Semester.mode` (TIDAK dihapus, dievaluasi tapi dibiarkan kalau ragu).
 
 ## Acceptance Criteria
-- [ ] Kelas punya field `modeJadwal` (Normal/Blok), default Normal, bisa diedit lewat halaman Kelas & Jurusan.
-- [ ] Resolusi jadwal (`getJadwalUntukTanggal`) memutuskan perlu-tidaknya filter Minggu A/B berdasarkan `Kelas.modeJadwal`, BUKAN lagi `Semester.mode`.
-- [ ] 1 semester BISA punya campuran kelas Normal dan Blok sekaligus, masing-masing di-resolve benar sesuai mode kelasnya.
-- [ ] Form Jadwal Mengajar menampilkan/menyembunyikan field `minggu` sesuai mode kelas yang dipilih.
-- [ ] Kelas mode Normal yang jadwalnya PUNYA nilai `minggu` lama (dari sebelum diubah mode) TIDAK menyebabkan jadwal itu hilang/salah tampil — field itu diabaikan, bukan menyebabkan error.
-- [ ] Regresi nol untuk kelas yang TIDAK diubah (default Normal, behavior sama seperti sebelum task ini kalau semester juga mode normal).
-- [ ] Build + type-check `apps/api` dan `apps/web` hijau.
+- [x] Kelas punya field `modeJadwal` (Normal/Blok), default Normal, bisa diedit lewat halaman Kelas & Jurusan.
+- [x] Resolusi jadwal (`getJadwalUntukTanggal`) memutuskan perlu-tidaknya filter Minggu A/B berdasarkan `Kelas.modeJadwal`, BUKAN lagi `Semester.mode`.
+- [x] 1 semester BISA punya campuran kelas Normal dan Blok sekaligus, masing-masing di-resolve benar sesuai mode kelasnya.
+- [x] Form Jadwal Mengajar menampilkan/menyembunyikan field `minggu` sesuai mode kelas yang dipilih.
+- [x] Kelas mode Normal yang jadwalnya PUNYA nilai `minggu` lama (dari sebelum diubah mode) TIDAK menyebabkan jadwal itu hilang/salah tampil — field itu diabaikan, bukan menyebabkan error.
+- [x] Regresi nol untuk kelas yang TIDAK diubah (default Normal, behavior sama seperti sebelum task ini kalau semester juga mode normal) — diverifikasi live di dev DB: 6 kelas existing tetap `normal` pasca-migration.
+- [x] Type-check `apps/web` hijau. `apps/api` type-check untuk file yang diubah task ini (`schedule-resolver.service.ts`, jest 17/17 hijau) BERSIH; `schedules.service.ts` tidak bisa di-tsc/jest karena diblokir error PRE-EXISTING dari sesi T158 paralel (nullable `jamMulai`/`jamSelesai` belum diadaptasi consumer-nya) — dikonfirmasi via `git stash` bukan regresi T159, lihat catatan di STATUS.md.
 
 ## Validasi Claudian
-- [ ] **BACA ULANG SECARA LENGKAP** `ScheduleResolverService.getJadwalUntukTanggal()` SEBELUM mengubah sumber keputusan mode — pastikan semua cabang logic existing dipahami, tidak ada yang terlewat saat migrasi dari `semester.mode` ke `kelas.modeJadwal`.
-- [ ] **JANGAN** hapus `Semester.mode` dari schema — biarkan ada meski mungkin tidak lagi jadi sumber logic utama, laporkan sebagai temuan kalau field itu jadi vestigial.
-- [ ] **JANGAN** ubah struktur `BlockWeekRange` jadi per-kelas — dikonfirmasi user TETAP 1 kalender blok global untuk seluruh sekolah.
-- [ ] Pastikan perubahan ini KOMPATIBEL dengan T157 (kalau halaman Jadwal Mengajar sudah diduplikasi ke admin) — form conditional field `minggu` perlu diterapkan di KEDUA lokasi (admin-jurnal asli DAN admin baru) kalau keduanya sudah ada saat task ini dikerjakan.
+- [x] **BACA ULANG SECARA LENGKAP** `ScheduleResolverService.getJadwalUntukTanggal()` SEBELUM mengubah sumber keputusan mode — pastikan semua cabang logic existing dipahami, tidak ada yang terlewat saat migrasi dari `semester.mode` ke `kelas.modeJadwal`.
+- [x] **JANGAN** hapus `Semester.mode` dari schema — biarkan ada meski mungkin tidak lagi jadi sumber logic utama, laporkan sebagai temuan kalau field itu jadi vestigial.
+- [x] **JANGAN** ubah struktur `BlockWeekRange` jadi per-kelas — dikonfirmasi user TETAP 1 kalender blok global untuk seluruh sekolah.
+- [x] Pastikan perubahan ini KOMPATIBEL dengan T157 (kalau halaman Jadwal Mengajar sudah diduplikasi ke admin) — form conditional field `minggu` perlu diterapkan di KEDUA lokasi (admin-jurnal asli DAN admin baru) kalau keduanya sudah ada saat task ini dikerjakan.
+
+## Status Eksekusi (2026-08-14)
+Selesai. Ringkasan implementasi & catatan blocker T158 lengkap di `STATUS.md` (baris T159).
+
+**Temuan `Semester.mode` vestigial** (sesuai instruksi "laporkan kalau ragu"): field ini SEKARANG TIDAK LAGI jadi sumber keputusan resolusi minggu A/B untuk jadwal `jam_mengajar` (sudah pindah total ke `Kelas.modeJadwal`). Field ini MASIH dipakai untuk 1 hal: kontrol tampil/tidaknya banner peringatan "rentang minggu A/B belum lengkap" (coverage-check `BlockWeekRange`) di halaman Jadwal Mengajar (`jadwal-view.tsx`) — TIDAK dihapus dari schema sesuai instruksi task ini, dan masih punya kegunaan UI yang sah (BlockWeekRange itu sendiri tetap 1 kalender global per semester, jadi indikator "kalender ini lengkap/belum" tetap relevan di level semester, terlepas dari kelas mana yang memakainya).
+
+Frontend `JadwalFormModal` kehilangan prop `modeBlok` (dihapus, sekarang dihitung internal dari `kelasId` yang dipilih user di form itu sendiri) — kalau ada consumer lain di luar `jadwal-view.tsx` yang memanggil komponen ini dengan prop tersebut, perlu disesuaikan (per grep saat implementasi, HANYA `jadwal-view.tsx` yang memanggilnya, dipakai bersama oleh `(admin-jurnal)/admin-jurnal/jadwal/` dan `(admin)/jadwal-mengajar/` via reuse T157 — sudah update di titik itu).

@@ -99,15 +99,27 @@ model GradeEntry {
 - **Jangan sentuh:** `JournalEntry.tugasPenilaian` (field teks bebas lama, TETAP ada terpisah, bukan pengganti modul ini).
 
 ## Acceptance Criteria
-- [ ] Guru bisa buat Penilaian baru: pilih kelas, mapel, judul, 1+ pertemuan.
-- [ ] Setelah dibuat, SEMUA siswa kelas itu otomatis muncul di daftar dengan nilai kosong.
-- [ ] Guru bisa isi/ubah nilai 0-100 per siswa, simpan, dan BUKA LAGI KAPAN SAJA untuk edit (tidak ada gate waktu).
-- [ ] Guru A tidak bisa lihat/edit Penilaian buatan guru B (verified filter teacherId dari JWT).
-- [ ] Assessment dengan sessions dari kelas berbeda ditolak dengan pesan jelas.
-- [ ] `@LogActivity` terpasang di create assessment + update entries — verified tercatat.
-- [ ] Build + type-check hijau, jest baru untuk modul ini pass.
+- [x] Guru bisa buat Penilaian baru: pilih kelas, mapel, judul, 1+ pertemuan — mapel di-derive dari pertemuan yang dicentang (bukan dropdown terpisah, karena tiap sesi sudah tahu mapelnya sendiri), diverifikasi live.
+- [x] Setelah dibuat, SEMUA siswa kelas itu otomatis muncul di daftar dengan nilai kosong — diverifikasi live (8 siswa auto-muncul).
+- [x] Guru bisa isi/ubah nilai 0-100 per siswa, simpan, dan BUKA LAGI KAPAN SAJA untuk edit (tidak ada gate waktu) — `updateEntries()` TIDAK punya `assertSessionStarted` atau gate serupa, diverifikasi unit test eksplisit.
+- [x] Guru A tidak bisa lihat/edit Penilaian buatan guru B (verified filter teacherId dari JWT) — unit test 403 di `getAssessmentDetail`+`updateEntries`+`createAssessment`.
+- [x] Assessment dengan sessions dari kelas berbeda ditolak dengan pesan jelas — unit test + pesan `"Semua sesi yang dipilih harus dari kelas yang sama..."`.
+- [x] `@LogActivity` terpasang di create assessment + update entries — verified tercatat. Manual (bukan decorator), pola sama `JournalService` (create punya child records, update bersifat bulk — keduanya tidak match asumsi interceptor 1-row-tunggal).
+- [x] Build + type-check hijau, jest baru untuk modul ini pass (18 test baru, full suite 411/411).
 
 ## Validasi Claudian
-- [ ] Konfirmasi SEMUA endpoint filter `teacherId` dari JWT, bukan trust client — cross-tenant leak check (guru lain tidak bisa akses assessment orang lain via tebak ID).
-- [ ] Konfirmasi `@LogActivity` terpasang, bukan asumsi otomatis tercatat (cek [[feedback_wajib_log_activity]]).
-- [ ] Konfirmasi validasi rentang nilai 0-100 di BACKEND (bukan cuma FE) — FE bisa dibypass.
+- [x] Konfirmasi SEMUA endpoint filter `teacherId` dari JWT, bukan trust client — cross-tenant leak check (guru lain tidak bisa akses assessment orang lain via tebak ID). Semua 4 endpoint pakai `requireTeacherId(user)` dari `@CurrentUser()`, tidak ada `teacherId` di body/query manapun.
+- [x] Konfirmasi `@LogActivity` terpasang, bukan asumsi otomatis tercatat (cek [[feedback_wajib_log_activity]]) — manual `activityLog.record()` di `createAssessment`+`updateEntries`, diverifikasi unit test eksplisit cek `action`/`targetType`/`targetId`.
+- [x] Konfirmasi validasi rentang nilai 0-100 di BACKEND (bukan cuma FE) — `GradeEntryItemDto.nilai` pakai `@Min(0) @Max(100)` (class-validator, backend), FE juga validasi duplikat sebagai UX cepat tapi bukan satu-satunya lapis.
+
+## Status Eksekusi (2026-08-15)
+Selesai. Ringkasan implementasi lengkap di `STATUS.md` (baris T172).
+
+**Keputusan implementasi yang diklarifikasi ke user**: tipe `nilai` — spec usulkan `Decimal(5,2)` (boleh desimal), user pilih **Integer bulat 0-100** (lebih simpel utk input mobile, konsisten kebiasaan nilai sekolah pada umumnya).
+
+**Keputusan desain lain (tidak diklarifikasi, cukup jelas dari spec+konvensi codebase)**:
+- Endpoint diletakkan di modul BARU `apps/api/src/grades/` (bukan menumpang di `journal`/`teaching-sessions`) karena domainnya benar-benar baru (Penilaian, bukan presensi/jurnal).
+- Form create pakai native `<input type="checkbox">` (bukan primitif `Checkbox` shadcn — belum ada di `packages/ui`, tidak ditambahkan krn di luar scope task ini) untuk multi-select pertemuan.
+- `GET /grades/sessions` sengaja TIDAK dibatasi rentang tanggal (beda dari `riwayat-jurnal` T171 yang 7 hari) — guru bisa gabung pertemuan dari rentang lebih panjang (misal semua pertemuan 1 bab), dicatat eksplisit di komentar kode + test.
+
+**Live-verify**: dibuat data dummy (guru+mapel+schedule+2 teaching_session) via docker exec, login browser, isi form create (pilih kelas, judul, centang 1 pertemuan — dikonfirmasi mapel checkbox lain ter-disable begitu 1 dicentang), redirect otomatis ke halaman isi nilai, isi 2 nilai, Simpan, indikator "Tersimpan" muncul, dikonfirmasi nilai benar via query database langsung, kembali ke daftar menampilkan ringkasan "2/8 dinilai" akurat. Semua data test dihapus bersih setelahnya.

@@ -46,11 +46,20 @@
 - **Jangan sentuh:** `attendance-table.tsx` (edit presensi di sesi aktif TETAP jalur ini, tidak diubah task ini), route `/guru/sesi/[sessionId]` (path sama).
 
 ## Acceptance Criteria
-- [ ] Form jurnal punya 5 field: Elemen, CP, TP, Materi, Catatan — tersimpan dan termuat kembali benar.
-- [ ] `/guru/jurnal` (bottom-nav "Jurnal Mengajar") menampilkan daftar sesi dengan status jurnal (sudah/belum diisi), BUKAN lagi daftar jadwal murni (itu sudah di `/guru/jadwal`).
-- [ ] Jurnal lama (field baru NULL) tampil rapi tanpa error di form edit.
-- [ ] Build + type-check hijau, jest existing tetap pass.
+- [x] Form jurnal punya field Elemen, CP, TP, Materi, Tugas/Penilaian, Catatan (6 field total — spec sebut 5 tapi `tugasPenilaian` existing WAJIB tetap ada per Validasi Claudian, jadi otomatis jadi 6) — tersimpan dan termuat kembali benar, diverifikasi live (autosave + query DB langsung).
+- [x] `/guru/jurnal` (bottom-nav "Jurnal Mengajar") menampilkan daftar sesi dengan status jurnal (sudah/belum diisi), BUKAN lagi daftar jadwal murni (itu sudah di `/guru/jadwal`) — diverifikasi live, 2 kartu dgn badge benar.
+- [x] Jurnal lama (field baru NULL) tampil rapi tanpa error di form edit — `jurnal.elemen ?? ""`/`jurnal.capaian_pembelajaran ?? ""` di state init, konsisten pola field lain yang sudah ada.
+- [x] Build + type-check hijau, jest existing tetap pass (393/393, 8 test baru).
 
 ## Validasi Claudian
-- [ ] Konfirmasi field `tugasPenilaian` (existing) TIDAK dihapus/diubah maknanya — tetap ada berdampingan dengan modul Nilai baru (T172), BUKAN digantikan.
-- [ ] Konfirmasi route `/guru/sesi/[sessionId]` tidak berubah path/struktur, hanya isi `journal-form.tsx` yang diperkaya.
+- [x] Konfirmasi field `tugasPenilaian` (existing) TIDAK dihapus/diubah maknanya — tetap ada berdampingan dengan modul Nilai baru (T172), BUKAN digantikan. Field itu TIDAK disentuh sama sekali di schema/DTO/service, hanya urutannya di form dipindah (sekarang setelah Materi, sebelum Catatan).
+- [x] Konfirmasi route `/guru/sesi/[sessionId]` tidak berubah path/struktur, hanya isi `journal-form.tsx` yang diperkaya — `sesi-detail-view.tsx`/`attendance-table.tsx`/routing TIDAK disentuh, diverifikasi live tabel presensi di halaman itu tetap ada kolom Aksi (mode edit, beda dari T170 read-only).
+
+## Status Eksekusi (2026-08-15)
+Selesai. Ringkasan implementasi lengkap di `STATUS.md` (baris T171).
+
+**Keputusan implementasi**: "jurnal sudah diisi" (untuk badge di `/guru/jurnal`) didefinisikan sebagai ADA baris `JournalEntry` dengan MINIMAL 1 dari 6 field berisi non-null — bukan sekadar baris `JournalEntry` eksis (secara teori bisa ada baris "kosong semua" kalau alur upsert pernah dipanggil dengan payload kosong, meski tidak terjadi di alur normal UI saat ini — tetap dijaga eksplisit di kode, dicover unit test). Rentang "riwayat" dipilih 7 hari terakhir termasuk hari ini (spec bilang "misal 7 hari terakhir, putuskan saat implementasi").
+
+**Live-verify**: dibuat data dummy (guru+mapel+schedule+2 teaching_session — 1 hari ini started tanpa jurnal, 1 dua hari lalu closed dengan jurnal terisi sebagian) via docker exec, login browser, konfirmasi daftar `/guru/jurnal` menampilkan badge status benar, buka salah satu sesi, isi field Elemen, tunggu autosave, verifikasi tersimpan benar via query DB langsung (`SELECT elemen FROM journal_entries`). Semua data test dihapus bersih setelahnya.
+
+**Catatan operasional**: proses `nest start --watch` sempat stale (route baru tidak ter-mount meski file sudah tersimpan) — diselesaikan dengan kill manual proses lama by PID lalu restart bersih, bukan bug di kode.
