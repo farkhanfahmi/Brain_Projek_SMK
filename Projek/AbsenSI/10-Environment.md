@@ -1,28 +1,36 @@
 ---
 tags: [absensi, environment]
-updated: 2026-08-04
+updated: 2026-08-25
 ---
 
 # 10 — Environment
 
 ← lihat STATUS.md untuk ringkasan progres, 11-Decisions.md untuk ADR
 
-> **Sudah LIVE**, bukan lagi rencana. Server sekolah fisik BELUM ada — 1 mesin dev
-> (`anunnaki`, workstation ini) berperan sebagai dev DAN production sementara sampai
-> server sekolah sungguhan siap (lihat bagian "Migrasi ke server sekolah" di bawah).
+> **Sudah LIVE**, bukan lagi rencana. Sejak 2026-08-25 topologi BERUBAH: dev dan
+> production TIDAK lagi di mesin yang sama.
+>
+> - **DEV → Windows** (mesin ini): `C:\ProjekSMK\AbsenSI`, branch `dev`.
+>   Docker: `absensi-mysql-1` (root/password, host port 3307) + `absensi-redis-1` (6379).
+>   Database dev BARU (seed testing saja) — dibuat kosong saat migrasi ke Windows,
+>   sesuai prinsip "dev boleh rusak bebas".
+> - **PRODUCTION → Linux** (`anunnaki`): path `/home/anunnaki/Documents/APP SMK/AbsenSI-production`,
+>   branch `main`, port web 3000 / api 3001 / kiosk 3002, MySQL prod port 3309, Redis 6380,
+>   dikelola systemd (T117). Diakses dari Windows via **VPN + SSH** — semua operasi production
+>   dari Windows WAJIB lewat SSH (`systemctl status` dulu sebelum restart apa pun).
+>
+> Riwayat topologi lama (dev+production 1 mesin Linux, auto-deploy post-commit hook)
+> tetap relevan untuk memahami insiden & aturan di bawah — baca dengan konteks itu.
 
-## Topologi Dev/Production (T105, sejak 2026-07-31)
+## Topologi Dev/Production
 
-2 lingkungan terpisah total di MESIN YANG SAMA:
+### DEV — Windows (mesin ini)
+- Path: `C:\ProjekSMK\AbsenSI` — branch `dev`. Node + pnpm native Windows.
+- Port: web 3000, api 3001, kiosk 3002 (standar repo; tidak ada folder produksi terpisah di Windows).
+- Infrastruktur: Docker Desktop (WSL2), compose file di root repo — `docker compose up -d`.
+- Jalankan: `pnpm turbo run dev` (script .sh lama butuh adaptasi bash/git-bash).
 
-### DEV
-- Path: `/home/anunnaki/Documents/APP SMK/AbsenSI` — branch `dev`.
-- Port: web 3100, api 3101, kiosk 3102.
-- Database: Docker `absensi-mysql-1` (host port 3307) — boleh direset/rusak bebas, TIDAK ada data sekolah asli.
-- Redis: Docker `absensi-redis-1` (port 6379).
-- Jalankan: `./scripts/dev-start.sh all` (atau `web`/`api`/`kiosk` individual).
-
-### PRODUCTION
+### PRODUCTION — Linux (`anunnaki`)
 - Path: `/home/anunnaki/Documents/APP SMK/AbsenSI-production` — branch `main` SELALU.
 - Port: web 3000, api 3001, kiosk 3002 (tidak berubah dari sebelum T105 — kiosk fisik gerbang & bookmark staff tidak perlu dikonfigurasi ulang). Diakses via `http://10.10.10.198:3000` dst.
 - Database: Docker `absensi-mysql-prod` (host port 3309) — **data sekolah ASLI**, dimulai kosong pasca insiden wipe 2026-07-30.

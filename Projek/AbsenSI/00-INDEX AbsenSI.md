@@ -6,8 +6,9 @@ updated: 2026-08-04
 
 # AbsenSI — Index Proyek
 
-> Sistem Absensi RFID untuk Siswa & Guru SMK. Dieksekusi via Claude Code (sesi tunggal,
-> bukan tim multi-developer — lihat catatan di bagian bawah).
+> Sistem Absensi RFID untuk Siswa & Guru SMK. Dieksekusi dengan bantuan AI coding agent
+> (awalnya Claude Code, sejak 2026-08-25 juga Hermes Agent — aturan di vault ini berlaku
+> untuk agent mana pun).
 
 **Mulai dari sini setiap sesi baru: baca STATUS.md dulu** — itu satu-satunya tempat
 untuk tahu apa yang sudah selesai dan apa yang masih perlu dikerjakan. File ini (INDEX)

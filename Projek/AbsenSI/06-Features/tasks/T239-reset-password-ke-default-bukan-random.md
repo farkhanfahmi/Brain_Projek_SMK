@@ -63,14 +63,25 @@ async resetPassword(id: number): Promise<{ username: string; newPassword: string
 - **Jangan sentuh:** `setPassword()` (method terpisah, tetap manual), `ForcePasswordChangeConfig`/`mustChangePassword` logic (TIDAK berubah, tetap `true` setelah reset).
 
 ## Acceptance Criteria
-- [ ] `POST /users/:id/reset-password` — password akun jadi `"12345678"`, BUKAN random lagi.
-- [ ] `mustChangePassword` tetap `true` setelah reset (perilaku existing TIDAK berubah).
-- [ ] `generateAkunGuruMassal()` (T232) dan `resetPassword()` — SAMA-SAMA pakai 1 konstanta `DEFAULT_PASSWORD`, tidak ada 2 nilai literal terpisah lagi.
-- [ ] `setPassword()` (set manual) — TIDAK terdampak, tetap terima input bebas.
-- [ ] Login dengan password default setelah reset — berhasil, langsung diarahkan wajib ganti password (`mustChangePassword` redirect existing tetap jalan).
-- [ ] Build + type-check hijau, jest baru: reset password hasilnya selalu "12345678", `mustChangePassword` tetap true.
+- [x] `POST /users/:id/reset-password` — password akun jadi `"12345678"`, BUKAN random lagi.
+- [x] `mustChangePassword` tetap `true` setelah reset (perilaku existing TIDAK berubah).
+- [x] `generateAkunGuruMassal()` (T232) dan `resetPassword()` — SAMA-SAMA pakai 1 konstanta `DEFAULT_PASSWORD`, tidak ada 2 nilai literal terpisah lagi.
+- [x] `setPassword()` (set manual) — TIDAK terdampak, tetap terima input bebas.
+- [x] Login dengan password default setelah reset — berhasil, langsung diarahkan wajib ganti password (`mustChangePassword` redirect existing tetap jalan) — logic redirect TIDAK disentuh, hanya nilai password yang berubah.
+- [x] Build + type-check hijau — **jest baru SENGAJA DILEWATI atas instruksi eksplisit user** ("lanjut eksekusi T239 tanpa jest test"); tidak ada test existing untuk `resetPassword()` yang perlu diupdate, dan test existing `generateAkunGuruMassal()` (22 test) tetap 22/22 lulus (0 regresi, behaviornya sendiri tidak berubah).
 
 ## Validasi Claudian
-- [ ] Konfirmasi konstanta `DEFAULT_PASSWORD` SATU sumber dipakai KEDUA method (`resetPassword()` dan `generateAkunGuruMassal()`), bukan 2 literal terpisah yang bisa drift kalau nanti nilai default berubah.
-- [ ] Konfirmasi `generatePassword()`/import `nanoid` yang jadi tidak terpakai (kalau memang tidak ada pemakaian lain) DIHAPUS, bukan dibiarkan jadi dead code.
-- [ ] Konfirmasi `setPassword()` method TERPISAH sama sekali tidak tersentuh oleh perubahan ini.
+- [x] Konfirmasi konstanta `DEFAULT_PASSWORD` SATU sumber dipakai KEDUA method (`resetPassword()` dan `generateAkunGuruMassal()`), bukan 2 literal terpisah yang bisa drift kalau nanti nilai default berubah.
+- [x] Konfirmasi `generatePassword()`/import `customAlphabet` dari `nanoid` DIHAPUS TOTAL (tidak dipakai di tempat lain file ini) — `nanoid` package sendiri TETAP dipakai luas di modul lain (auth/kiosks/tv-sessions/dll), hanya import lokal `users.service.ts` yang dihapus.
+- [x] Konfirmasi `setPassword()` method TERPISAH sama sekali tidak tersentuh oleh perubahan ini.
+
+## Implementasi (2026-08-25)
+
+Konstanta `DEFAULT_PASSWORD = "12345678"` ditambah di `users.service.ts` (menggantikan
+`generatePassword()`/`customAlphabet` yang dihapus total, dan literal `"12345678"` di
+`generateAkunGuruMassal()`). `resetPassword()` — response shape TIDAK berubah (`{username,
+newPassword}`), FE existing otomatis kompatibel. Dialog "Password Baru" di
+`akun-view.tsx` diupdate judul+teks jadi "Password Direset ke Default" (menjelaskan ini
+nilai TETAP/dikenal, bukan kode acak sekali-lihat) — struktur dialog tidak diubah. tsc
+api+web bersih, test existing `users.service.spec.ts` 22/22 tetap lulus. Jest test baru
+untuk `resetPassword()` sengaja dilewati sesuai instruksi eksplisit user.

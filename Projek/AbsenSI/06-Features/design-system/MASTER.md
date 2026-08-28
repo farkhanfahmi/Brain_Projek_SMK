@@ -1,6 +1,6 @@
 # MASTER Design System — "EzMart" Admin Dashboard Style
 
-> **Source of truth.** Claude Code must read this file (and the companion files listed below) before writing any UI code for this project. Do not invent colors, spacing, or component shapes that are not defined here. If a needed pattern isn't covered, extrapolate using the same visual logic (rounded, soft, orange-accented, high-contrast text) rather than defaulting to generic Tailwind/shadcn defaults.
+> **Sumber kebenaran desain.** Agent AI (Claude Code, Hermes Agent, atau lainnya) HARUS membaca file ini (dan companion files di bawah) sebelum menulis kode UI apapun. Jangan mengarang warna, spacing, atau bentuk komponen yang tidak didefinisikan di sini. Kalau pattern yang dibutuhkan tidak tercakup, ekstrapolasi dengan logika visual yang sama (rounded, soft, orange-accented, high-contrast text) — jangan default ke generic Tailwind/shadcn.
 
 ## Companion files (read all of them)
 - [`01-colors.md`](./01-colors.md) — full color token table, usage rules, states

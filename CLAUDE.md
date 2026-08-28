@@ -1,6 +1,8 @@
 # CLAUDE.md — AbsenSI Project Context
 
 > Baca file ini di awal setiap sesi sebelum mengerjakan apapun.
+> (File ini juga dibaca oleh Hermes Agent sebagai AGENTS-context — aturan di sini
+> berlaku untuk agent AI mana pun yang mengerjakan proyek ini.)
 > Vault Obsidian ini adalah **sumber kebenaran desain** untuk proyek AbsenSI.
 > Kode dieksekusi di repo terpisah; vault ini adalah referensi spec, ADR, dan status task.
 

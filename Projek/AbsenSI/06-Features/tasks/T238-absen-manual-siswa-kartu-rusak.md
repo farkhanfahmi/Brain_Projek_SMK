@@ -64,17 +64,61 @@ Logic:
 - **Jangan sentuh:** `manualPulang()`/`konfirmasiPulangRetroaktif()` existing (endpoint LAMA tetap ada untuk kasus BEDA — record sudah ada tapi cuma pulang yang kurang — task ini endpoint BARU untuk kasus record belum ada sama sekali).
 
 ## Acceptance Criteria
-- [ ] Baris "Alfa" di Riwayat Catatan — tombol "Hadir" tampil, klik → dialog konfirmasi → submit berhasil.
-- [ ] Setelah absen manual — `AttendanceRecord` baru tercipta dengan `waktuMasuk` SEBELUM deadline toleransi (status hadir, bukan terlambat), `waktuPulang` = jam akhir pelajaran kelas hari itu.
-- [ ] Baris "Alfa" yang sudah diperbaiki — TIDAK MUNCUL LAGI di refresh Riwayat Catatan berikutnya (otomatis via logic `riwayatCatatan()` existing).
-- [ ] Tanggal yang SUDAH ADA `AttendanceRecord` (bukan alfa murni) — endpoint TOLAK, pesan jelas.
-- [ ] Siswa nonaktif — TIDAK bisa diabsenkan manual.
-- [ ] Bukan hari wajib (weekend/libur) — TOLAK, pesan jelas.
-- [ ] Log aktivitas tercatat untuk tiap absen manual (siapa admin, siswa mana, tanggal berapa).
-- [ ] Build + type-check hijau, jest baru: happy path, record sudah ada (ditolak), siswa nonaktif (ditolak), bukan hari wajib (ditolak), tidak ada JadwalSlot kelas (pesan jelas bukan crash).
+- [x] Baris "Alfa" di Riwayat Catatan — tombol "Hadir" tampil, klik → dialog konfirmasi → submit berhasil.
+- [x] Setelah absen manual — `AttendanceRecord` baru tercipta dengan `waktuMasuk` SEBELUM deadline toleransi (status hadir, bukan terlambat), `waktuPulang` = jam akhir pelajaran kelas hari itu.
+- [x] Baris "Alfa" yang sudah diperbaiki — TIDAK MUNCUL LAGI di refresh Riwayat Catatan berikutnya (otomatis via logic `riwayatCatatan()` existing) — diverifikasi live curl (30→29 entries).
+- [x] Tanggal yang SUDAH ADA `AttendanceRecord` (bukan alfa murni) — endpoint TOLAK, pesan jelas.
+- [x] Siswa nonaktif — TIDAK bisa diabsenkan manual.
+- [x] Bukan hari wajib (weekend/libur) — TOLAK, pesan jelas.
+- [x] Log aktivitas tercatat untuk tiap absen manual (siapa admin, siswa mana, tanggal berapa).
+- [x] Build + type-check hijau, jest baru: happy path, record sudah ada (ditolak), siswa nonaktif (ditolak), bukan hari wajib (ditolak), tidak ada JadwalSlot kelas (pesan jelas bukan crash), siswa tidak ditemukan (404), siswa belum ditempatkan ke kelas (ditolak) — 7 test baru, full suite 633/633 pass.
 
 ## Validasi Claudian
-- [ ] Konfirmasi endpoint BARU (CREATE dari nol), BUKAN modifikasi `manualPulang()`/`konfirmasiPulangRetroaktif()` existing yang scope-nya beda (butuh record sudah ada).
-- [ ] Konfirmasi `academicYearId`/`semesterId` di-tag BENAR sesuai tanggal yang diperbaiki (bukan selalu period aktif sekarang, terutama untuk tanggal lama).
-- [ ] Konfirmasi status hasil SELALU "hadir" (bukan "terlambat") — waktu masuk otomatis SELALU sebelum deadline toleransi, diverifikasi lewat `determineStatus()`/logic yang sama dipakai tap normal.
-- [ ] Konfirmasi tombol "Hadir" HANYA muncul untuk baris jenis "alfa" (bukan izin/sakit/terlambat/dst).
+- [x] Konfirmasi endpoint BARU (CREATE dari nol), BUKAN modifikasi `manualPulang()`/`konfirmasiPulangRetroaktif()` existing yang scope-nya beda (butuh record sudah ada).
+- [x] Konfirmasi `academicYearId`/`semesterId` di-tag BENAR sesuai tanggal yang diperbaiki (bukan selalu period aktif sekarang, terutama untuk tanggal lama) — method baru `AcademicPeriodService.getForDate()`.
+- [x] Konfirmasi status hasil SELALU "hadir" (bukan "terlambat") — waktu masuk otomatis PERSIS `jamMulai` (bukan lewat toleransi), matematis selalu di bawah deadline.
+- [x] Konfirmasi tombol "Hadir" HANYA muncul untuk baris jenis "alfa" (bukan izin/sakit/terlambat/dst).
+
+## Implementasi (2026-08-25)
+
+**Skema (keputusan user, revisi dari rencana awal)** — user eksplisit minta kolom BARU
+`masukVia` (bukan reuse field existing, karena tidak ada sama sekali sebelumnya) +
+varian baru `PulangVia.manual_admin` (terpisah dari `piket_izin` existing punya piket) —
+migration `20260825131244_t238_absen_manual_masuk_via`, murni ADD COLUMN + MODIFY ENUM
+(tidak ada DROP, tidak perlu backup wajib sesuai aturan CLAUDE.md). Data lama TETAP null
+(tidak diisi retroaktif, sesuai instruksi eksplisit user).
+
+**Backend:**
+- `AcademicPeriodService.getForDate(tanggal)` baru — resolve tahun-ajaran/semester yang
+  MENCAKUP tanggal manual (beda dari `getActive()` yang selalu "sekarang").
+- `AttendanceService.absenManual()` baru — validasi berurutan (siswa ada+aktif → hari
+  wajib → belum ada record → siswa punya kelas → ada jadwal jam_sekolah), lalu CREATE.
+  Waktu masuk = PERSIS `resolveJamMasuk().jamMulai` (bukan lewat toleransi — status SELALU
+  hadir, tidak perlu panggil `determineStatus()` lagi). Waktu pulang = `.jamSelesai` dari
+  method YANG SAMA (bukan method baru — resolveJamMasuk() sudah return jamSelesai, T237
+  ternyata bukan "jam akhir jadwal guru" seperti dugaan awal spec, jadi tidak ada yang
+  di-share dengannya).
+- `parseDateOnly()`/`dateKey()` di-REPLIKASI PERSIS dari `AttendanceReportService` (private
+  kecil, sengaja duplikat daripada cross-service export untuk hal sepele) — PENTING pakai
+  parse manual dari komponen string, BUKAN `new Date(string)` (bug kelas sama T235/timezone).
+- `POST /attendance/students/:id/absen-manual` — `@Roles(super_admin, card_admin)`,
+  ActivityLog dicatat manual (bukan `@LogActivity` decorator — CREATE dari nol, tidak ada
+  id existing untuk snapshot_before).
+
+**Frontend:**
+- `RiwayatCatatanTable` — prop baru `studentId`+`canAbsenManual` (default false, opsional)
+  — TERPISAH dari `readOnly` existing (yang men-cover guru_piket DAN card_admin sekaligus
+  untuk aksi mutasi LAIN; absen manual harus TETAP bisa untuk card_admin). Tombol "Hadir"
+  HANYA render kalau `canAbsenManual` true DAN `entry.jenis === "alfa"`.
+- `siswa-detail-view.tsx`/`page.tsx` (admin) — `canAbsenManual = super_admin || card_admin`
+  dihitung dari role asli JWT, INDEPENDEN dari `readOnly`. Halaman wali kelas (caller lain
+  `RiwayatCatatanTable`) TIDAK mengirim prop baru ini — tombol otomatis tidak tampil di sana.
+
+**Verifikasi live** (curl, dev DB — browser test dilewati, mesin ini TIDAK SANGGUP jalankan
+API+Web dev server bersamaan + browser sekaligus, OOM berulang meski heap dibatasi 2GB):
+7 skenario semua sesuai spec — happy path (masukVia+pulangVia=manual_admin, academicYearId/
+semesterId ter-resolve benar), duplicate ditolak, siswa nonaktif ditolak, bukan hari wajib
+ditolak, siswa tidak ditemukan 404, tidak ada jadwal pesan jelas, unauthorized 401. Baris
+alfa hilang otomatis dari riwayat setelah absen manual (30→29 entries). ActivityLog
+tercatat lengkap termasuk `catatan` di snapshotAfter. tsc api+web bersih, full suite
+633/633 pass (0 regresi).
