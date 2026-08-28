@@ -37,10 +37,63 @@ updated: 2026-08-25
 - Redis: Docker `absensi-redis-prod` (port host 6380).
 - Jalankan: `./scripts/start-production.sh` (install → migrate deploy → prisma generate → build → restart via systemd, lihat bagian "Process Management" di bawah — T117. Build gagal = exit 1 sebelum service lama dimatikan, production tidak pernah mati gara-gara deploy baru gagal build).
 
-### Auto-deploy (git hook)
+### Auto-deploy (git hook) — ⚠️ TIDAK LAGI BEKERJA DARI WINDOWS (sejak migrasi topologi 2026-08-25)
+
 - `.git/hooks/post-commit` di folder DEV: commit ke branch `dev` otomatis → push ke GitHub (`origin`) + push ke `production` remote (`dev:main`, path lokal `file://`) → trigger `start-production.sh` di background.
 - Folder production: `git config receive.denyCurrentBranch updateInstead` — working tree ter-update otomatis saat menerima push.
-- **Trade-off disengaja:** restart production full otomatis tanpa jeda cek manual — risiko kode belum teruji langsung live, dipilih demi kemudahan workflow "push dari dev".
+- **Trade-off disengaja (saat masih 1 mesin):** restart production full otomatis tanpa jeda cek manual — risiko kode belum teruji langsung live, dipilih demi kemudahan workflow "push dari dev".
+
+**Kondisi SEKARANG (dev di Windows, production di Linux, 2 mesin terpisah)**: remote
+`production` di hook itu adalah path `file://` lokal (`/home/anunnaki/Documents/APP SMK/AbsenSI-production`)
+— **Windows tidak punya akses filesystem ke path itu**, jadi baris `git push production dev:main`
+di hook **GAGAL DIAM-DIAM atau tidak pernah ter-trigger sama sekali** kalau hook itu masih ada
+salinannya di clone Windows. Auto-deploy dev→production **PUTUS TOTAL** sejak topologi 2 mesin
+ini berlaku — commit dari Windows `git push origin dev` HANYA sampai ke GitHub, **TIDAK PERNAH**
+mencapai production secara otomatis. Insiden nyata: 2026-08-29, 5 commit (T238–T262) dari Windows
+sudah beberapa hari di GitHub tapi production masih menjalankan kode lama sampai ketahuan manual.
+
+#### 🔁 Prosedur WAJIB Sinkronisasi dev(Windows) → production(Linux) — Sampai Ada Otomatisasi Baru
+
+**Setelah commit+push dari Windows (`git push origin dev`), JANGAN anggap production ikut ter-update.**
+Sesi Claude Code manapun (Windows atau Linux) yang baru saja push/pull perubahan `dev` WAJIB
+jalankan urutan ini dari mesin Linux (`anunnaki`) — via SSH kalau dikerjakan dari sesi Windows:
+
+1. Di folder dev Linux (`/home/anunnaki/Documents/APP SMK/AbsenSI`, kalau ada) atau lewat SSH:
+   ```bash
+   git fetch origin && git merge --ff-only origin/dev   # pastikan fast-forward, BUKAN divergent
+   ```
+   Kalau bukan fast-forward (ada commit lokal Linux yang belum di-push) — **STOP**, selesaikan
+   divergence dulu (lihat sesi mana yang seharusnya jadi sumber kebenaran), jangan force apa pun.
+2. Cek migration baru sejak deploy production terakhir — **WAJIB** untuk migration destruktif
+   (`DROP TABLE`/`DROP COLUMN`/`TRUNCATE`), ikuti protokol backup manual di bagian
+   "🔒 Aturan WAJIB Sebelum Commit di Dev yang Mengandung Migration DROP/ALTER Destruktif" di bawah
+   SEBELUM lanjut ke langkah 3 — additif (`ADD COLUMN`/`ADD TABLE`) aman langsung lanjut.
+3. Push working tree dev ke folder production (memicu `receive.denyCurrentBranch updateInstead`):
+   ```bash
+   git push production dev:main
+   ```
+4. Trigger build+migrate+restart (skrip yang SAMA dipakai hook lama):
+   ```bash
+   cd "/home/anunnaki/Documents/APP SMK/AbsenSI-production" && ./scripts/start-production.sh
+   ```
+5. **VERIFIKASI eksplisit, jangan asumsikan skrip berhasil dari exit code semata** — skrip ini
+   memanggil `sudo -n systemctl restart absensi-prod-{api,web,kiosk}`, yang BISA gagal diam-diam
+   kalau dijalankan dari sesi/proses yang tidak punya akses ke sudoers NOPASSWD yang sama
+   (`/etc/sudoers.d/absensi-systemd`) — terbukti terjadi 2026-08-29 (skrip lapor "confirmed active"
+   tapi ternyata itu log LAMA dari deploy sebelumnya, service sebenarnya BELUM restart). Cek:
+   ```bash
+   systemctl status absensi-prod-api absensi-prod-web absensi-prod-kiosk | grep "Active:"
+   ```
+   Bandingkan timestamp "active since" dengan waktu SEKARANG — kalau bukan barusan, restart
+   BELUM benar-benar terjadi meski log skrip terlihat sukses. Kalau butuh restart manual (sudo
+   interaktif), **itu aksi yang harus dikonfirmasi/dijalankan user sendiri**, bukan dijalankan
+   sepihak oleh agent tanpa otorisasi eksplisit di sesi itu.
+
+**Untuk agent yang bekerja DARI Windows**: kalian tidak bisa menjalankan langkah 3-5 di atas
+langsung (tidak ada akses filesystem/systemd ke mesin Linux). Setelah `git push origin dev`,
+**WAJIB beri tahu user secara eksplisit** bahwa production BELUM ter-update dan langkah sinkronisasi
+manual di atas perlu dijalankan dari/lewat sesi di mesin Linux — JANGAN diam-diam menganggap
+tugas selesai hanya karena push ke GitHub berhasil.
 
 ## Process Management — Systemd (T117, sejak 2026-08-06)
 
