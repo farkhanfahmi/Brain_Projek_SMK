@@ -1,4 +1,4 @@
-﻿---
+---
 tags: [absensi, api]
 updated: 2026-06-25
 ---

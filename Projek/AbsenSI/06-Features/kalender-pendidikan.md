@@ -1,7 +1,7 @@
 ---
-tags: [absensi, feature, kalender, admin, fase-1, planning]
-status: planning
-updated: 2026-07-03
+tags: [absensi, feature, kalender, admin]
+status: selesai
+updated: 2026-08-31
 ---
 
 # Feature — Kalender Pendidikan (Admin Dashboard)
@@ -14,12 +14,16 @@ updated: 2026-07-03
 
 ## 📋 Status
 
+> **[2026-08-31] Diperbarui** — dokumen ini ditulis 2026-07-03 sebagai rencana. SUDAH LIVE sejak lama dengan banyak perluasan lewat implementasi nyata.
+
 | Item | Detail |
 |---|---|
-| Phase | Fase 1 |
-| Status | 🟡 Planning |
-| Modul terkait | Core (Admin), Rekap |
-| Prasyarat | Harus diisi **sebelum** data absensi mulai dikumpulkan — kalau kalender belum diisi, perhitungan alfa di rekap tidak bisa diandalkan |
+| Manajemen Tahun Ajaran + Semester | ✅ **Selesai & live** — form create/edit/aktifkan lengkap (T156) |
+| Input libur (blok & mendadak) | ✅ **Selesai & live** |
+| Tampilan kalender visual | ✅ **Selesai & live** (bug alignment grid diperbaiki T198) |
+| Akses Admin Jurnal (Full CRUD, setara Super Admin) | ✅ **Selesai & live** (T188) — perluasan di luar rencana awal, `admin_jurnal` bisa CRUD penuh, bukan cuma read-only seperti draf awal |
+| Halaman Presensi Guru (kalender per kelas + riwayat) | ✅ **Selesai & live** (T170) |
+| Modul terkait | Core (Admin), Rekap, Journal (Jurnal Guru) |
 
 ---
 
@@ -37,6 +41,7 @@ updated: 2026-07-03
 | Aktor | Aksi |
 |---|---|
 | `super_admin` | Full CRUD — buat tahun ajaran, input libur, tandai libur mendadak, hapus/edit entri libur |
+| `admin_jurnal` | **[2026-08-31] Full CRUD juga** (T188, setara `super_admin` untuk modul ini) — bukan read-only seperti rencana awal. Menu Semester read-only lama sudah dihapus (T190), redirect ke kalender ini |
 | Role lain | Read-only — bisa lihat kalender aktif tapi tidak bisa edit |
 
 ---

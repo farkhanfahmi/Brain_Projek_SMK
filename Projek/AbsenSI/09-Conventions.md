@@ -1,4 +1,4 @@
-﻿---
+---
 tags: [absensi, conventions, git, coding-standard]
 updated: 2026-06-25
 ---
@@ -16,7 +16,7 @@ updated: 2026-06-25
 - 2 branch: `dev` (kerja harian) dan `main` (khusus folder production, lihat `10-Environment.md`) — TIDAK ada feature branch per task.
 - Commit message: `feat: T0xx — deskripsi singkat` / `fix: T0xx — deskripsi` / `chore: deskripsi` (prefix conventional-commit-style, nomor task kalau relevan). Contoh nyata dari histori: `feat: T103 — sidebar admin dikelompokkan (accordion) + pisah Upload Foto Siswa/Guru`.
 - Commit ke `dev` otomatis auto-deploy ke production via git post-commit hook (lihat `10-Environment.md`) — tidak ada proses PR/review manual.
-- Task ID: `T0xx` polos (tanpa prefix modul) — didefinisikan di `06-Features/tasks/T0xx-*.md`, statusnya di-track di `STATUS.md`.
+- Task ID: `T0xx` polos (tanpa prefix modul) — didefinisikan di `06-Features/tasks/T0xx-*.md`, statusnya di-track di `STATUS.md`. **[2026-08-31] Konvensi BARU untuk task ke depan**: `task-MODUL-NNN` (mis. `task-WEB-264`), ditulis pakai format 8-bagian `_task-template.md`, hasil sesi diskusi Hermes. Task lama (T001-T263) TIDAK di-rename — 2 konvensi hidup berdampingan, bedakan dari prefiksnya.
 
 ## Coding Standard (TypeScript)
 - ESLint + Prettier config shared via `packages/config` — jangan override per-app tanpa diskusi

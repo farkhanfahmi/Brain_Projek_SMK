@@ -17,7 +17,7 @@ updated: 2026-06-25
 |---|---|
 | Phase | Fase 1 |
 | Status | 🟢 Final — siap jadi task |
-| Owner | Developer 1 (apps/web) untuk UI; Developer 3 (apps/api) untuk auth & endpoint |
+| Owner | Modul `apps/web` (UI) + `apps/api` (auth & endpoint) |
 
 ---
 

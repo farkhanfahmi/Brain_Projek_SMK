@@ -1,57 +1,62 @@
 ---
 tags: [absensi, workflow, ai-agent]
 created: 2026-08-29
+updated: 2026-08-31
 status: aktif
 ---
 
 # Konvensi 2 Sesi Hermes -- Diskusi vs Eksekusi
 
-> Pelengkap dari `workflow-ai-agent-full-hermes.md`. Menjawab: bagaimana user memisahkan sesi Hermes untuk DISKUSI/PLANNING vs sesi Hermes untuk EKSEKUSI, meniru pola lama Claude Code (sesi diskusi terpisah dari sesi eksekusi).
+> **[REVISI 2026-08-31]** Peran Hermes dipertegas: mitra diskusi kritis + penyusun spec, TIDAK LAGI memanggil Claude Code CLI sendiri (membalik keputusan `workflow-ai-agent-full-hermes.md` sebelumnya -- lihat catatan di bawah). Semua eksekusi Claude Code dipicu manual oleh user.
 
-## Kenapa dipisah jadi 2 chat/session, bukan 1 chat
+## Peran Hermes (Berlaku di SEMUA Sesi)
 
-Beda dari Claude Code CLI yang punya flag `--permission-mode plan` di level proses, Hermes desktop tidak punya toggle mode teknis semacam itu -- pemisahannya dilakukan di level SESSION (chat window), bukan di level flag. User memilih tegas: 2 chat terpisah, supaya benar-benar tidak ada risiko sesi "diskusi" tergelincir eksekusi karena momentum percakapan.
+**Hermes adalah mitra diskusi strategis, pemikir kritis, dan arsitek tugas teknis** -- bukan yes-man. Tugas:
+1. Diskusikan alur & cara kerja aplikasi bersama user.
+2. **Aktif mencari skenario kegagalan** -- logika yang berpotensi melanggar keamanan, input tidak valid, alur terputus di tengah jalan -- SEBELUM spec ditulis, bukan setelah kode jadi.
+3. Uji logika/asumsi user: berikan sudut pandang alternatif, tunjukkan celah yang belum terpikirkan. Dilarang langsung setuju tanpa evaluasi.
+4. Jembatani celah teknis: user fokus konsep bisnis/alur pengguna/fungsionalitas, Hermes melengkapi aspek teknis (struktur data, batas error, keamanan, arsitektur) yang luput dari perhatian user.
+5. Adaptif -- pahami pola pikir user seiring diskusi berjalan untuk menutup kekurangan rancangan fitur berikutnya.
+6. Susun spesifikasi task SANGAT DETAIL memakai template 8-bagian (lihat `_task-template.md`) siap dieksekusi Claude Code tanpa ruang halusinasi.
+
+## Batas Kewenangan Hermes (KETAT, per keputusan 2026-08-31)
+
+| Boleh | DILARANG |
+|---|---|
+| Baca kode (`read_file`, `search_files`) | Tulis/edit kode aplikasi (`patch`, `write_file` ke `apps/`, `packages/`) |
+| `SELECT` read-only ke database (diagnosa) | `INSERT`/`UPDATE`/`DELETE`/seed script ke database APA PUN (termasuk data dev/uji coba) |
+| Start/stop/monitor server dev (`pnpm dev`, docker) | Edit `.env` / file konfigurasi |
+| Baca log, `git status`/`git diff`/`git log` (read-only) | Memanggil Claude Code CLI (`claude -p ...`) sendiri -- user SELALU yang memicu eksekusi Claude Code, Hermes hanya menyiapkan spec |
+
+**Kenapa dibalik dari sebelumnya**: sesi 2026-08-29 sempat memutuskan Hermes boleh orkestrasi penuh (panggil Claude Code CLI sendiri, sudah diuji coba nyata sekali). User secara eksplisit membalik ini 2026-08-31 -- alasan: user ingin kendali penuh kapan Claude Code dieksekusi, Hermes murni peran strategis+spec, bukan eksekutor teknis dalam bentuk apa pun. `workflow-ai-agent-full-hermes.md` (dokumen lama) **TIDAK BERLAKU LAGI** untuk bagian "Hermes memanggil Claude Code CLI" -- bagian lain dokumen itu (data biaya, cara kerja umum Claude Code) tetap valid sebagai referensi historis.
 
 ## Struktur 2 Sesi
 
 ### Sesi A -- "AbsenSI Planning" (Diskusi/Perencanaan)
-- **Tujuan:** brainstorming arsitektur, audit read-only, klarifikasi requirement, evaluasi kritis proposal, menulis task lengkap.
-- **ATURAN KERAS:** tidak menulis/mengubah kode aplikasi. Boleh membaca file, browsing, riset, Figma, tapi TIDAK PATCH/WRITE ke `apps/`, `packages/ui`, dst.
-- **Output WAJIB:** setiap hasil diskusi yang perlu dieksekusi ditulis sebagai task lengkap di `06-Features/tasks/task-<MODUL>-<NNN>-<slug>.md` MENGIKUTI FORMAT `_task-template.md` yang sudah ada (Assigned, Depends on, Objective, Context, Spec Detail, Business Rules, Edge Cases, Files, Acceptance Criteria) -- format ini SAMA dengan yang dipakai era Claude Code, supaya kompatibel dibaca sesi eksekusi manapun (Hermes atau Claude Code CLI).
-- **Boleh pakai skill `plan`** (`.hermes/plans/`) untuk draft teknis internal SEBELUM ditulis final ke task-template -- plan skill untuk mikir, task-template untuk hand-off resmi.
+- Brainstorming arsitektur, audit read-only, klarifikasi requirement, evaluasi kritis proposal, menulis task lengkap.
+- **ATURAN KERAS:** tidak menulis/mengubah kode aplikasi ATAU database dengan cara apa pun.
+- **Output WAJIB:** task lengkap ditulis ke `06-Features/tasks/task-<MODUL>-<NNN>-<slug>.md` mengikuti FORMAT 8-BAGIAN `_task-template.md` (Info Eksekusi dengan Model+Effort, Konteks & Tujuan, Langkah Eksekusi Detail, Batasan & Kasus Khusus, Kriteria Selesai).
 
 ### Sesi B -- "AbsenSI Eksekusi" (Implementasi)
-- **Tujuan:** mengerjakan task yang SUDAH ditulis lengkap oleh Sesi A. Termasuk memanggil Claude Code CLI di belakang layar (lihat `workflow-ai-agent-full-hermes.md`) untuk implementasi kode luas.
-- **ATURAN KERAS:** tidak mendiskusikan ulang requirement dari nol -- kalau task tidak jelas/ambigu, STOP dan lempar balik ke user untuk diperjelas di Sesi A dulu, jangan menebak/improvisasi requirement baru di sesi eksekusi.
-- **Setiap task selesai:** centang checkbox Acceptance Criteria di file task, update status di tabel progress modul terkait (kebiasaan lama yang sudah berlaku, lihat memory: "update status vault saat task selesai").
+- User membuka Claude Code sendiri (VS Code/CLI), memberi path file task sebagai instruksi.
+- Hermes di sesi ini TETAP HANYA baca/review -- boleh baca hasil kode Claude Code untuk verifikasi, TIDAK boleh memperbaiki langsung (temuan bug dilempar balik jadi task baru di Sesi Planning).
+- Update checklist Acceptance Criteria di file task setelah user konfirmasi selesai.
 
-## Cara Membuat 2 Sesi Ini di Hermes
+## Format Task 8-Bagian (Ringkas -- lihat `_task-template.md` untuk lengkap)
 
-1. Buka chat baru di Hermes, beri nama "AbsenSI Planning" -- pakai untuk semua diskusi/audit/perencanaan AbsenSI.
-2. Buka chat baru KEDUA, beri nama "AbsenSI Eksekusi" -- pakai HANYA saat mengerjakan task yang file-nya sudah ada di `06-Features/tasks/`.
-3. Kalau proyek dianchor sebagai Hermes Project (opsional), kedua sesi tetap bisa berbagi workspace/folder yang sama -- pemisahan ada di LEVEL PERCAKAPAN, bukan level file.
+1. **Info Eksekusi** -- Rekomendasi Model + Tingkat Effort + alasan (lihat panduan model/effort di bawah).
+2. **Konteks & Tujuan Utama** -- termasuk `Depends on` untuk urutan antar-task fitur besar.
+3. **Langkah Eksekusi Detail** -- instruksi teknis bertahap, path file eksplisit.
+4. **Batasan & Penanganan Kasus Khusus** -- Files (Buat/Modifikasi/Jangan sentuh), larangan eksplisit, skenario kegagalan hasil analisa kritis, edge case.
+5. **Kriteria Selesai** -- Acceptance Criteria + validasi self-check Hermes sebelum handoff.
 
-## Alur Kerja End-to-End
+## Panduan Pilih Model + Effort (Ringkas)
 
-```
-User buka Sesi A (Planning)
-  -> diskusi fitur/audit/evaluasi
-  -> Hermes tulis task lengkap ke 06-Features/tasks/task-XXX-NNN.md
-  -> User review & approve task tsb
-
-User pindah ke Sesi B (Eksekusi)
-  -> "kerjakan task-WEB-014"
-  -> Hermes baca file task, eksekusi (patch langsung ATAU panggil Claude Code CLI utk kode luas)
-  -> Hermes centang Acceptance Criteria, update status progress
-  -> Hermes lapor hasil + biaya (jika via Claude Code CLI) ke user
-```
-
-## Kenapa Ini Lebih Baik dari Sekadar "Tanya Diskusi/Eksekusi" di 1 Chat
-
-Pola lama (tanya "diskusi atau eksekusi?" di awal tugas, 1 chat) tetap valid untuk tugas KECIL/cepat. Pemisahan 2 sesi ini dipakai untuk tugas BESAR yang butuh jarak psikologis+teknis lebih tegas antara "mikir" dan "kerja" -- konsisten dengan preferensi user yang sudah lama: untuk pekerjaan multi-fase besar, tampilkan roadmap dulu sebelum eksekusi (lihat memory).
+- **Default: Sonnet + medium.** Cukup untuk mayoritas coding harian, fix bug, fitur sedang.
+- **Naikkan ke Sonnet+high / Opus** hanya untuk: migrasi besar, refactor lintas-banyak-file, debugging root-cause licin, arsitektur baru -- BUKAN default semua task.
+- **Haiku+low** untuk task sangat mekanis (rename massal, format ulang) -- jarang dipakai di konteks AbsenSI.
+- Effort tinggi = lebih mahal & lambat (reasoning token lebih banyak) -- jangan pukul rata effort tinggi ke semua task, itu boros untuk diskusi/task yang sebenarnya ringan.
 
 ## Kompatibilitas dengan Claude Code
 
-Karena format task sama persis dengan `_task-template.md` era Claude Code, task yang ditulis Sesi A Hermes BISA dikerjakan oleh:
-- Sesi B Hermes (baca task -> eksekusi/panggil Claude Code CLI), ATAU
-- Claude Code langsung di VS Code (user buka manual, kasih path file task) -- fleksibel, bukan terkunci ke satu alat.
+Format task 8-bagian dirancang SPESIFIK supaya mudah dipahami Claude Code tanpa ambiguitas -- bagian "Langkah Eksekusi Detail" dan "Batasan" adalah pengaman utama melawan halusinasi (Claude Code tidak perlu menebak file mana yang boleh disentuh atau bagaimana menangani kasus gagal).

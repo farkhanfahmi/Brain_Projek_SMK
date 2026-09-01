@@ -99,12 +99,14 @@ Ada **dua sub-alur** yang berbeda, keduanya dikelola dari menu Perizinan Keluar:
 
 ---
 
-## 🖨️ Integrasi Printer (lihat ADR-018)
+## 🖨️ Integrasi Printer
 
-- **Tidak membangun mekanisme print baru** — pakai ulang `print.php` yang sudah terbukti jalan dengan printer thermal Blueprint ECO 58D (USB, driver terinstal sebagai printer Windows biasa).
-- Parameter URL: `petugas`, `tgl`, `nama`, `kls`, `alasan`, `ket`, `jamkembali` (pola sama dengan sistem lama/AppSheet) + parameter baru `kode` (kode verifikasi).
-- Server `print.php` (`10.10.10.100:8800`) tetap berdiri independen dari server utama AbsenSI — **tidak perlu dikonsolidasi sekarang** (technical debt opsional, bukan blocker).
-- Flow: sistem buka URL `print.php` di tab baru → halaman preview tampil → petugas klik tombol print di browser secara manual (tidak ada auto-print untuk V1).
+> **[2026-08-31] Diperbarui** — ADR-018 DIREVISI (lihat 11-Decisions.md). Bagian di bawah SUDAH TIDAK BERLAKU: mekanisme cetak dipindah dari server PHP eksternal ke Route Handler Next.js internal.
+
+- **Route handler internal**: `apps/web/src/app/print/struk-izin/route.ts` — menggantikan server `print.php` eksternal (`10.10.10.100:8800`) yang sebelumnya dipakai. HTML/CSS/struktur struk 58mm untuk printer thermal Blueprint ECO 58D di-port 1:1 dari template PHP asli, hanya *tempat* logic-nya berpindah.
+- Parameter URL: `petugas`, `tgl`, `nama`, `kls`, `alasan`, `ket`, `jamkembali`, `kode` (kode verifikasi) — sama seperti sebelumnya.
+- Flow tidak berubah: sistem buka URL `/print/struk-izin?...` di tab baru → halaman preview tampil → petugas klik tombol print di browser secara manual (tidak ada auto-print).
+- Server PHP eksternal (`10.10.10.100:8800`) **tidak lagi dipakai** untuk fitur ini.
 
 ---
 

@@ -1,56 +1,63 @@
 # Task-[MODUL-XXX]: [Nama Task]
 
 > Modul prefix: CORE (apps/api) / WEB (apps/web) / KIOSK (apps/kiosk). Contoh: task-CORE-001.
+> Ditulis oleh Hermes (sesi Planning) setelah diskusi kritis dengan user. Dieksekusi oleh Claude Code — user yang memicu jalannya, BUKAN Hermes.
+> **[2026-08-31] Konvensi penamaan**: format `task-MODUL-NNN` ini berlaku untuk task BARU mulai sekarang. 260+ task lama (T001-T263) tetap pakai format lama `T0xx-slug.md` (tanpa prefix modul, nomor polos) — TIDAK di-rename, kedua konvensi hidup berdampingan. Jangan bingung kalau menemukan file lama berformat beda.
 
-## Assigned
-**Developer:** [Dev 1 / Dev 2 / Dev 3 — nama]
-**Recommended Model:** [Haiku / Sonnet / Opus — lihat panduan di Claudian-Workflow global]
+**Task Terbuat:** [tanggal ditulis, isi otomatis saat file ini dibuat]
+**Task Tereksekusi:** — [isi tanggal saat task dinyatakan selesai; kosongkan/— selama masih berjalan]
 
-## Depends on
-[task-XXX-YYY jika ada dependency. Tulis "Tidak ada" jika tidak ada. JANGAN mulai eksekusi sebelum dependency selesai.]
+---
 
-## Objective
-[Satu kalimat: apa yang harus selesai setelah task ini dikerjakan]
+## 1. Info Eksekusi
 
-## Context
-- **Modul:** [Core / Attendance / Card / Schedule / Notification / Web / Kiosk]
-- **DB Tables:** [tabel yang terlibat]
-- **API Endpoints:** [endpoint yang terlibat]
+**Rekomendasi Model:** [Haiku / Sonnet / Opus — default Sonnet kecuali terbukti perlu lebih/kurang]
+**Tingkat Effort:** [low / medium / high / xhigh / max — default medium, naikkan hanya untuk task yang butuh reasoning berat: migrasi besar, refactor lintas-file, debugging root-cause licin]
+**Alasan pemilihan:** [1 kalimat kenapa kombinasi ini, bukan yang lain — mis. "task ini murni tambah 1 endpoint CRUD sederhana, Sonnet+medium cukup, Opus berlebihan"]
 
-## Spec Detail
-(Salin langsung dari 06-Features/[modul].md — bukan link, tapi teks lengkap)
+## 2. Konteks & Tujuan Utama
 
-**Input:**
-- field: type, required/optional, validasi
+[Penjelasan singkat: fitur/masalah apa yang diselesaikan, kenapa ini dibutuhkan, hasil diskusi kritis (skenario kegagalan yang sudah dipertimbangkan) yang melatarbelakangi keputusan desain task ini]
 
-**Output sukses:**
-{ contoh response }
+**Depends on:** [task-XXX-YYY jika ada dependency urutan. Tulis "Tidak ada" jika berdiri sendiri. JANGAN mulai eksekusi sebelum dependency selesai — relevan untuk fitur besar yang perlu urutan (mis. migrasi token dulu baru migrasi komponen).]
 
-**Output gagal:**
-{ contoh response + kode HTTP }
+## 3. Langkah Eksekusi Detail
 
-## Business Rules
-- Rule 1
-- Rule 2
+[Urutan instruksi teknis, bertahap, dengan path file EKSPLISIT dan potongan kode/pseudo-code kalau perlu presisi tinggi. Setiap langkah harus bisa dieksekusi tanpa Claude Code perlu menebak/berasumsi.]
 
-## Edge Cases
-- Case: [kondisi] → [behavior yang diharapkan]
+1. ...
+2. ...
+3. ...
 
-## Files
+## 4. Batasan & Penanganan Kasus Khusus
+
+**Files:**
 - **Buat:** `apps/[app]/[path]`
 - **Modifikasi:** `apps/[app]/[path]` — [apa yang diubah]
 - **Jangan sentuh:** `apps/[app]/[path]`
 - **⚠️ Kalau task ini butuh ubah `packages/types` (shared):** WAJIB stop dan minta konfirmasi user dulu — breaking change ke app lain.
 
-## Acceptance Criteria
+**Dilarang dilakukan:**
+- [mis. "Jangan ubah skema Prisma tanpa migration terpisah", "Jangan sentuh database production"]
+
+**Skenario kegagalan yang WAJIB ditangani** (hasil analisa kritis sebelum spec ini ditulis):
+- Kondisi: [mis. input kosong/null] → Perilaku yang benar: [...]
+- Kondisi: [mis. race condition 2 request bersamaan] → Perilaku yang benar: [...]
+- Kondisi: [mis. permission/role salah] → Perilaku yang benar: [...]
+
+**Edge case:**
+- [kondisi] → [behavior yang diharapkan]
+
+## 5. Kriteria Selesai
+
+**Acceptance Criteria:**
 - [ ] Kriteria 1
 - [ ] Kriteria 2
 - [ ] Kriteria 3
 
-## Validasi Claudian
-- [ ] Tidak ada ambiguitas dalam spec ini
-- [ ] Semua edge case sudah tercakup
-- [ ] Scope tidak terlalu besar (estimasi < 300 baris perubahan)
-- [ ] Tidak ada konflik dengan keputusan di 11-Decisions.md
+**Validasi sebelum dianggap selesai:**
+- [ ] Tidak ada ambiguitas dalam spec ini (dicek ulang oleh Hermes sebelum handoff)
+- [ ] Semua skenario kegagalan di bagian 4 sudah tercakup implementasinya
+- [ ] Scope tidak terlalu besar (estimasi < 300 baris perubahan; kalau lebih, pecah jadi beberapa task berurutan pakai "Depends on")
+- [ ] Tidak ada konflik dengan keputusan arsitektur yang sudah ada (cek `11-Decisions.md` / `DESIGN_SYSTEM_AGENT.md` bila relevan)
 - [ ] Dependency (jika ada) sudah selesai sebelum task ini di-assign
-- [ ] Field "Assigned" sudah diisi nama developer yang benar

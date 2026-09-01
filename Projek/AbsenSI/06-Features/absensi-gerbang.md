@@ -18,7 +18,7 @@ updated: 2026-06-25
 | Phase | Fase 1 |
 | Status | 🟢 Final — semua Open Questions resolved, siap jadi task |
 | Modul terkait | Core (Schedule, jadwal), Attendance, Card |
-| Owner | Developer 3 (apps/api) untuk logic; Developer 2 (apps/kiosk) untuk UI tap |
+| Owner | Modul `apps/api` (logic tap) + `apps/kiosk` (UI tap gerbang) |
 
 ---
 
@@ -81,6 +81,12 @@ Lihat dashboard-tv.md (06-Features/dashboard-tv.md) untuk detail terpisah.
 
 ---
 
+## ⚰️ Rencana Fase 2 Lama (Dibatalkan)
+
+Awalnya direncanakan reader RFID di tiap ruang kelas untuk absensi per-mapel (tap gerbang wajib dulu, lalu tap kelas). **Dibatalkan 2026-07-21** — blocker "gerbang tanpa penghalang fisik" tidak pernah terpecahkan, dan kebutuhan riil sekolah lebih ke jurnal mengajar + jadwal blok (lihat 01-Overview.md Fase 2 aktual). Digantikan oleh Dashboard Guru — Jurnal Mengajar (`06-Features/dashboard-guru-jurnal.md`), yang sudah dikerjakan & live. Arsip detail rencana lama: `_archive/absensi-kelas-mapel.md`.
+
+---
+
 ## ✅ Open Questions — Semua Resolved (2026-07-03)
 
 - [x] **Tap ke-3+** → Update `waktu_pulang` terus ke waktu tap terakhir
@@ -93,6 +99,6 @@ Lihat dashboard-tv.md (06-Features/dashboard-tv.md) untuk detail terpisah.
 
 ## 🔗 Lihat Juga
 - Manajemen Kartu RFID (06-Features/manajemen-kartu.md)
-- Absensi Kelas & Mapel (Fase 2) (06-Features/absensi-kelas-mapel.md)
+- Dashboard Guru — Jurnal Mengajar (06-Features/dashboard-guru-jurnal.md) — pengganti rencana Fase 2 lama
 - ADR-005 (11-Decisions.md)
 

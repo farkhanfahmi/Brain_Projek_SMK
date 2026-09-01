@@ -8,7 +8,7 @@ updated: 2026-07-22
 
 ← Index (00-INDEX AbsenSI.md)
 
-> **Status: FINAL, siap breakdown task.** Ditemukan sebagai celah 2026-07-22: siswa cuma bisa di-assign ke kelas SEKALI saat form "Tambah Siswa" dibuat — tidak ada mekanisme pindah kelas (individual maupun massal), tidak ada penempatan siswa baru (SPMB) secara batch, dan tidak ada aksi "Tandai Keluar/Lulus" dari UI meski field skemanya (`status`, `alasanNonaktif` dari T063) sudah ada.
+> **Status: ✅ SELESAI & LIVE** (terverifikasi ke kode 2026-08-31). Awalnya ditemukan sebagai celah 2026-07-22: siswa cuma bisa di-assign ke kelas SEKALI saat form "Tambah Siswa" dibuat — tidak ada mekanisme pindah kelas, tidak ada penempatan siswa baru (SPMB) secara batch, dan tidak ada aksi "Tandai Keluar/Lulus" dari UI. Keempat mekanisme di bawah sudah diimplementasikan.
 
 ---
 
@@ -50,9 +50,9 @@ Ditambah 1 kebutuhan terkait yang ditemukan saat diskusi: **Tandai Siswa Keluar*
 
 ---
 
-## 2️⃣ Kenaikan Kelas Massal (Menu Tersendiri — REVISI 2026-07-22, baca T073 untuk detail lengkap)
+## 2️⃣ Kenaikan Kelas Massal (Menu Tersendiri — REVISI 2026-07-22, ✅ SUDAH SELESAI)
 
-> **Desain diganti total** dari versi awal (pilih 1 kelas asal + 1 kelas tujuan per proses) — sekarang **1 halaman untuk SEMUA kelas sekaligus**. Spec detail lengkap ada di task T073 (06-Features/tasks/T073-kenaikan-kelas-massal.md) (task file itu sumber kebenaran terbaru, ringkasan di bawah).
+> **[2026-08-31] Terverifikasi ke kode**: `apps/api/src/core/kelas/kelas.controller.ts` (`POST /kelas/kenaikan-massal`) + `apps/web/src/app/(admin)/kelas/kenaikan-massal/` — lengkap sesuai spec T073 (dropdown per baris, opsi "Lulus" khusus kelas XII, transaction tunggal, `@LogActivity`). Ringkasan di bawah tetap akurat sebagai referensi desain.
 
 ### Alur (Ringkas)
 1. **Menu tersendiri** `/kelas/kenaikan-massal` — admin pilih dulu **"Naik ke Tahun Ajaran"** (dari tahun ajaran yang SUDAH ADA, dibuat lewat menu Kalender Pendidikan — bukan dibuat di sini)

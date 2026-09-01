@@ -17,7 +17,7 @@ updated: 2026-06-25
 |---|---|
 | Phase | Fase 1 |
 | Status | 🟢 Final — siap jadi task |
-| Owner | Developer 2 (apps/kiosk atau app terpisah untuk TV — perlu diputuskan apakah TV display bagian dari `apps/kiosk` atau modul Next.js sendiri) |
+| Owner | Modul `apps/web` — route `/tv` (Next.js admin app), lihat "Open Questions Resolved" di bawah untuk keputusan lokasinya |
 
 ---
 

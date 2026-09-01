@@ -1,12 +1,14 @@
 ---
 tags: [absensi, workflow, ai-agent]
 created: 2026-08-29
-status: aktif
+status: SUPERSEDED 2026-08-31
 ---
 
 # Workflow AI Agent AbsenSI -- Full Hermes Orchestration
 
-> Keputusan resmi 2026-08-29: user memilih FULL menggunakan Hermes sebagai satu titik kontak untuk seluruh pekerjaan AbsenSI (riset, desain, DAN coding), bukan berpindah manual antara Hermes dan Claude Code di VS Code.
+> ⚠️ DIBATALKAN 2026-08-31 -- user membalik keputusan ini secara eksplisit. Hermes TIDAK LAGI boleh memanggil Claude Code CLI sendiri; semua eksekusi Claude Code dipicu manual oleh user. Dokumen aktif sekarang: workflow-2-sesi-diskusi-eksekusi.md. Isi di bawah HANYA referensi historis (data biaya nyata, cara kerja umum Claude Code CLI) -- JANGAN diikuti sebagai panduan aktif.
+
+> Keputusan resmi 2026-08-29 (SUDAH TIDAK BERLAKU): user memilih FULL menggunakan Hermes sebagai satu titik kontak untuk seluruh pekerjaan AbsenSI (riset, desain, DAN coding), bukan berpindah manual antara Hermes dan Claude Code di VS Code.
 
 ## Latar Belakang Keputusan
 

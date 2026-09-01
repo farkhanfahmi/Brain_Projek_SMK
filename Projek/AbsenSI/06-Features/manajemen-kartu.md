@@ -1,7 +1,7 @@
 ---
-tags: [absensi, feature, kartu, fase-1]
-status: draft
-updated: 2026-06-25
+tags: [absensi, feature, kartu, admin, fase-1, fase-2]
+status: final
+updated: 2026-08-31
 ---
 
 # Feature — Manajemen Kartu RFID
@@ -17,7 +17,7 @@ updated: 2026-06-25
 |---|---|
 | Phase | Fase 1 |
 | Status | 🟢 Final — siap jadi task |
-| Owner | Developer 3 (apps/api — Card module) + Developer 1 (apps/web — UI admin) |
+| Owner | Modul `apps/api` (Card module) + `apps/web` (UI admin) |
 
 ---
 
@@ -35,6 +35,16 @@ updated: 2026-06-25
 
 ## Role & Akses
 **Resolved (lihat ADR-008 & 03-User-Roles (03-User-Roles.md)):** Registrasi & CRUD kartu boleh dilakukan oleh **Admin Pusat (`super_admin`)** maupun **Admin Pengelola Kartu (`card_admin`)** — role kedua ini didedikasikan khusus untuk delegasi tugas kartu (misal ke staff TU), tanpa kasih akses ke fitur lain (jadwal, koreksi absensi, kelola akun). Validasi role wajib dicek di backend API, bukan cuma disembunyikan di UI.
+
+## Dashboard Dedicated untuk `card_admin` (digabung dari dashboard-petugas-kartu.md, 2026-08-31)
+
+> Role `card_admin` sudah ada sejak Fase 1 (lihat ADR-008), tapi awalnya cuma didefinisikan wewenangnya di backend tanpa UI/dashboard sendiri — semua orang pakai akun admin pusat. Fitur ini murni membangun UI dedicated + mengaktifkan akun nyata untuk role yang sudah dirancang.
+
+- **Clone fitur, bukan role baru.** Semua fungsi kartu di atas (registrasi, nonaktifkan, ganti kartu, riwayat, bulk import CSV, tap-to-assign) di-clone ke dashboard `card_admin`, dengan wewenang **identik persis** — tidak dipersempit maupun diperluas.
+- Menu manajemen kartu **tetap ada juga** di dashboard admin pusat (`super_admin`) — dua entry point paralel ke fungsi & data yang sama, bukan menu eksklusif yang dipindah.
+- **Input data siswa/guru tetap eksklusif admin pusat.** Petugas kartu tidak bisa create/edit biodata siswa/guru — cuma pilih dari daftar existing saat registrasi/mapping kartu.
+- Dashboard `card_admin` tidak menampilkan menu lain (kelola akun, jadwal, absensi, rekap, dst) — fokus tunggal ke modul kartu.
+- Tidak ada perubahan skema database untuk dashboard ini — `users.role = card_admin` sudah ada sejak Fase 1. Murni pekerjaan UI/UX + routing akses berbasis role yang sudah ada.
 
 ## ✅ Open Questions — Resolved
 

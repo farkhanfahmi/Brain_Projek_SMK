@@ -1,14 +1,18 @@
 ---
 tags: [absensi, index, rfid, sekolah]
 status: in-progress
-updated: 2026-08-04
+updated: 2026-08-31
 ---
 
 # AbsenSI — Index Proyek
 
 > Sistem Absensi RFID untuk Siswa & Guru SMK. Dieksekusi dengan bantuan AI coding agent
-> (awalnya Claude Code, sejak 2026-08-25 juga Hermes Agent — aturan di vault ini berlaku
-> untuk agent mana pun).
+> (awalnya Claude Code, sejak 2026-08-25 juga Hermes Agent).
+>
+> **[2026-08-31] Pembagian peran ketat**: Hermes = mitra diskusi kritis + penyusun spec task
+> (baca kode, SELECT read-only DB, start/stop server — TIDAK menulis kode/DB/`.env`, TIDAK
+> memanggil Claude Code CLI). Claude Code = eksekutor kode, SELALU dipicu manual oleh user.
+> Detail lengkap: `workflow-2-sesi-diskusi-eksekusi.md`.
 
 **Mulai dari sini setiap sesi baru: baca STATUS.md dulu** — itu satu-satunya tempat
 untuk tahu apa yang sudah selesai dan apa yang masih perlu dikerjakan. File ini (INDEX)
@@ -29,17 +33,21 @@ hanya peta navigasi ke dokumen lain, bukan tempat cek progres.
 | Konvensi kode & git | `09-Conventions.md` |
 | Environment, topologi dev/production, backup | `10-Environment.md` |
 | Keputusan arsitektur (ADR-001 s/d ADR-025+) | `11-Decisions.md` — **terpelihara aktif** |
-| Brief visual (warna, tipografi, komponen) | `06-Features/design-system/MASTER.md` — **WAJIB dibaca sebelum kerja UI apapun** |
-| Spek fitur per modul | `06-Features/*.md` (sebagian besar draft pra-coding, detail implementasi asli ada di kode) |
-| Detail task individual | `06-Features/tasks/T0xx-*.md` — dibaca sesuai kebutuhan, jangan baca semua sekaligus |
+| **Workflow Hermes ⟷ Claude Code (2 sesi, batas kewenangan, format task)** | `workflow-2-sesi-diskusi-eksekusi.md` — **WAJIB dibaca sebelum sesi diskusi/eksekusi apa pun** |
+| Template task baru (format 8-bagian) | `06-Features/tasks/_task-template.md` |
+| Brief visual v1 (warna, tipografi, komponen — sebagian sudah revamp ke v2) | `06-Features/design-system/MASTER.md` |
+| **Design System v2 (token, kontrak komponen, Figma, governance)** | `06-Features/design-system-v2/00-INDEX.md` — **WAJIB dibaca sebelum kerja UI apapun** |
+| Spek fitur per modul (2026-08-31: dikonsolidasi — status diverifikasi ke kode, file duplikat digabung, arsip dipindah) | `06-Features/*.md` |
+| Detail task individual | `06-Features/tasks/T0xx-*.md` (task lama) atau `task-MODUL-NNN-*.md` (task baru sejak 2026-08-31) — dibaca sesuai kebutuhan, jangan baca semua sekaligus |
 | Riwayat task lama (arsip, jarang perlu dibaca) | `_archive/` |
+| **154 task SELESAI (detail lengkap, dipisah dari STATUS.md 2026-08-31)** | `_archive/STATUS-Arsip-Selesai.md` |
 
 ---
 
 ## Skala & Konteks
 
 - Target: ±2.500 siswa, 100+ guru/karyawan, 1 sekolah (bukan SaaS multi-tenant)
-- Repo kode: `/home/anunnaki/Documents/APP SMK/AbsenSI` (dev) + `/home/anunnaki/Documents/APP SMK/AbsenSI-production` (production) — lihat `10-Environment.md`
+- Repo kode: **DEV** `C:\ProjekSMK\AbsenSI` (Windows, branch `dev`) + **PRODUCTION** `/home/anunnaki/Documents/APP SMK/AbsenSI-production` (Linux, branch `main`) — 2 mesin terpisah sejak 2026-08-25, lihat `10-Environment.md` untuk topologi & prosedur sinkronisasi
 - Vault ini adalah sumber kebenaran DESAIN, kode aktual adalah sumber kebenaran IMPLEMENTASI. Kalau ada konflik antara vault dan kode, vault menang untuk KEPUTUSAN yang belum diimplementasikan; kode menang untuk DETAIL implementasi yang sudah jalan.
 
 ---

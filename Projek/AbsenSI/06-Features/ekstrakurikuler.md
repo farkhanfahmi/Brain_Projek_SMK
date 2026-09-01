@@ -1,7 +1,7 @@
 ---
 tags: [absensi, feature, ekstrakurikuler]
-status: in-progress
-updated: 2026-07-30
+status: selesai
+updated: 2026-08-31
 ---
 
 # Feature — Ekstrakurikuler (Pendaftaran + Absensi oleh Pembina)
@@ -18,7 +18,7 @@ updated: 2026-07-30
 |---|---|
 | Pendaftaran ekstra (publik, self-service siswa) | ✅ **Selesai & live** — lihat bagian "Yang Sudah Ada" |
 | Monitoring pendaftaran (admin) | ✅ **Selesai & live** |
-| Absensi ekstra oleh pembina (dashboard baru) | 🟡 **Task ditulis 2026-07-30, belum dikerjakan** — lihat T096 (06-Features/tasks/T096-absensi-ekstrakurikuler-pembina.md) |
+| Absensi ekstra oleh pembina (dashboard baru) | ✅ **Selesai & live** — T096 (skema dasar) + T102 (amandemen: kelompok opsional per ekstra, auto-generate sesi dari jadwal) + T097 (sidebar guru berkelompok). Lihat `06-Features/tasks/T096-T105` untuk histori lengkap. |
 
 **PENTING:** Draft versi 2026-07-27 dokumen ini SUDAH USANG di beberapa bagian — beberapa keputusan sudah berubah lewat implementasi nyata dan diskusi lanjutan 2026-07-30. Perbedaan utama vs draft lama:
 - Pendaftaran ekstra ternyata **self-service oleh siswa sendiri** (halaman publik `/daftar-ekstra`, tanpa login), BUKAN input admin dari formulir kertas seperti draft lama asumsikan.

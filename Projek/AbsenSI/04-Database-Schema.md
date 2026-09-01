@@ -1,168 +1,949 @@
-﻿---
+---
 tags: [absensi, database, schema]
-updated: 2026-07-21
+updated: 2026-08-31
 ---
 
-# 04 — Database Schema
+# 04 — Database Schema (Lengkap, Auto-Extract dari Prisma)
 
 ← Index (00-INDEX AbsenSI.md)
 
-> **Update 2026-06-26:** Keputusan struktur tabel inti & engine database sudah final lewat ADR-010 s/d ADR-014 (lihat 11-Decisions (11-Decisions.md)). Skema di bawah merefleksikan keputusan itu. Masih ada Open Questions di level detail kolom (lihat bagian bawah), tapi kerangka dasarnya tidak lagi berubah.
+> **[2026-08-31] Ditulis ulang total** — versi sebelumnya HANYA mencakup skema s.d. Fase 1b (peringatan eksplisit di dalamnya sendiri). Dokumen ini di-generate dari ekstraksi langsung `apps/api/prisma/schema.prisma` (59 model, 749 baris field) — **59/59 model dikonfirmasi tercakup**, tidak ada yang terlewat.
 >
-> **⚠️ PERINGATAN AKURASI (ditambahkan 2026-08-04):** Dokumen ini HANYA mencakup skema
-> sampai Fase 1b (Dashboard Piket, T032). Skema aktual (`apps/api/prisma/schema.prisma`)
-> sudah JAUH lebih besar — mencakup Fase 2 penuh (Teaching Sessions, Semester,
-> Block Week Ranges, Teacher Permits, Wali Kelas), TV Piket, Ekstrakurikuler
-> (Ekstrakurikuler, EkstraKelompok, EkstraSesi, EkstraAbsen, EkstraPendaftaran), Student
-> PKL, dan banyak kolom biodata tambahan (T028, T061-T066) yang TIDAK didokumentasikan
-> di bawah ini. **Untuk skema terkini, selalu baca `apps/api/prisma/schema.prisma`
-> langsung** — dokumen ini cuma akurat untuk histori keputusan desain awal (dual-FK
-> nullable, insert-only tables, dst), bukan daftar tabel lengkap yang ada sekarang.
+> **Cara baca**: kolom **Field** = nama di kode Prisma/TypeScript (camelCase). Kolom **Kolom DB** = nama fisik di tabel MySQL (snake_case, cuma ditulis kalau beda dari field via `@map`). Relasi (foreign key ke model lain) TIDAK didaftar sebagai kolom data — cukup disebut ringkas di bagian "Relasi" tiap model, karena itu bukan kolom fisik tambahan (relasi 1-ke-banyak tidak menambah kolom di tabel ini).
+>
+> **Untuk skema paling akurat mutlak, selalu cross-check ke `apps/api/prisma/schema.prisma` langsung** — dokumen ini snapshot per 2026-08-31, akan basi lagi seiring migration baru.
 
 ---
 
-## Entitas Inti
+## Ringkasan
 
-### `students`
-- `id`, `nisn` (unique), `nama`, `kelas_id` (FK), `jurusan_id` (FK), `status` (aktif/nonaktif), `tanggal_lahir` (opsional)
-- **T028 (2026-07-17):** tambahan biodata lengkap, semua opsional — `tempat_lahir`, `jenis_kelamin` (enum: `laki_laki`/`perempuan`), `agama` (enum: `islam`/`kristen`/`katolik`/`hindu`/`buddha`/`konghucu`), `alamat`, `rt_rw`, `nama_ayah`, `nama_ibu`, `foto` (path relatif ke file di disk, lihat ADR-023 — **bukan** BLOB di database)
+**Total: 59 model / tabel**, dikelompokkan 8 domain berikut:
 
-### `teachers`
-- `id`, `niy` (unique — **rename dari `nip`, T028 2026-07-17**, lihat catatan migrasi di bawah), `nama`, `status` (aktif/nonaktif)
-- **T028:** tambahan `no_hp` (opsional), `foto` (path relatif, sama seperti `students.foto`, ADR-023)
-
-> **Catatan migrasi (T028):** Rename `nip`→`niy` **wajib** pakai `RENAME COLUMN` manual di migration SQL, bukan drop+add — Prisma default generate drop+add yang menghapus seluruh data NIP existing. Field ini dulunya "NIP" (istilah PNS), diganti terminologi jadi "NIY" (Nomor Induk Yayasan, lebih umum untuk sekolah swasta) tapi tetap unique identifier tunggal per guru — bukan field tambahan di samping NIP.
-
-> **Catatan desain (ADR-010):** `persons` tunggal resmi dipecah jadi `students` + `teachers` karena field keduanya cukup berbeda (siswa punya kelas/jurusan, guru punya jadwal mengajar). Semua tabel di bawah yang perlu relasi ke "siswa ATAU guru" memakai **pola dual-FK nullable** (`student_id` + `teacher_id`, tepat 1 yang terisi) — bukan polymorphic generik — supaya foreign key constraint asli MySQL tetap berlaku dan integritas data tidak 100% bergantung pada logic aplikasi.
-
-### `cards`
-- `id`, `uid` (unique), `student_id` (FK, nullable), `teacher_id` (FK, nullable), `status` (active/inactive), `issued_at`, `revoked_at`
-- Constraint aplikasi: tepat satu dari `student_id`/`teacher_id` yang terisi, sisanya null.
-
-### `schedules` (jadwal masuk sekolah + jadwal mengajar guru — generic untuk fase 1 & 2)
-- `id`, `type` (jam_sekolah / jam_mengajar / jadwal_khusus), `teacher_id` (nullable, FK ke guru jika type=jam_mengajar), `kelas_id` (nullable), `mapel_id` (nullable, fase 2), `hari`, `jam_mulai`, `jam_selesai`, `threshold_terlambat_menit`, `tanggal_berlaku_mulai`, `tanggal_berlaku_selesai` (untuk dukung jadwal khusus ujian)
-
-### `attendance_sessions` (generic — gerbang ATAU kelas, lihat catatan di absensi-kelas-mapel.md)
-- `id`, `location_type` (gerbang/kelas — fase 1 cuma gerbang), `kelas_id` (nullable), `mapel_id` (nullable, fase 2)
-
-### `attendance_records`
-- `id`, `student_id` (FK, nullable), `teacher_id` (FK, nullable), `session_id` (FK, nullable di fase 1 kalau session tidak relevan), `tanggal`, `waktu_masuk`, `waktu_pulang` (nullable), `status` (hadir/terlambat/tidak_hadir/bolos — bolos baru relevan fase 2), `pulang_via` (nullable, enum: `tap` / `piket_izin` / `tap_izin_pulang` — lihat penjelasan di bagian Entitas Baru), `client_uuid` (unique, untuk idempotency offline-sync), `kiosk_id` (device asal tap)
-- Constraint aplikasi: tepat satu dari `student_id`/`teacher_id` yang terisi, sama seperti `cards`.
-
-## ✅ Open Questions yang Sudah Resolved
-- [x] **`persons` 1 tabel gabungan atau terpisah?** → Resolved: `students` + `teachers` terpisah, relasi pakai dual-FK nullable. Lihat ADR-010.
-- [x] **Strategi partitioning tabel `attendance_records`?** → Resolved: **tidak perlu**. Estimasi ±500rb baris/tahun terlalu kecil untuk butuh partitioning (bahkan 10 tahun = ±5 juta baris, masih nyaman untuk MySQL dengan index komposit yang tepat). Partitioning di skala ini dianggap premature optimization.
-- [x] **Engine database** → Resolved: **MySQL** (bukan PostgreSQL seperti rencana awal di ADR-002). Lihat ADR-011.
-
-## ❓ Open Questions yang Masih Terbuka
-- [ ] Index komposit final untuk filter rekap (kelas, jurusan, tanggal, status) — desain detail kolom menyusul setelah volume data lebih jelas, tapi prinsipnya sudah disetujui (lihat catatan performa di dashboard-tv.md (06-Features/dashboard-tv.md))
-- [ ] Query gabungan siswa+guru (misal laporan kehadiran semua orang dalam 1 tabel hasil) — perlu `UNION` atau view gabungan karena `students`/`teachers` terpisah, desain detail menyusul saat modul rekap dikerjakan
-
-## Entitas Baru — Dashboard Piket (Fase 1b)
-
-> Ditambahkan 2026-06-26 mengikuti ADR-015 s/d ADR-018. Lihat dashboard-piket.md (06-Features/dashboard-piket.md) untuk spek fitur lengkap.
-
-### `kampus`
-- `id`, `nama` (misal "Kampus 1", "Kampus 2")
-
-### Perubahan ke tabel yang sudah ada
-- `kelas` tambah kolom **`kampus_id`** (FK ke `kampus`) — siswa mewarisi kampus lewat relasi ke kelasnya, tidak ada `kampus_id` duplikat di `students`.
-- `students` tambah kolom untuk mekanisme lock (ADR-017): `locked_at` (nullable), `locked_reason` (nullable), `locked_by` (FK ke `users`, nullable), `unlocked_at` (nullable), `unlocked_by` (FK ke `users`, nullable), `unlock_note` (nullable).
-- `students` tambah kolom **`late_strike_reset_at`** (nullable — T037, ADR-025) — timestamp reset counter keterlambatan untuk mekanisme lock otomatis 2x terlambat. Diisi `now()` oleh `unlock()` kalau lock yang dibuka adalah lock otomatis (dideteksi lewat `locked_by IS NULL`, karena lock manual selalu diisi piket yang login). `null` berarti hitung dari seluruh riwayat terlambat sejak awal.
-- `attendance_records` tambah kolom **`pulang_via`** (nullable, enum: `tap` / `piket_izin` / `tap_izin_pulang`) — makna masing-masing nilai:
-  - `tap` = tap keluar normal di gerbang, tanpa aksi piket khusus
-  - `piket_izin` = piket catat keluar tanpa tap (izin keluar tidak kembali, atau siswa gagal tap dan piket manual input)
-  - `tap_izin_pulang` = siswa tap di gerbang, lalu piket konfirmasi tap itu sebagai izin pulang awal resmi (tap ada, tapi konteksnya diubah piket)
-  - `null` = siswa belum pulang / belum ada data pulang hari itu
-
-### `users` (akun login — definisi formal pertama kali, sebelumnya cuma dibahas konsep role di 03-User-Roles (03-User-Roles.md))
-- `id`, `username`, `password_hash`, `role` (`super_admin` / `card_admin` / `guru` / `kepsek` / `guru_piket`), `teacher_id` (FK ke `teachers`, nullable — terisi untuk role `guru`/`guru_piket`/`kepsek` yang merupakan akun seorang guru), `kampus_id` (FK ke `kampus`, nullable — **hanya** terisi untuk role `guru_piket`, jadi scope akses dashboard-nya), `status` (aktif/nonaktif)
-
-### `permits`
-- `id`, `student_id` (FK), `jenis` (`tidak_masuk` | `keluar`), `alasan_kategori` (`sakit` | `izin`), `alasan_detail` (teks), `tanggal`, `jam_keluar` (nullable, hanya `jenis=keluar`), `jam_kembali_diharapkan` (nullable — kalau siswa diperkirakan kembali hari itu), `status_kembali` (`belum` / `sudah` / `pulang`) , `kembali_dikonfirmasi_at` (nullable), `kembali_dikonfirmasi_by` (FK ke `users`, nullable), `approved_by` (FK ke `users`), `kode_verifikasi` (unique, nullable — hanya digenerate untuk `jenis=keluar` yang dicetak), `surat_printed_at` (nullable), `created_at`
-
-> **Catatan desain (2026-07-03):** Field `akan_kembali` (boolean) **dihapus** dari desain sebelumnya. Semua izin keluar (`jenis=keluar`) dianggap berpotensi kembali — piket tetap memantau via `status_kembali`. Kalau siswa tidak kembali sampai akhir hari, piket cukup ubah `status_kembali` jadi `pulang` (siswa dianggap pulang lebih awal sah, bukan kasus alarming). Nilai `tidak_relevan` dihapus dan diganti dengan enum yang lebih eksplisit: `belum` (belum kembali / belum dikonfirmasi), `sudah` (sudah kembali, piket klik konfirmasi), `pulang` (tidak kembali, dianggap pulang lebih awal).
-
-**Constraint & logic aplikasi penting:**
-- Setiap `permits` baru otomatis update `attendance_records` hari itu sesuai `jenis`:
-  - `tidak_masuk` → status record jadi `izin`/`sakit`, tidak ada `waktu_pulang`
-  - `keluar` → `attendance_records.pulang_via` diset `piket_izin`, `waktu_pulang` = `jam_keluar` (baru diset kalau siswa ternyata tidak kembali / `status_kembali` diubah jadi `pulang`)
-- `status_kembali='belum'` + `jam_kembali_diharapkan` sudah lewat → muncul di daftar "Belum Kembali" di Dashboard Piket (sinyal visual untuk piket, bukan trigger otomatis apa pun — lihat ADR-017).
-- Kewenangan membuat dan mengubah `permits` hanya role `guru_piket` — ditegakkan di level API guard (lihat ADR-019).
-
-### `tap_events` (immutable — raw log setiap tap RFID)
-- `id`, `uid` (UID kartu yang di-scan — raw string, bukan FK, supaya tap UID tidak dikenal pun tercatat), `card_id` (FK ke `cards`, nullable — null kalau UID tidak ditemukan), `kiosk_id` (FK ke `kiosks`, nullable — **T027: sekarang proper FK bertipe integer, bukan lagi string self-reported dari kiosk**), `scanned_at` (**timestamp server**, bukan client — clock kiosk tidak bisa dijadikan sumber kebenaran waktu), `result` (enum: `accepted` / `rejected_inactive` / `rejected_locked` / `rejected_unknown` / `rejected_duplicate` / `rejected_wrong_kiosk_type` — nilai terakhir ditambahkan T028, ADR-022), `attendance_record_id` (FK ke `attendance_records`, nullable — terisi kalau tap berhasil membuat/update record)
-
-> **Insert-only.** Tidak ada endpoint DELETE atau UPDATE dari aplikasi. Ini adalah log forensik bukti tap fisik — berguna untuk kasus "siswa klaim sudah tap tapi tidak tercatat." Volume estimasi: ±5.000 baris/hari (2.500 siswa × 2 tap) = ±1,8 juta/tahun. Masuk scope ETL ke data warehouse (ADR-013). Lihat ADR-020.
-
-### `activity_log` (immutable — audit trail aksi pengguna yang login)
-- `id`, `actor_id` (FK ke `users`), `action` (string: misal `permit.create`, `permit.confirm_kembali`, `permit.set_pulang`, `student.lock`, `student.unlock`, `attendance.set_izin_pulang`), `target_type` (string: `permit` / `attendance_record` / `student` / `card` / ...), `target_id` (ID record yang diubah), `snapshot_before` (JSON, nullable — state sebelum diubah), `snapshot_after` (JSON, nullable — state sesudah diubah), `ip_address` (nullable), `created_at`
-
-> **Insert-only.** Tidak ada endpoint DELETE atau UPDATE dari aplikasi. Setiap aksi yang mengubah data oleh pengguna yang login harus menghasilkan 1 baris di tabel ini. `snapshot_before`/`snapshot_after` disimpan sebagai JSON supaya perubahan bisa dibaca langsung dari log tanpa harus rekonstruksi dari histori. Lihat ADR-020.
-
-## Entitas Kalender Pendidikan (Fase 1)
-
-> Ditambahkan 2026-07-03. Dibutuhkan sebagai fondasi perhitungan alfa di modul Rekap. Lihat kalender-pendidikan.md (06-Features/kalender-pendidikan.md) untuk spek fitur lengkap.
-
-### `academic_years`
-- `id`, `nama` (misal "2025/2026"), `tanggal_mulai` (date), `tanggal_selesai` (date), `is_active` (boolean — hanya 1 yang true sekaligus, ditegakkan di level aplikasi), `created_by` (FK ke `users`), `created_at`
-
-### `school_holidays`
-- `id`, `academic_year_id` (FK ke `academic_years`, nullable — null untuk libur yang tidak terikat tahun ajaran spesifik), `tanggal_mulai` (date), `tanggal_selesai` (date — sama dengan `tanggal_mulai` untuk hari tunggal), `jenis` (enum: `libur_nasional` / `libur_semester` / `libur_sekolah` / `libur_mendadak`), `keterangan` (teks, misal "Hari Raya Idul Fitri"), `created_by` (FK ke `users`), `created_at`, `updated_by` (FK ke `users`, nullable), `updated_at`
-
-**Tiga kategori hari — penting untuk rekap:**
-
-| Hari | Kategori | Tap diterima? | Absen = Alfa? |
-|---|---|---|---|
-| Senin–Jumat (hari sekolah aktif) | **Wajib** | ✅ | ✅ Ya |
-| Sabtu | **Opsional** | ✅ | ❌ Tidak |
-| Minggu | **Libur** | ✅ (kiosk tidak dimatikan) | ❌ Tidak |
-| Hari dalam `school_holidays` | **Libur** | ✅ | ❌ Tidak |
-
-> **Sabtu adalah hari opsional** — siswa dan guru tetap bisa tap dan kehadirannya tercatat normal di `attendance_records`, tapi jika tidak hadir maka **tidak dihitung alfa**. Ini beda dari hari libur (yang memang tidak ada ekspektasi kehadiran sama sekali) dan beda dari hari wajib (yang jika tidak hadir = alfa).
-
-**Logic "hari wajib" untuk query alfa:**
-```sql
--- Hari wajib = hari yang jika siswa tidak hadir, dihitung alfa
-hari_wajib = tanggal ∈ range academic_years (is_active = true)
-             AND DAYOFWEEK(tanggal) BETWEEN 2 AND 6  -- Senin (2) s/d Jumat (6) saja
-             AND tanggal TIDAK overlap dengan school_holidays
--- Sabtu (DAYOFWEEK = 7) dan Minggu (DAYOFWEEK = 1) dikecualikan dari hari wajib
-```
-
-**Catatan implementasi:** Tidak perlu field tambahan di skema — aturan "Senin–Jumat wajib, Sabtu opsional" dikode sebagai konstanta di service layer Rekap, bukan data yang bisa dikonfigurasi admin. Kalau suatu saat jadwal berubah (misal ada program Sabtu wajib), baru dipertimbangkan sebagai perubahan skema.
-
-## Entitas Kiosk (T027 ADR-021, T028 ADR-022)
-
-> Ditambahkan 2026-07-16 (T027) — token per-kiosk dari database + IP whitelist, menggantikan static env token. Tipe kiosk ditambahkan 2026-07-17 (T028).
-
-### `kiosks`
-- `id` (Int autoincrement — **bukan** `String cuid()` seperti draf awal spec, disesuaikan supaya konsisten dengan seluruh model lain di schema ini), `nama`, `kampus_id` (FK ke `kampus`), `device_token` (unique, random 256-bit via `nanoid(32)`), `allowed_ip` (IPv4, divalidasi di level DTO), `tipe` (enum: `siswa` / `guru` — **T028, ADR-022**, wajib diisi admin saat registrasi, TIDAK dideteksi otomatis dari kartu), `is_active` (boolean), `last_seen_at` (nullable, update fire-and-forget setiap tap sukses), `last_seen_ip` (nullable), `created_by` (FK ke `users`), `created_at`
-
-**Auth berlapis (ADR-021):** token dari URL (`?device=TOKEN`, admin generate + tampilkan QR code) **DAN** IP harus cocok dengan `allowed_ip` — kombinasi keduanya, bukan salah satu saja. `KioskGuard` query `kiosks` berdasarkan token dari header `Authorization: Bearer`, lalu validasi IP request terhadap `allowed_ip`.
-
-**Kartu salah tipe kiosk (ADR-022):** kartu siswa di-tap di kiosk `tipe=guru` (atau sebaliknya) ditolak dengan `tap_events.result=rejected_wrong_kiosk_type` — tetap tercatat (insert-only, forensik), tapi tidak membuat/ubah `attendance_records`.
-
-**Status online/offline** (dipakai UI admin `/kiosk`, belum dikerjakan): `last_seen_at` dalam 5 menit terakhir → online, lebih dari itu → offline. Bukan kolom tersendiri, dihitung saat query seperti halnya alfa di modul Rekap.
-
-## Entitas Jadwal Piket (T032, ADR-024)
-
-> Ditambahkan 2026-07-21 (T032) — jadwal hari bertugas per akun `guru_piket`, dasar untuk enforcement read-only dashboard piket di hari non-tugas.
-
-### `piket_schedules`
-- `id`, `hari` (Int, **basis independen 1=Senin..6=Sabtu** — **BUKAN** basis DAYOFWEEK yang dipakai `schedules.hari`, sengaja beda karena grid admin cuma 6 kolom Senin-Sabtu tanpa Minggu), `user_id` (FK ke `users`, harus role `guru_piket`), `created_by` (FK ke `users`), `created_at`
-- Constraint unique `(hari, user_id)` — satu guru piket tidak bisa di-assign dobel ke hari yang sama.
-
-**Enforcement (bukan cuma UI):** `PiketOnDutyGuard` di backend cek `piket_schedules` sebelum semua endpoint tulis modul piket (lock/unlock siswa, buat/update permit, konfirmasi kembali, dst) — guru piket yang login di luar hari jadwalnya tetap bisa lihat data, tapi request tulis ditolak 403 walau di-bypass lewat API langsung, bukan cuma disembunyikan di UI.
+- **Master Data & Struktur Sekolah** (12 tabel): Kampus, Jurusan, Kelas, Student, StudentPkl, KelasPengurus, KelasPiketJadwal, Teacher, TeacherWifiAccess, Card, Mapel, MapelJurusan
+- **Konfigurasi Sistem (Singleton)** (10 tabel): ScheduleConfig, AttendanceLockConfig, KampusTapConfig, ServerHealthAlert, GoogleDriveBackupConfig, KaryawanJamKerjaConfig, SystemLiveConfig, ForcePasswordChangeConfig, TvPiketDisplayConfig, EkstraRegistrationConfig
+- **Jadwal & Jurnal Mengajar Guru** (9 tabel): Schedule, TeachingSession, JournalEntry, ClassAttendanceMark, GradeAssessment, GradeAssessmentSession, GradeEntry, TeacherPermit, TeacherPermitSession
+- **Absensi Inti (Tap RFID)** (5 tabel): AttendanceSession, AttendanceRecord, Kiosk, TvSession, TapEvent
+- **Audit & Kalender Akademik** (4 tabel): ActivityLog, AcademicYear, Semester, SchoolHoliday
+- **Jadwal Pelajaran (Fondasi Baru T203+)** (8 tabel): AlokasiWaktu, AlokasiWaktuSlot, OpsiJadwal, OpsiJadwalTingkat, OpsiJadwalMingguGenerate, MapelGuru, JadwalSlot, JadwalSlotGuru
+- **Akun & Perizinan** (5 tabel): User, Permit, LateEntrySlip, PiketSchedule, PiketJournalEntry
+- **Ekstrakurikuler** (6 tabel): Ekstrakurikuler, EkstraKelompok, EkstraKelompokAnggota, EkstraPendaftaran, EkstraSesi, EkstraAbsen
 
 ---
 
-## 🏗️ Catatan Infrastruktur (lihat 10-Environment (10-Environment.md) untuk detail lengkap)
-Database AbsenSI hidup sebagai 1 schema/database MySQL di server fisik bersama (bukan VM terpisah, ADR-012), disinkronkan berkala ke data warehouse pusat (ADR-013) untuk laporan lintas-aplikasi ekosistem sekolah. Modul Core (siswa/guru/jadwal) tetap di dalam AbsenSI untuk saat ini, belum diekstrak jadi servis terpisah (ADR-014).
+## Master Data & Struktur Sekolah
 
-## 🔗 Lihat Juga
-- absensi-gerbang.md (06-Features/absensi-gerbang.md)
-- absensi-kelas-mapel.md (06-Features/absensi-kelas-mapel.md)
-- dashboard-piket.md (06-Features/dashboard-piket.md)
-- 11-Decisions (11-Decisions.md) — ADR-010 s/d ADR-025
+### `Kampus` → tabel `kampus`
 
+| Field | Tipe | Kolom DB |
+|---|---|---|
+| `id` | Int | — |
+| `nama` | String | — |
+| `lokasiLat` | Decimal? | lokasi_lat |
+| `lokasiLng` | Decimal? | lokasi_lng |
+| `radiusGeofenceMeter` | Int? | radius_geofence_meter |
+
+**Relasi:** `kelas`→Kelas, `users`→User, `kiosks`→Kiosk, `tvSessions`→TvSession, `tvPiketDisplayConfig`→TvPiketDisplayConfig
+
+### `Jurusan` → tabel `jurusan`
+
+| Field | Tipe | Kolom DB |
+|---|---|---|
+| `id` | Int | — |
+| `nama` | String | — |
+
+**Relasi:** `kelas`→Kelas, `mapelRelations`→MapelJurusan
+
+### `Kelas` → tabel `kelas`
+
+| Field | Tipe | Kolom DB |
+|---|---|---|
+| `id` | Int | — |
+| `nama` | String | — |
+| `kampusId` | Int | kampus_id |
+| `jurusanId` | Int | jurusan_id |
+| `tingkat` | Tingkat | — |
+| `ruangan` | String? | — |
+| `lantai` | Int? | — |
+
+**Relasi:** `kampus`→Kampus, `jurusan`→Jurusan, `students`→Student, `schedules`→Schedule, `teachingSessions`→TeachingSession, `waliKelas`→User, `gradeAssessments`→GradeAssessment, `jadwalSlots`→JadwalSlot, `pengurus`→KelasPengurus, `piketJadwal`→KelasPiketJadwal
+
+### `Student` → tabel `students`
+
+| Field | Tipe | Kolom DB |
+|---|---|---|
+| `id` | Int | — |
+| `nisn` | String | — |
+| `nama` | String | — |
+| `kelasId` | Int? | kelas_id |
+| `kelasTerakhirNama` | String? | kelas_terakhir_nama |
+| `status` | PersonStatus | — |
+| `tanggalLahir` | DateTime? | tanggal_lahir |
+| `alasanNonaktif` | AlasanNonaktif? | alasan_nonaktif |
+| `tahunLulus` | Int? | tahun_lulus |
+| `lockedAt` | DateTime? | locked_at |
+| `lockedReason` | String? | locked_reason |
+| `lockedById` | Int? | locked_by |
+| `unlockedAt` | DateTime? | unlocked_at |
+| `unlockedById` | Int? | unlocked_by |
+| `unlockNote` | String? | unlock_note |
+| `lateStrikeResetAt` | DateTime? | late_strike_reset_at |
+| `tempatLahir` | String? | tempat_lahir |
+| `jenisKelamin` | JenisKelamin? | jenis_kelamin |
+| `agama` | Agama? | — |
+| `alamat` | String? | — |
+| `rtRw` | String? | rt_rw |
+| `namaAyah` | String? | nama_ayah |
+| `namaIbu` | String? | nama_ibu |
+| `foto` | String? | — |
+| `noHpSiswa` | String? | no_hp_siswa |
+| `noHpAyah` | String? | no_hp_ayah |
+| `noHpIbu` | String? | no_hp_ibu |
+| `tinggalKelasPada` | DateTime? | tinggal_kelas_pada |
+
+**Relasi:** `kelas`→Kelas, `lockedBy`→User, `unlockedBy`→User, `cards`→Card, `attendanceRecords`→AttendanceRecord, `permits`→Permit, `classAttendanceMarks`→ClassAttendanceMark, `pklRecords`→StudentPkl, `ekstraPendaftaran`→EkstraPendaftaran, `ekstraAbsen`→EkstraAbsen, `ekstraKelompok`→EkstraKelompokAnggota, `lateEntrySlips`→LateEntrySlip, `gradeEntries`→GradeEntry, `kelasPengurus`→KelasPengurus, `kelasPiketJadwal`→KelasPiketJadwal, `userAkun`→User
+
+### `StudentPkl` → tabel `student_pkl`
+
+| Field | Tipe | Kolom DB |
+|---|---|---|
+| `id` | Int | — |
+| `studentId` | Int | student_id |
+| `tanggalMulai` | DateTime | tanggal_mulai |
+| `tanggalSelesai` | DateTime? | tanggal_selesai |
+| `tempatPkl` | String? | tempat_pkl |
+| `createdById` | Int | created_by |
+| `createdAt` | DateTime | created_at |
+| `endedAt` | DateTime? | ended_at |
+| `academicYearId` | Int? | academic_year_id |
+| `semesterId` | Int? | semester_id |
+
+**Relasi:** `student`→Student, `createdBy`→User, `academicYear`→AcademicYear, `semester`→Semester
+
+### `KelasPengurus` → tabel `kelas_pengurus`
+
+| Field | Tipe | Kolom DB |
+|---|---|---|
+| `id` | Int | — |
+| `kelasId` | Int | kelas_id |
+| `studentId` | Int | student_id |
+| `jabatan` | JabatanPengurus | — |
+| `academicYearId` | Int | academic_year_id |
+| `createdById` | Int | created_by |
+| `createdAt` | DateTime | created_at |
+| `updatedAt` | DateTime | updated_at |
+
+**Relasi:** `kelas`→Kelas, `student`→Student, `academicYear`→AcademicYear, `createdBy`→User
+
+### `KelasPiketJadwal` → tabel `kelas_piket_jadwal`
+
+| Field | Tipe | Kolom DB |
+|---|---|---|
+| `id` | Int | — |
+| `kelasId` | Int | kelas_id |
+| `hari` | Int | — |
+| `studentId` | Int | student_id |
+| `createdAt` | DateTime | created_at |
+| `updatedAt` | DateTime | updated_at |
+
+**Relasi:** `kelas`→Kelas, `student`→Student
+
+### `Teacher` → tabel `teachers`
+
+| Field | Tipe | Kolom DB |
+|---|---|---|
+| `id` | Int | — |
+| `niy` | String | — |
+| `nama` | String | — |
+| `noHp` | String? | no_hp |
+| `foto` | String? | — |
+| `status` | PersonStatus | — |
+| `gelarDepan` | String? | gelar_depan |
+| `gelarBelakang` | String? | gelar_belakang |
+| `tempatLahir` | String? | tempat_lahir |
+| `tanggalLahir` | DateTime? | tanggal_lahir |
+| `jenisKelamin` | JenisKelamin? | jenis_kelamin |
+| `agama` | Agama? | — |
+| `alamat` | String? | — |
+| `statusPernikahan` | StatusPernikahan? | status_pernikahan |
+| `statusKepegawaian` | StatusKepegawaian | status_kepegawaian |
+
+**Relasi:** `users`→User, `cards`→Card, `schedules`→Schedule, `attendanceRecords`→AttendanceRecord, `teachingSessions`→TeachingSession, `teacherPermits`→TeacherPermit, `gradeAssessments`→GradeAssessment, `mapelPengampu`→MapelGuru, `jadwalSlotGuru`→JadwalSlotGuru, `wifiAccess`→TeacherWifiAccess
+
+### `TeacherWifiAccess` → tabel `teacher_wifi_access`
+
+| Field | Tipe | Kolom DB |
+|---|---|---|
+| `id` | Int | — |
+| `teacherId` | Int | teacher_id |
+| `username` | String | — |
+| `password` | String | — |
+| `updatedById` | Int | updated_by |
+| `updatedAt` | DateTime | updated_at |
+
+**Relasi:** `teacher`→Teacher, `updatedBy`→User
+
+### `Card` → tabel `cards`
+
+| Field | Tipe | Kolom DB |
+|---|---|---|
+| `id` | Int | — |
+| `uid` | String | — |
+| `studentId` | Int? | student_id |
+| `teacherId` | Int? | teacher_id |
+| `status` | CardStatus | — |
+| `issuedAt` | DateTime | issued_at |
+| `revokedAt` | DateTime? | revoked_at |
+
+**Relasi:** `student`→Student, `teacher`→Teacher, `tapEvents`→TapEvent
+
+### `Mapel` → tabel `mapel`
+
+| Field | Tipe | Kolom DB |
+|---|---|---|
+| `id` | Int | — |
+| `nama` | String | — |
+| `kode` | String? | — |
+| `createdAt` | DateTime | created_at |
+
+**Relasi:** `jurusanRelations`→MapelJurusan, `schedules`→Schedule, `teachingSessions`→TeachingSession, `gradeAssessments`→GradeAssessment, `guruPengampu`→MapelGuru, `jadwalSlots`→JadwalSlot
+
+### `MapelJurusan` → tabel `mapel_jurusan`
+
+| Field | Tipe | Kolom DB |
+|---|---|---|
+| `id` | Int | — |
+| `mapelId` | Int | mapel_id |
+| `jurusanId` | Int | jurusan_id |
+
+**Relasi:** `mapel`→Mapel, `jurusan`→Jurusan
+
+---
+
+## Konfigurasi Sistem (Singleton)
+
+### `ScheduleConfig` → tabel `schedule_config`
+
+| Field | Tipe | Kolom DB |
+|---|---|---|
+| `id` | Int | — |
+| `toleransiSiswaMenit` | Int | toleransi_siswa_menit |
+| `toleransiGuruMenit` | Int | toleransi_guru_menit |
+| `toleransiKaryawanMenit` | Int | toleransi_karyawan_menit |
+| `updatedById` | Int | updated_by |
+| `updatedAt` | DateTime | updated_at |
+
+**Relasi:** `updatedBy`→User
+
+### `AttendanceLockConfig` → tabel `attendance_lock_config`
+
+| Field | Tipe | Kolom DB |
+|---|---|---|
+| `id` | Int | — |
+| `lateLockAutoEnabled` | Boolean | late_lock_auto_enabled |
+| `updatedById` | Int | updated_by |
+| `updatedAt` | DateTime | updated_at |
+
+**Relasi:** `updatedBy`→User
+
+### `KampusTapConfig` → tabel `kampus_tap_config`
+
+| Field | Tipe | Kolom DB |
+|---|---|---|
+| `id` | Int | — |
+| `kampusMatchEnabled` | Boolean | kampus_match_enabled |
+| `updatedById` | Int | updated_by |
+| `updatedAt` | DateTime | updated_at |
+
+**Relasi:** `updatedBy`→User
+
+### `ServerHealthAlert` → tabel `server_health_alerts`
+
+| Field | Tipe | Kolom DB |
+|---|---|---|
+| `id` | Int | — |
+| `kategori` | String | — |
+| `pesan` | String | — |
+| `createdAt` | DateTime | created_at |
+
+### `GoogleDriveBackupConfig` → tabel `google_drive_backup_config`
+
+| Field             | Tipe     | Kolom DB          |
+| ----------------- | -------- | ----------------- |
+| `id`              | Int      | —                 |
+| `refreshTokenEnc` | String   | refresh_token_enc |
+| `driveFolderId`   | String   | drive_folder_id   |
+| `driveFolderNama` | String?  | drive_folder_nama |
+| `connectedEmail`  | String?  | connected_email   |
+| `updatedById`     | Int      | updated_by        |
+| `updatedAt`       | DateTime | updated_at        |
+
+**Relasi:** `updatedBy`→User
+
+### `KaryawanJamKerjaConfig` → tabel `karyawan_jam_kerja_config`
+
+| Field | Tipe | Kolom DB |
+|---|---|---|
+| `id` | Int | — |
+| `jamMulai` | String | jam_mulai |
+| `jamSelesai` | String | jam_selesai |
+| `toleransiAktif` | Boolean | toleransi_aktif |
+| `updatedById` | Int | updated_by |
+| `updatedAt` | DateTime | updated_at |
+
+**Relasi:** `updatedBy`→User
+
+### `SystemLiveConfig` → tabel `system_live_config`
+
+| Field | Tipe | Kolom DB |
+|---|---|---|
+| `id` | Int | — |
+| `liveSince` | DateTime | live_since |
+| `updatedById` | Int | updated_by |
+| `updatedAt` | DateTime | updated_at |
+
+**Relasi:** `updatedBy`→User
+
+### `ForcePasswordChangeConfig` → tabel `force_password_change_config`
+
+| Field | Tipe | Kolom DB |
+|---|---|---|
+| `id` | Int | — |
+| `forceAdmin` | Boolean | force_admin |
+| `forcePiket` | Boolean | force_piket |
+| `forceGuru` | Boolean | force_guru |
+| `forcePembinaEkstra` | Boolean | force_pembina_ekstra |
+| `updatedById` | Int | updated_by |
+| `updatedAt` | DateTime | updated_at |
+
+**Relasi:** `updatedBy`→User
+
+### `TvPiketDisplayConfig` → tabel `tv_piket_display_config`
+
+| Field | Tipe | Kolom DB |
+|---|---|---|
+| `id` | Int | — |
+| `kampusId` | Int | kampus_id |
+| `tampilBarPersentase` | Boolean | tampil_bar_persentase |
+| `tampilSiswaTidakHadir` | Boolean | tampil_siswa_tidak_hadir |
+| `tampilGuruBelumMulai` | Boolean | tampil_guru_belum_mulai |
+| `tampilGuruIzin` | Boolean | tampil_guru_izin |
+| `tampilSiswaIzinBelumKembali` | Boolean | tampil_siswa_izin_belum_kembali |
+| `updatedById` | Int | updated_by |
+| `updatedAt` | DateTime | updated_at |
+
+**Relasi:** `kampus`→Kampus, `updatedBy`→User
+
+### `EkstraRegistrationConfig` → tabel `ekstra_registration_config`
+
+| Field | Tipe | Kolom DB |
+|---|---|---|
+| `id` | Int | — |
+| `lockPindahEkstra` | Boolean | lock_pindah_ekstra |
+| `isOpen` | Boolean | is_open |
+| `bukaMulai` | DateTime? | buka_mulai |
+| `bukaSampai` | DateTime? | buka_sampai |
+| `updatedById` | Int | updated_by |
+| `updatedAt` | DateTime | updated_at |
+
+**Relasi:** `updatedBy`→User
+
+---
+
+## Jadwal & Jurnal Mengajar Guru
+
+### `Schedule` → tabel `schedules`
+
+| Field | Tipe | Kolom DB |
+|---|---|---|
+| `id` | Int | — |
+| `type` | ScheduleType | — |
+| `teacherId` | Int? | teacher_id |
+| `kelasId` | Int? | kelas_id |
+| `mapelId` | Int? | mapel_id |
+| `hari` | Int | — |
+| `jamMulai` | String? | jam_mulai |
+| `jamSelesai` | String? | jam_selesai |
+| `thresholdTerlambatMenit` | Int | threshold_terlambat_menit |
+| `tanggalBerlakuMulai` | DateTime? | tanggal_berlaku_mulai |
+| `tanggalBerlakuSelesai` | DateTime? | tanggal_berlaku_selesai |
+| `semesterId` | Int? | semester_id |
+| `tingkat` | Tingkat? | — |
+
+**Relasi:** `teacher`→Teacher, `kelas`→Kelas, `mapel`→Mapel, `semester`→Semester
+
+### `TeachingSession` → tabel `teaching_sessions`
+
+| Field | Tipe | Kolom DB |
+|---|---|---|
+| `id` | Int | — |
+| `jadwalSlotId` | Int | jadwal_slot_id |
+| `teacherId` | Int | teacher_id |
+| `kelasId` | Int | kelas_id |
+| `mapelId` | Int | mapel_id |
+| `tanggal` | DateTime | — |
+| `startedAt` | DateTime? | started_at |
+| `closedAt` | DateTime? | closed_at |
+| `status` | SesiJurnalStatus | — |
+| `lokasiLat` | Decimal? | lokasi_lat |
+| `lokasiLng` | Decimal? | lokasi_lng |
+| `terlambatMenit` | Int? | terlambat_menit |
+| `createdAt` | DateTime | created_at |
+| `academicYearId` | Int? | academic_year_id |
+| `semesterId` | Int? | semester_id |
+
+**Relasi:** `jadwalSlot`→JadwalSlot, `teacher`→Teacher, `kelas`→Kelas, `mapel`→Mapel, `journalEntry`→JournalEntry, `attendanceMarks`→ClassAttendanceMark, `teacherPermitSessions`→TeacherPermitSession, `academicYear`→AcademicYear, `semester`→Semester, `gradeAssessmentSessions`→GradeAssessmentSession
+
+### `JournalEntry` → tabel `journal_entries`
+
+| Field | Tipe | Kolom DB |
+|---|---|---|
+| `id` | Int | — |
+| `sessionId` | Int | session_id |
+| `elemen` | String? | — |
+| `capaianPembelajaran` | String? | capaian_pembelajaran |
+| `materi` | String? | — |
+| `tujuanPembelajaran` | String? | tujuan_pembelajaran |
+| `tugasPenilaian` | String? | tugas_penilaian |
+| `catatan` | String? | — |
+| `createdAt` | DateTime | created_at |
+| `updatedAt` | DateTime | updated_at |
+| `academicYearId` | Int? | academic_year_id |
+| `semesterId` | Int? | semester_id |
+
+**Relasi:** `session`→TeachingSession, `academicYear`→AcademicYear, `semester`→Semester
+
+### `ClassAttendanceMark` → tabel `class_attendance_marks`
+
+| Field | Tipe | Kolom DB |
+|---|---|---|
+| `id` | Int | — |
+| `sessionId` | Int | session_id |
+| `studentId` | Int | student_id |
+| `status` | ClassAttendanceStatus | — |
+| `markedById` | Int | marked_by |
+| `markedAt` | DateTime | marked_at |
+| `academicYearId` | Int? | academic_year_id |
+| `semesterId` | Int? | semester_id |
+
+**Relasi:** `session`→TeachingSession, `student`→Student, `markedBy`→User, `academicYear`→AcademicYear, `semester`→Semester
+
+### `GradeAssessment` → tabel `grade_assessments`
+
+| Field | Tipe | Kolom DB |
+|---|---|---|
+| `id` | Int | — |
+| `teacherId` | Int | teacher_id |
+| `kelasId` | Int | kelas_id |
+| `mapelId` | Int | mapel_id |
+| `judul` | String | — |
+| `createdAt` | DateTime | created_at |
+| `updatedAt` | DateTime | updated_at |
+
+**Relasi:** `teacher`→Teacher, `kelas`→Kelas, `mapel`→Mapel, `sessions`→GradeAssessmentSession, `entries`→GradeEntry
+
+### `GradeAssessmentSession` → tabel `grade_assessment_sessions`
+
+| Field | Tipe | Kolom DB |
+|---|---|---|
+| `id` | Int | — |
+| `assessmentId` | Int | assessment_id |
+| `sessionId` | Int | session_id |
+
+**Relasi:** `assessment`→GradeAssessment, `session`→TeachingSession
+
+### `GradeEntry` → tabel `grade_entries`
+
+| Field | Tipe | Kolom DB |
+|---|---|---|
+| `id` | Int | — |
+| `assessmentId` | Int | assessment_id |
+| `studentId` | Int | student_id |
+| `nilai` | Int? | — |
+| `updatedAt` | DateTime | updated_at |
+
+**Relasi:** `assessment`→GradeAssessment, `student`→Student
+
+### `TeacherPermit` → tabel `teacher_permits`
+
+| Field | Tipe | Kolom DB |
+|---|---|---|
+| `id` | Int | — |
+| `teacherId` | Int | teacher_id |
+| `tanggal` | DateTime | — |
+| `tanggalSelesai` | DateTime? | tanggal_selesai |
+| `kategori` | TeacherPermitKategori | — |
+| `status` | TeacherPermitStatus | — |
+| `buktiFilePath` | String | bukti_file_path |
+| `buktiUpdatedAt` | DateTime | bukti_updated_at |
+| `approvedById` | Int | approved_by |
+| `approvedAt` | DateTime | approved_at |
+| `tugasFilePath` | String? | tugas_file_path |
+| `tugasKeterangan` | String? | tugas_keterangan |
+| `submittedAt` | DateTime? | submitted_at |
+| `followUpNeeded` | Boolean | follow_up_needed |
+| `academicYearId` | Int? | academic_year_id |
+| `semesterId` | Int? | semester_id |
+
+**Relasi:** `teacher`→Teacher, `sessions`→TeacherPermitSession, `approvedBy`→User, `academicYear`→AcademicYear, `semester`→Semester
+
+### `TeacherPermitSession` → tabel `teacher_permit_sessions`
+
+| Field | Tipe | Kolom DB |
+|---|---|---|
+| `id` | Int | — |
+| `permitId` | Int | permit_id |
+| `sessionId` | Int | session_id |
+
+**Relasi:** `permit`→TeacherPermit, `session`→TeachingSession
+
+---
+
+## Absensi Inti (Tap RFID)
+
+### `AttendanceSession` → tabel `attendance_sessions`
+
+| Field | Tipe | Kolom DB |
+|---|---|---|
+| `id` | Int | — |
+| `locationType` | LocationType | location_type |
+| `kelasId` | Int? | kelas_id |
+
+**Relasi:** `attendanceRecords`→AttendanceRecord
+
+### `AttendanceRecord` → tabel `attendance_records`
+
+| Field | Tipe | Kolom DB |
+|---|---|---|
+| `id` | Int | — |
+| `studentId` | Int? | student_id |
+| `teacherId` | Int? | teacher_id |
+| `sessionId` | Int? | session_id |
+| `tanggal` | DateTime | — |
+| `waktuMasuk` | DateTime | waktu_masuk |
+| `waktuPulang` | DateTime? | waktu_pulang |
+| `status` | AttendanceStatus | — |
+| `masukVia` | MasukVia? | masuk_via |
+| `pulangVia` | PulangVia? | pulang_via |
+| `clientUuid` | String? | client_uuid |
+| `kioskId` | Int? | kiosk_id |
+| `academicYearId` | Int? | academic_year_id |
+| `semesterId` | Int? | semester_id |
+
+**Relasi:** `student`→Student, `teacher`→Teacher, `session`→AttendanceSession, `kiosk`→Kiosk, `tapEvents`→TapEvent, `lateEntrySlips`→LateEntrySlip, `academicYear`→AcademicYear, `semester`→Semester
+
+### `Kiosk` → tabel `kiosks`
+
+| Field | Tipe | Kolom DB |
+|---|---|---|
+| `id` | Int | — |
+| `nama` | String | — |
+| `kampusId` | Int | kampus_id |
+| `deviceToken` | String | device_token |
+| `allowedIp` | String | allowed_ip |
+| `tipe` | KioskTipe | — |
+| `isActive` | Boolean | is_active |
+| `lastSeenAt` | DateTime? | last_seen_at |
+| `lastSeenIp` | String? | last_seen_ip |
+| `lastFailedIp` | String? | last_failed_ip |
+| `lastFailedAt` | DateTime? | last_failed_at |
+| `createdById` | Int | created_by |
+| `createdAt` | DateTime | created_at |
+
+**Relasi:** `kampus`→Kampus, `createdByUser`→User, `tapEvents`→TapEvent, `attendanceRecords`→AttendanceRecord
+
+### `TvSession` → tabel `tv_sessions`
+
+| Field | Tipe | Kolom DB |
+|---|---|---|
+| `id` | Int | — |
+| `kampusId` | Int | kampus_id |
+| `token` | String | — |
+| `isActive` | Boolean | is_active |
+| `revokedAt` | DateTime? | revoked_at |
+| `revokedById` | Int? | revoked_by |
+| `createdById` | Int | created_by |
+| `createdAt` | DateTime | created_at |
+
+**Relasi:** `kampus`→Kampus, `revokedBy`→User, `createdBy`→User
+
+### `TapEvent` → tabel `tap_events`
+
+| Field | Tipe | Kolom DB |
+|---|---|---|
+| `id` | Int | — |
+| `uid` | String | — |
+| `cardId` | Int? | card_id |
+| `kioskId` | Int? | kiosk_id |
+| `scannedAt` | DateTime | scanned_at |
+| `result` | TapResult | — |
+| `attendanceRecordId` | Int? | attendance_record_id |
+| `academicYearId` | Int? | academic_year_id |
+| `semesterId` | Int? | semester_id |
+
+**Relasi:** `card`→Card, `attendanceRecord`→AttendanceRecord, `kiosk`→Kiosk, `academicYear`→AcademicYear, `semester`→Semester
+
+---
+
+## Audit & Kalender Akademik
+
+### `ActivityLog` → tabel `activity_log`
+
+| Field | Tipe | Kolom DB |
+|---|---|---|
+| `id` | Int | — |
+| `actorId` | Int | actor_id |
+| `action` | String | — |
+| `targetType` | String | target_type |
+| `targetId` | Int | target_id |
+| `snapshotBefore` | Json? | snapshot_before |
+| `snapshotAfter` | Json? | snapshot_after |
+| `ipAddress` | String? | ip_address |
+| `createdAt` | DateTime | created_at |
+| `academicYearId` | Int? | academic_year_id |
+| `semesterId` | Int? | semester_id |
+
+**Relasi:** `actor`→User, `academicYear`→AcademicYear, `semester`→Semester
+
+### `AcademicYear` → tabel `academic_years`
+
+| Field | Tipe | Kolom DB |
+|---|---|---|
+| `id` | Int | — |
+| `nama` | String | — |
+| `tanggalMulai` | DateTime | tanggal_mulai |
+| `tanggalSelesai` | DateTime | tanggal_selesai |
+| `isActive` | Boolean | is_active |
+| `createdById` | Int | created_by |
+| `createdAt` | DateTime | created_at |
+
+**Relasi:** `createdBy`→User, `schoolHolidays`→SchoolHoliday, `semesters`→Semester, `studentPkl`→StudentPkl, `teachingSessions`→TeachingSession, `journalEntries`→JournalEntry, `classAttendanceMarks`→ClassAttendanceMark, `teacherPermits`→TeacherPermit, `attendanceRecords`→AttendanceRecord, `tapEvents`→TapEvent, `activityLogs`→ActivityLog, `permits`→Permit, `lateEntrySlips`→LateEntrySlip, `piketJournalEntries`→PiketJournalEntry, `ekstraSesi`→EkstraSesi, `ekstraAbsen`→EkstraAbsen, `kelasPengurus`→KelasPengurus
+
+### `Semester` → tabel `semesters`
+
+| Field | Tipe | Kolom DB |
+|---|---|---|
+| `id` | Int | — |
+| `academicYearId` | Int | academic_year_id |
+| `nama` | SemesterNama | — |
+| `tanggalMulai` | DateTime | tanggal_mulai |
+| `tanggalSelesai` | DateTime | tanggal_selesai |
+| `isActive` | Boolean | is_active |
+| `createdById` | Int | created_by |
+| `createdAt` | DateTime | created_at |
+
+**Relasi:** `academicYear`→AcademicYear, `createdBy`→User, `schedules`→Schedule, `opsiJadwal`→OpsiJadwal, `studentPkl`→StudentPkl, `teachingSessions`→TeachingSession, `journalEntries`→JournalEntry, `classAttendanceMarks`→ClassAttendanceMark, `teacherPermits`→TeacherPermit, `attendanceRecords`→AttendanceRecord, `tapEvents`→TapEvent, `activityLogs`→ActivityLog, `permits`→Permit, `lateEntrySlips`→LateEntrySlip, `piketJournalEntries`→PiketJournalEntry, `ekstraSesi`→EkstraSesi, `ekstraAbsen`→EkstraAbsen
+
+### `SchoolHoliday` → tabel `school_holidays`
+
+| Field | Tipe | Kolom DB |
+|---|---|---|
+| `id` | Int | — |
+| `academicYearId` | Int? | academic_year_id |
+| `tanggalMulai` | DateTime | tanggal_mulai |
+| `tanggalSelesai` | DateTime | tanggal_selesai |
+| `jenis` | HolidayJenis | — |
+| `keterangan` | String? | — |
+| `createdById` | Int | created_by |
+| `createdAt` | DateTime | created_at |
+| `updatedById` | Int? | updated_by |
+| `updatedAt` | DateTime? | updated_at |
+
+**Relasi:** `academicYear`→AcademicYear, `createdBy`→User, `updatedBy`→User
+
+---
+
+## Jadwal Pelajaran (Fondasi Baru T203+)
+
+### `AlokasiWaktu` → tabel `alokasi_waktu`
+
+| Field | Tipe | Kolom DB |
+|---|---|---|
+| `id` | Int | — |
+| `nama` | String | — |
+| `createdById` | Int | created_by |
+| `createdAt` | DateTime | — |
+| `updatedAt` | DateTime | — |
+
+**Relasi:** `slots`→AlokasiWaktuSlot, `opsiJadwal`→OpsiJadwal, `createdBy`→User
+
+### `AlokasiWaktuSlot` → tabel `alokasi_waktu_slots`
+
+| Field | Tipe | Kolom DB |
+|---|---|---|
+| `id` | Int | — |
+| `alokasiWaktuId` | Int | alokasi_waktu_id |
+| `hari` | Int | — |
+| `jamKe` | Int? | jam_ke |
+| `jamMulai` | String | jam_mulai |
+| `jamSelesai` | String | jam_selesai |
+| `keterangan` | String? | — |
+| `urutan` | Int | — |
+
+**Relasi:** `alokasiWaktu`→AlokasiWaktu
+
+### `OpsiJadwal` → tabel `opsi_jadwal`
+
+| Field | Tipe | Kolom DB |
+|---|---|---|
+| `id` | Int | — |
+| `semesterId` | Int | semester_id |
+| `alokasiWaktuId` | Int | alokasi_waktu_id |
+| `nama` | String | — |
+| `mode` | ModeJadwal | — |
+| `isActive` | Boolean | is_active |
+| `createdById` | Int | created_by |
+| `createdAt` | DateTime | — |
+| `updatedAt` | DateTime | — |
+
+**Relasi:** `semester`→Semester, `alokasiWaktu`→AlokasiWaktu, `tingkatScopes`→OpsiJadwalTingkat, `mingguGenerate`→OpsiJadwalMingguGenerate, `jadwalSlots`→JadwalSlot, `createdBy`→User
+
+### `OpsiJadwalTingkat` → tabel `opsi_jadwal_tingkat`
+
+| Field | Tipe | Kolom DB |
+|---|---|---|
+| `id` | Int | — |
+| `opsiJadwalId` | Int | opsi_jadwal_id |
+| `tingkat` | Tingkat | — |
+
+**Relasi:** `opsiJadwal`→OpsiJadwal
+
+### `OpsiJadwalMingguGenerate` → tabel `opsi_jadwal_minggu_generate`
+
+| Field | Tipe | Kolom DB |
+|---|---|---|
+| `id` | Int | — |
+| `opsiJadwalId` | Int | opsi_jadwal_id |
+| `tanggal` | DateTime | — |
+| `minggu` | MingguAB | — |
+
+**Relasi:** `opsiJadwal`→OpsiJadwal
+
+### `MapelGuru` → tabel `mapel_guru`
+
+| Field | Tipe | Kolom DB |
+|---|---|---|
+| `id` | Int | — |
+| `mapelId` | Int | mapel_id |
+| `teacherId` | Int | teacher_id |
+
+**Relasi:** `mapel`→Mapel, `teacher`→Teacher
+
+### `JadwalSlot` → tabel `jadwal_slots`
+
+| Field | Tipe | Kolom DB |
+|---|---|---|
+| `id` | Int | — |
+| `opsiJadwalId` | Int | opsi_jadwal_id |
+| `kelasId` | Int | kelas_id |
+| `mapelId` | Int | mapel_id |
+| `hari` | Int | — |
+| `jamKe` | Int | jam_ke |
+| `minggu` | MingguAB? | — |
+| `jamKeAkhirRentang` | Int? | jam_ke_akhir_rentang |
+| `createdById` | Int | created_by |
+| `createdAt` | DateTime | — |
+| `updatedAt` | DateTime | — |
+
+**Relasi:** `opsiJadwal`→OpsiJadwal, `kelas`→Kelas, `mapel`→Mapel, `guru`→JadwalSlotGuru, `createdBy`→User, `teachingSessions`→TeachingSession
+
+### `JadwalSlotGuru` → tabel `jadwal_slot_guru`
+
+| Field | Tipe | Kolom DB |
+|---|---|---|
+| `id` | Int | — |
+| `jadwalSlotId` | Int | jadwal_slot_id |
+| `teacherId` | Int | teacher_id |
+
+**Relasi:** `jadwalSlot`→JadwalSlot, `teacher`→Teacher
+
+---
+
+## Akun & Perizinan
+
+### `User` → tabel `users`
+
+| Field | Tipe | Kolom DB |
+|---|---|---|
+| `id` | Int | — |
+| `username` | String | — |
+| `passwordHash` | String | password_hash |
+| `role` | UserRole | — |
+| `teacherId` | Int? | teacher_id |
+| `studentId` | Int? | student_id |
+| `kampusId` | Int? | kampus_id |
+| `kelasIdWali` | Int? | kelas_id_wali |
+| `status` | UserStatus | — |
+| `mustChangePassword` | Boolean | must_change_password |
+| `passwordChangedAt` | DateTime? | password_changed_at |
+| `lockedAt` | DateTime? | locked_at |
+| `lockedReason` | String? | locked_reason |
+| `lockedById` | Int? | locked_by |
+| `unlockedAt` | DateTime? | unlocked_at |
+| `unlockedById` | Int? | unlocked_by |
+| `unlockNote` | String? | unlock_note |
+
+**Relasi:** `teacher`→Teacher, `student`→Student, `kampus`→Kampus, `kelasWali`→Kelas, `lockedBy`→User, `unlockedBy`→User, `activityLogs`→ActivityLog, `academicYearsCreated`→AcademicYear, `holidaysCreated`→SchoolHoliday, `holidaysUpdated`→SchoolHoliday, `studentsLocked`→Student, `studentsUnlocked`→Student, `permitsApproved`→Permit, `permitsKembaliConfirmed`→Permit, `kiosksCreated`→Kiosk, `piketSchedules`→PiketSchedule, `piketSchedulesCreated`→PiketSchedule, `scheduleConfigsUpdated`→ScheduleConfig, `attendanceLockConfigsUpdated`→AttendanceLockConfig, `kampusTapConfigsUpdated`→KampusTapConfig, `googleDriveBackupConfigsUpdated`→GoogleDriveBackupConfig, `karyawanJamKerjaConfigsUpdated`→KaryawanJamKerjaConfig, `systemLiveConfigsUpdated`→SystemLiveConfig, `forcePasswordChangeConfigsUpdated`→ForcePasswordChangeConfig, `ekstraRegistrationConfigsUpdated`→EkstraRegistrationConfig, `classAttendanceMarksMade`→ClassAttendanceMark, `teacherPermitsApproved`→TeacherPermit, `semestersCreated`→Semester, `tvSessionsCreated`→TvSession, `tvSessionsRevoked`→TvSession, `studentPklsCreated`→StudentPkl, `ekstrakurikulerDibina`→Ekstrakurikuler, `ekstraSesiCreated`→EkstraSesi, `ekstraAbsenMarked`→EkstraAbsen, `lateEntrySlipsPrinted`→LateEntrySlip, `piketJournalEntries`→PiketJournalEntry, `tvPiketDisplayConfigsUpdated`→TvPiketDisplayConfig, `alokasiWaktuCreated`→AlokasiWaktu, `opsiJadwalCreated`→OpsiJadwal, `jadwalSlotCreated`→JadwalSlot, `usersLocked`→User, `usersUnlocked`→User, `kelasPengurusCreated`→KelasPengurus, `teacherWifiAccessUpdated`→TeacherWifiAccess
+
+### `Permit` → tabel `permits`
+
+| Field | Tipe | Kolom DB |
+|---|---|---|
+| `id` | Int | — |
+| `studentId` | Int | student_id |
+| `jenis` | PermitJenis | — |
+| `alasanKategori` | PermitAlasanKategori | alasan_kategori |
+| `alasanDetail` | String? | alasan_detail |
+| `tanggal` | DateTime | — |
+| `tanggalSelesai` | DateTime? | tanggal_selesai |
+| `jamKeluar` | DateTime? | jam_keluar |
+| `jamKembaliDiharapkan` | DateTime? | jam_kembali_diharapkan |
+| `statusKembali` | StatusKembali | status_kembali |
+| `kembaliDikonfirmasiAt` | DateTime? | kembali_dikonfirmasi_at |
+| `kembaliDikonfirmasiById` | Int? | kembali_dikonfirmasi_by |
+| `approvedById` | Int | approved_by |
+| `kodeVerifikasi` | String? | kode_verifikasi |
+| `suratPrintedAt` | DateTime? | surat_printed_at |
+| `buktiFilePath` | String? | bukti_file_path |
+| `createdAt` | DateTime | created_at |
+| `academicYearId` | Int? | academic_year_id |
+| `semesterId` | Int? | semester_id |
+
+**Relasi:** `student`→Student, `approvedBy`→User, `kembaliDikonfirmasiBy`→User, `academicYear`→AcademicYear, `semester`→Semester
+
+### `LateEntrySlip` → tabel `late_entry_slips`
+
+| Field | Tipe | Kolom DB |
+|---|---|---|
+| `id` | Int | — |
+| `studentId` | Int | student_id |
+| `attendanceRecordId` | Int? | attendance_record_id |
+| `tanggal` | DateTime | — |
+| `jamTap` | DateTime | jam_tap |
+| `alasan` | String? | — |
+| `catatan` | String? | — |
+| `kodeVerifikasi` | String | kode_verifikasi |
+| `printedById` | Int | printed_by |
+| `createdAt` | DateTime | created_at |
+| `academicYearId` | Int? | academic_year_id |
+| `semesterId` | Int? | semester_id |
+
+**Relasi:** `student`→Student, `attendanceRecord`→AttendanceRecord, `printedBy`→User, `academicYear`→AcademicYear, `semester`→Semester
+
+### `PiketSchedule` → tabel `piket_schedules`
+
+| Field | Tipe | Kolom DB |
+|---|---|---|
+| `id` | Int | — |
+| `hari` | Int | — |
+| `userId` | Int | user_id |
+| `createdById` | Int | created_by |
+| `createdAt` | DateTime | created_at |
+
+**Relasi:** `user`→User, `createdBy`→User
+
+### `PiketJournalEntry` → tabel `piket_journal_entries`
+
+| Field | Tipe | Kolom DB |
+|---|---|---|
+| `id` | Int | — |
+| `userId` | Int | user_id |
+| `tanggal` | DateTime | — |
+| `catatan` | String | — |
+| `filledAt` | DateTime | filled_at |
+| `createdAt` | DateTime | created_at |
+| `academicYearId` | Int? | academic_year_id |
+| `semesterId` | Int? | semester_id |
+
+**Relasi:** `user`→User, `academicYear`→AcademicYear, `semester`→Semester
+
+---
+
+## Ekstrakurikuler
+
+### `Ekstrakurikuler` → tabel `ekstrakurikuler`
+
+| Field | Tipe | Kolom DB |
+|---|---|---|
+| `id` | Int | — |
+| `nama` | String | — |
+| `urutan` | Int | — |
+| `pembinaId` | Int? | pembina_id |
+| `hari` | Int? | hari |
+| `jamMulai` | String? | jam_mulai |
+| `jamSelesai` | String? | jam_selesai |
+
+**Relasi:** `pembina`→User, `pendaftaran`→EkstraPendaftaran, `sesi`→EkstraSesi, `kelompok`→EkstraKelompok
+
+### `EkstraKelompok` → tabel `ekstra_kelompok`
+
+| Field | Tipe | Kolom DB |
+|---|---|---|
+| `id` | Int | — |
+| `ekstrakurikulerId` | Int | ekstrakurikuler_id |
+| `nama` | String | — |
+| `jamMulai` | String | jam_mulai |
+| `jamSelesai` | String | jam_selesai |
+
+**Relasi:** `ekstrakurikuler`→Ekstrakurikuler, `anggota`→EkstraKelompokAnggota, `sesi`→EkstraSesi
+
+### `EkstraKelompokAnggota` → tabel `ekstra_kelompok_anggota`
+
+| Field | Tipe | Kolom DB |
+|---|---|---|
+| `id` | Int | — |
+| `kelompokId` | Int | kelompok_id |
+| `studentId` | Int | student_id |
+
+**Relasi:** `kelompok`→EkstraKelompok, `student`→Student
+
+### `EkstraPendaftaran` → tabel `ekstra_pendaftaran`
+
+| Field | Tipe | Kolom DB |
+|---|---|---|
+| `id` | Int | — |
+| `studentId` | Int | student_id |
+| `ekstrakurikulerId` | Int | ekstrakurikuler_id |
+| `submittedAt` | DateTime | submitted_at |
+| `updatedAt` | DateTime | updated_at |
+
+**Relasi:** `student`→Student, `ekstrakurikuler`→Ekstrakurikuler
+
+### `EkstraSesi` → tabel `ekstra_sesi`
+
+| Field | Tipe | Kolom DB |
+|---|---|---|
+| `id` | Int | — |
+| `ekstrakurikulerId` | Int | ekstrakurikuler_id |
+| `kelompokId` | Int? | kelompok_id |
+| `tanggal` | DateTime | — |
+| `jamMulai` | String? | jam_mulai |
+| `jamSelesai` | String? | jam_selesai |
+| `catatan` | String? | — |
+| `createdById` | Int | created_by |
+| `createdAt` | DateTime | created_at |
+| `academicYearId` | Int? | academic_year_id |
+| `semesterId` | Int? | semester_id |
+
+**Relasi:** `ekstrakurikuler`→Ekstrakurikuler, `kelompok`→EkstraKelompok, `createdBy`→User, `absen`→EkstraAbsen, `academicYear`→AcademicYear, `semester`→Semester
+
+### `EkstraAbsen` → tabel `ekstra_absen`
+
+| Field | Tipe | Kolom DB |
+|---|---|---|
+| `id` | Int | — |
+| `sesiId` | Int | sesi_id |
+| `studentId` | Int | student_id |
+| `status` | EkstraAbsenStatus? | — |
+| `buktiFilePath` | String? | bukti_file_path |
+| `markedById` | Int? | marked_by |
+| `markedAt` | DateTime? | marked_at |
+| `academicYearId` | Int? | academic_year_id |
+| `semesterId` | Int? | semester_id |
+
+**Relasi:** `sesi`→EkstraSesi, `student`→Student, `markedBy`→User, `academicYear`→AcademicYear, `semester`→Semester
+
+---
+
+## Enum yang Dipakai
+
+Daftar semua 30 enum ada langsung di `schema.prisma` (cari `enum `) — tidak diduplikasi di sini karena enum baru sering ditambah seiring fitur baru dan gampang basi. Enum penting yang sering direferensikan dokumen lain: `UserRole`, `PersonStatus`, `AttendanceStatus`, `PulangVia`, `MasukVia`, `JabatanPengurus`.

@@ -1,7 +1,7 @@
 ---
-tags: [absensi, database, migrasi, planning]
-status: planning-interview
-updated: 2026-07-22
+tags: [absensi, database, migrasi]
+status: uji-coba-selesai-cutover-pending
+updated: 2026-08-31
 ---
 
 # Feature — Migrasi Data dari Database Lama (Laravel/Spatie)
@@ -9,6 +9,8 @@ updated: 2026-07-22
 ← Index (00-INDEX AbsenSI.md)
 
 > AbsenSI adalah rebuild dari aplikasi absensi lama (Laravel + Spatie Permission, MySQL). File dump lama: `/media/anunnaki/DataNvme/sql_absensi_smk.sql` (65MB, ~359rb baris, 22 tabel). Dokumen ini membandingkan struktur lama vs skema Prisma baru, dan mencatat keputusan migrasi yang sudah dan belum diambil.
+>
+> **[2026-08-31] STATUS TERKINI — PENTING, beda dari kesan dokumen di bawah:** ETL migrasi (T062) **SUDAH DIEKSEKUSI SUKSES 2026-07-23** — 348.391 `attendance_records`, 4.090 siswa, 159 guru, 76 kelas berhasil masuk ke AbsenSI. **TAPI ini BUKAN cutover final** — sistem lama (Laravel, server `10.10.10.100`) masih berjalan live saat migrasi dijalankan, jadi data ini untuk keperluan **uji coba** dulu. User akan berikan dump database TERBARU dari sistem lama untuk sinkronisasi ulang setelah AbsenSI dinyatakan siap — itu baru cutover resmi. **Jangan asumsikan data siswa/guru/attendance saat ini final** sampai cutover benar-benar terjadi. Script ETL: `apps/api/scripts/legacy-migration/`, hasil id-mapping tersimpan sebagai `id-mapping-*.json` untuk referensi delta-sync nanti.
 
 ---
 

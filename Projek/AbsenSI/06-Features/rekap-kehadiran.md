@@ -1,7 +1,7 @@
 ---
-tags: [absensi, feature, rekap, laporan, fase-1, planning]
-status: planning
-updated: 2026-07-03
+tags: [absensi, feature, rekap, laporan]
+status: selesai
+updated: 2026-08-31
 ---
 
 # Feature — Rekap Kehadiran
@@ -14,12 +14,16 @@ updated: 2026-07-03
 
 ## 📋 Status
 
+> **[2026-08-31] Diperbarui** — dokumen ini ditulis 2026-07-03 sebagai rencana Fase 1/2. Sebagian besar SUDAH LIVE lewat implementasi nyata (nomor task di bawah), beberapa detail berbeda dari rencana awal.
+
 | Item | Detail |
 |---|---|
-| Phase | Fase 1 (admin), Fase 2 (wali kelas + guru) |
-| Status | 🟡 Planning — desain disepakati, belum jadi task |
-| Modul terkait | Attendance, Core (Siswa, Kelas, Jurusan) |
-| Prasyarat | Data `attendance_records` sudah terisi dari Fase 1 (absensi gerbang berjalan) |
+| Rekap admin (filter kelas/jurusan/tanggal) | ✅ **Selesai & live** — jauh lebih lengkap dari rencana awal (filter Tingkat X/XI/XII, lensa Tahun Ajaran/Semester T140, filter+sort per kolom T218) |
+| Export PDF/Excel + grafik | ✅ **Selesai & live** (T115) — lebih awal dari rencana "Fase 2 opsional" |
+| Rekap Wali Kelas (scope ke kelas yang diampu) | ✅ **Selesai & live** (T224a-d, T226) |
+| Rekap Guru (kehadiran guru sendiri + admin) | ✅ **Selesai & live** (T176, menggantikan rencana T116 lama) |
+| Mode rekap 1-hari (kolom sederhana) | ✅ **Selesai & live** (T132) |
+| Modul terkait | Attendance, Core (Siswa, Kelas, Jurusan), Teacher |
 
 ---
 
@@ -89,9 +93,9 @@ Alfa = tidak ada `attendance_records` hari itu **dan** tidak ada `permits` hari 
 
 ---
 
-## 🔮 Rekap Fase 2 — Wali Kelas & Guru
+## 🔮 Rekap Fase 2 — Wali Kelas & Guru (✅ SUDAH SELESAI, lihat status di atas)
 
-> Belum didesain detail — hanya outline awal untuk panduan arsitektur.
+> Bagian ini adalah rencana ASLI 2026-07-03 — dipertahankan sebagai referensi historis. Implementasi aktual (T224a-d, T226 untuk Wali Kelas; T176 untuk Guru) sudah live dan mungkin berbeda detail dari outline di bawah. Untuk perilaku aktual, baca kode langsung atau `STATUS.md`/`_archive/STATUS-Arsip-Selesai.md`.
 
 ### Wali Kelas
 - Filter yang tersedia: sama seperti admin, tapi scope dibatasi ke kelas yang dia ampu saja (ditegakkan di API, bukan hanya UI)

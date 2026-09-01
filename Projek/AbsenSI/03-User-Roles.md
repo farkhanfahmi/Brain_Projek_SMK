@@ -37,6 +37,21 @@ updated: 2026-06-25
 
 Sama seperti `card_admin`, pemisahan role-role ini ditegakkan di level API guard, bukan cuma disembunyikan di UI (lihat "Aturan Tegas" di bawah).
 
+## Role Tambahan — Akun Siswa Terbatas (T247, SUDAH LIVE)
+
+> **[2026-08-31] Perubahan arsitektur penting**: sejak T247, pernyataan "Siswa ❌ Tidak login" di atas **tidak lagi berlaku mutlak**. Ditambahkan SEMPIT untuk kasus Ketua/Wakil Ketua Kelas — bukan perubahan ke semua siswa.
+
+| Role | Login? | Akses |
+|---|---|---|
+| **Ketua Kelas** (`ketua_kelas`) | ✅ Login — akun `User` terhubung ke `Student` via `studentId` (unique FK) | Portal siswa terbatas: QR jadwal, kemungkinan piket kebersihan kelas. Scope sempit ke kelasnya sendiri saja |
+
+**Detail arsitektur penting:**
+- `Student` (data siswa, tap RFID) tetap **terpisah** dari `User` (akun login) — `ketua_kelas` MENJEMBATANI keduanya untuk kasus ini saja, BUKAN mengubah pemisahan Student/User secara umum. Mayoritas siswa TIDAK punya akun `User` sama sekali.
+- 1 siswa maksimal 1 akun (`User.studentId` unique) — meski jabatan berganti, tidak ada 2 akun untuk 1 `Student` yang sama.
+- **Trade-off yang SUDAH DISADARI & DITERIMA user** (bukan bug): kalau Ketua DAN Wakil Ketua sama-sama absen, akun salah satu boleh dipakai/dioper informal oleh siswa lain secara fisik — sistem tidak membangun mekanisme delegasi otomatis, dan tidak pernah tahu PERSIS individu mana yang menekan tombol (cuma tahu akun mana yang dipakai).
+- Model pendukung: `KelasPengurus` (struktur pengurus per tahun ajaran: ketua/wakil_ketua/sekretaris/wakil_sekretaris/bendahara/wakil_bendahara — 4 jabatan terakhir TIDAK dapat akun login, hanya `ketua`/`wakil_ketua`).
+- Detail lengkap: `06-Features/tasks/T247-schema-struktur-pengurus-piket-akun-siswa.md` s/d T251 (backend QR, portal siswa, scanner guru).
+
 ## Aturan Tegas
 1. **Hanya Admin Pusat dan Admin Pengelola Kartu yang boleh mengubah data.** Guru read-only mutlak — tidak ada exception.
 2. Admin Pengelola Kartu **tidak boleh** akses fitur di luar modul kartu — ini batasan permission di level API, bukan cuma disembunyikan di UI (kalau cuma disembunyikan di frontend, endpoint API tetap bisa diakses langsung — harus dicek role di backend).

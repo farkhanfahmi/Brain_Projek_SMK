@@ -9,6 +9,8 @@ updated: 2026-06-25
 ← Index (00-INDEX AbsenSI.md)
 
 > **Naik ke scope Fase 1** (awalnya dianggap fase 3/nice-to-have, dinaikkan karena rollout awal 2.500 kartu tidak praktis kalau input manual satu-satu). Mencakup 3 alur: import data siswa, import data guru, dan pemetaan kartu RFID ke orang.
+>
+> **[2026-08-31] Terverifikasi ke kode**: `ImportService.importStudents()`/`importTeachers()`/`importCards()` di `apps/api/src/import/import.service.ts` — ketiga sub-fitur sudah live sesuai spec di bawah. Sejak itu juga diperluas (T174: import Kelas/Jurusan/Mapel/User; T193: import Excel Wali Kelas) — lihat `_archive/STATUS-Arsip-Selesai.md` untuk detail perluasan.
 
 ---
 
@@ -17,7 +19,7 @@ updated: 2026-06-25
 |---|---|
 | Phase | Fase 1 |
 | Status | 🟢 Final — siap jadi task |
-| Owner | Developer 3 (apps/api — logic import & validasi) + Developer 1 (apps/web — UI upload & laporan hasil) |
+| Owner | Modul `apps/api` (logic import & validasi) + `apps/web` (UI upload & laporan hasil) |
 
 ---
 
