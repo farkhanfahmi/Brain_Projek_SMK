@@ -27,7 +27,7 @@ updated: 2026-08-25
 ### DEV — Windows (mesin ini)
 - Path: `C:\ProjekSMK\AbsenSI` — branch `dev`. Node + pnpm native Windows.
 - Port: web 3000, api 3001, kiosk 3002 (standar repo; tidak ada folder produksi terpisah di Windows).
-- Infrastruktur: Docker Desktop (WSL2), compose file di root repo — `docker compose up -d`.
+- **[2026-09-02] Infrastruktur migrasi ke MySQL+Redis NATIVE** (task-INFRA-002, selesai) — Docker Desktop terlalu berat untuk RAM 8GB device ini (WSL2 VM overhead + 3 dev server sekaligus sering OOM). MySQL 8.0 native (port 3306, bukan 3307 lagi, root/catat) + Redis via Memurai native — **port 6378** (BUKAN 6379 default, karena 6379 masih dipakai container Docker lama saat instalasi; kalau container Docker lama sudah dihapus, port ini masih 6378 karena Memurai sudah terlanjur dikonfigurasi begitu). `docker-compose.yml` tetap ada di repo untuk device/kontributor lain yang masih mau pakai Docker — TIDAK dihapus. Docker Desktop di-quit permanen (auto-start off), distro WSL2 `docker-desktop` di-unregister, dan Windows Feature `VirtualMachinePlatform`+`Microsoft-Windows-Subsystem-Linux` dinonaktifkan (butuh enable ulang kalau mau pakai Docker/WSL lagi di device ini). **Fix tambahan**: script `dev` di `apps/api/package.json` dipindah ke SWC compiler (`nest-cli.dev.json`) karena compiler default (tsc/webpack watch) OOM heap ~2GB di RAM 8GB ini — compiler lama tersedia sebagai `dev:tsc` kalau perlu type-check penuh. **Trade-off disadari**: dev sekarang tidak 100% identik production (yang tetap Docker `mysql:8`+`redis:7`) — risiko kecil versi/collation berbeda, diterima demi RAM lega.
 - Jalankan: `pnpm turbo run dev` (script .sh lama butuh adaptasi bash/git-bash).
 
 ### PRODUCTION — Linux (`anunnaki`)

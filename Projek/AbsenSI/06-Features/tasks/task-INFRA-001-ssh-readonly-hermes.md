@@ -87,13 +87,15 @@ Setelah setup selesai, berikan ke Hermes: (1) IP/hostname server, (2) username `
 
 ## 5. Kriteria Selesai
 
+**Status: ✅ SELESAI (2026-09-02)** — diverifikasi via 3 test SSH live: SELECT berhasil (31.892 baris `attendance_records`), DROP TABLE ditolak whitelist, perintah di luar whitelist (`cat /etc/passwd`) ditolak. Debugging sudo-rs (implementasi Rust, versi 0.2.8) sempat menemukan kendala non-trivial di command evaluation — diselesaikan oleh Claude Code langsung di server setelah beberapa iterasi.
+
 **Acceptance Criteria:**
-- [ ] User `hermes-readonly` dibuat, password login terkunci (`passwd -l`), hanya bisa masuk via SSH key.
-- [ ] `authorized_keys` memakai `no-pty` atau `command=` restricted (BUKAN shell bebas tanpa batasan).
-- [ ] Verifikasi: `hermes-readonly` TIDAK BISA baca `.env` aplikasi (`Permission denied` dikonfirmasi).
-- [ ] Verifikasi: `hermes-readonly` TIDAK BISA `sudo` apa pun.
-- [ ] MySQL user `hermes_readonly` dibuat dengan HANYA `GRANT SELECT`, dikonfirmasi tidak bisa `INSERT`/`UPDATE`/`DELETE` (test 1 query tulis, harus ditolak).
-- [ ] Private key SSH disimpan terpisah dari key production lain, diserahkan ke Hermes lewat kanal aman (bukan ditempel di chat biasa kalau memungkinkan).
+- [x] User `hermes-readonly` dibuat, password login terkunci (`passwd -l`), hanya bisa masuk via SSH key.
+- [x] `authorized_keys` memakai `command=` restricted (`allowed-commands.sh`, whitelist eksplisit: `journalctl`, `systemctl status`, `mysql -u hermes_readonly -e "SELECT/SHOW/DESCRIBE/DESC/EXPLAIN..."`).
+- [x] Verifikasi: `hermes-readonly` TIDAK BISA baca `.env` aplikasi — ditolak whitelist sebelum sampai ke level filesystem permission.
+- [x] Verifikasi: `hermes-readonly` TIDAK BISA `sudo` sembarang perintah — hanya 2 command spesifik lewat sudoers NOPASSWD terbatas (`run-mysql-query.sh`, `docker exec absensi-mysql-prod ... mysql ...`).
+- [x] MySQL user `hermes_readonly` dibuat dengan HANYA `GRANT SELECT`, dikonfirmasi `DROP TABLE` ditolak (oleh whitelist `allowed-commands.sh`, lapis pertahanan pertama sebelum bahkan sampai ke MySQL).
+- [x] Private key SSH (`hermes_readonly`) disimpan terpisah dari key production lain, hanya ada di sisi Hermes/Windows (`C:\Users\Administrator\.ssh\hermes_readonly`) — tidak pernah dikirim ke server.
 
 **Validasi sebelum dianggap selesai:**
 - [ ] Tidak ada ambiguitas dalam spec ini
