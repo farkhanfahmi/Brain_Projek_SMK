@@ -44,6 +44,7 @@
 - Kondisi: [mis. input kosong/null] → Perilaku yang benar: [...]
 - Kondisi: [mis. race condition 2 request bersamaan] → Perilaku yang benar: [...]
 - Kondisi: [mis. permission/role salah] → Perilaku yang benar: [...]
+- **Kalau task ini butuh cek data production untuk memutuskan behavior** (mis. "apakah ada baris NULL", "berapa banyak record kondisi X") — Hermes WAJIB cek dulu via SSH read-only SEBELUM handoff (lihat `06-Features/akses-data-production.md`), tulis HASIL NYATA di sini (bukan instruksi "Claude Code cek sendiri" — Claude Code TIDAK PUNYA akses SSH production).
 
 **Edge case:**
 - [kondisi] → [behavior yang diharapkan]

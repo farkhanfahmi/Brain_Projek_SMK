@@ -34,6 +34,7 @@ hanya peta navigasi ke dokumen lain, bukan tempat cek progres.
 | Environment, topologi dev/production, backup | `10-Environment.md` |
 | Keputusan arsitektur (ADR-001 s/d ADR-025+) | `11-Decisions.md` — **terpelihara aktif** |
 | **Workflow Hermes ⟷ Claude Code (2 sesi, batas kewenangan, format task)** | `workflow-2-sesi-diskusi-eksekusi.md` — **WAJIB dibaca sebelum sesi diskusi/eksekusi apa pun** |
+| **Akses data production (siapa bisa apa, cara Hermes cek data untuk task)** | `06-Features/akses-data-production.md` — **WAJIB dibaca Claude Code kalau task menyebut "cek data production"** |
 | Template task baru (format 8-bagian) | `06-Features/tasks/_task-template.md` |
 | Brief visual v1 (warna, tipografi, komponen — sebagian sudah revamp ke v2) | `06-Features/design-system/MASTER.md` |
 | **Design System v2 (token, kontrak komponen, Figma, governance)** | `06-Features/design-system-v2/00-INDEX.md` — **WAJIB dibaca sebelum kerja UI apapun** |
